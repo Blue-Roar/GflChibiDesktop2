@@ -37,6 +37,8 @@ namespace HDTLPanel
                 UseShellExecute = false
             };
 
+            // 确保工作目录存在（File.OpenWrite 不会自动创建父目录）
+            Directory.CreateDirectory(workingDirectory);
             outWriter = new StreamWriter(File.OpenWrite(Path.Combine(workingDirectory, "out.log")));
             errWriter = new StreamWriter(File.OpenWrite(Path.Combine(workingDirectory, "err.log")));
 

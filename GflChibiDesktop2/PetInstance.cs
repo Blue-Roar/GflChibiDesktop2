@@ -51,9 +51,21 @@ namespace HDTLPanel
         {
             string appDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app");
             string workDir = Path.Combine(appDir, "instances", id.ToString());
-            if (Directory.Exists(workDir))
+            // 清理残留：普通目录直接删除，悬空 junction 也强制移除
+            try
             {
-                SafeDelete(workDir);
+                if (Directory.Exists(workDir))
+                {
+                    SafeDelete(workDir);
+                }
+                else
+                {
+                    // 悬空 junction：Exists 为 false 但路径仍被占用，尝试按链接删除
+                    Directory.Delete(workDir, false);
+                }
+            }
+            catch
+            {
             }
             Directory.CreateDirectory(workDir);
             string assetsDir = Path.Combine(workDir, "assets");
@@ -189,13 +201,16 @@ namespace HDTLPanel
 
         /// <summary>
         /// 安全删除目录：先删联接点（避免跟随 junction 删除共享内容），再递归删除。
+        /// 对悬空 junction（Exists 为 true 但枚举抛异常）直接删链接本身。
         /// </summary>
         private static void SafeDelete(string dir)
         {
             if (!Directory.Exists(dir)) return;
             try
             {
-                foreach (string sub in Directory.GetDirectories(dir))
+                // 悬空 junction 或损坏目录：GetDirectories 会抛异常，直接删链接
+                string[] subs = Directory.GetDirectories(dir);
+                foreach (string sub in subs)
                 {
                     var info = new DirectoryInfo(sub);
                     if ((info.Attributes & FileAttributes.ReparsePoint) != 0)
@@ -212,6 +227,17 @@ namespace HDTLPanel
                     File.Delete(f);
                 }
                 Directory.Delete(dir, false);
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // 悬空 junction：按链接删除（不递归，避免删到目标）
+                try
+                {
+                    Directory.Delete(dir, false);
+                }
+                catch
+                {
+                }
             }
             catch
             {

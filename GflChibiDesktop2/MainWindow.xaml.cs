@@ -309,6 +309,12 @@ namespace HDTLPanel
                     return;
                 }
             }
+
+            MessageBoxResult result = HandyControl.Controls.MessageBox.Show("确定要退出少女前线桌面Q宠吗？", "确认退出", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result != MessageBoxResult.Yes)
+            {
+                e.Cancel = true;
+            }
         }
 
         private void ExitApplication(object sender, RoutedEventArgs e)
@@ -472,7 +478,7 @@ namespace HDTLPanel
             {
                 ShowInTaskbar = false;
                 Hide();
-                HandyControl.Controls.Growl.InfoGlobal("少前桌宠已最小化到系统托盘。双击托盘图标显示主窗口。");
+                HandyControl.Controls.Growl.InfoGlobal("少女前线桌面Q宠已在后台静默启动。\n双击托盘图标显示主窗口。");
             }
         }
 
@@ -483,7 +489,7 @@ namespace HDTLPanel
 
         private void notifyIcon_MouseDoubleClick(object sender, RoutedEventArgs e)
         {
-            Visibility = Visibility.Visible;
+            Show();
             ShowInTaskbar = true;
             WindowState = WindowState.Normal;
             Activate();
@@ -565,10 +571,10 @@ namespace HDTLPanel
 
         public bool IsAutoRun
         {
-            get => AutoRun.IsAutoRun(AppDomain.CurrentDomain.BaseDirectory + "HDTLPanel.exe", "HuiDesktop启动器与控制面板");
+            get => AutoRun.IsAutoRun(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName, "少女前线桌面Q宠");
             set
             {
-                AutoRun.SetAutoRun(AppDomain.CurrentDomain.BaseDirectory + "HDTLPanel.exe", "HuiDesktop启动器与控制面板", value);
+                AutoRun.SetAutoRun(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName, "少女前线桌面Q宠", value);
                 OnPropertyChanged();
             }
         }

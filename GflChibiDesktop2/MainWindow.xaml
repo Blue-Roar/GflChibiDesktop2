@@ -6,7 +6,9 @@
         xmlns:local="clr-namespace:HDTLPanel"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance local:MainWindowDataContext, IsDesignTimeCreatable=True}"
-        Title="少女前线桌面Q宠" Height="375" Width="520" MinHeight="375" MinWidth="480" Closing="Window_Closing" Closed="Window_Closed" StateChanged="Window_StateChanged" Background="#FF1B1B1C" Foreground="White" Icon="/GlobalIcon.ico">
+        Title="少女前线桌面Q宠" Height="375" Width="520" MinHeight="375" MinWidth="480" WindowStartupLocation="CenterScreen"
+        Closing="Window_Closing" Closed="Window_Closed" StateChanged="Window_StateChanged"
+        Background="#FF1B1B1C" Foreground="White" Icon="/hk416_happy.ico">
     <Window.Resources>
         <local:BoolToStringValueConverter x:Key="runningStatusConverter"/>
         <local:ReverseBooleanValueConverter x:Key="reverseBooleanConverter"/>
@@ -16,7 +18,7 @@
             <ColumnDefinition Width="8*"/>
             <ColumnDefinition Width="5*"/>
         </Grid.ColumnDefinitions>
-        <hc:NotifyIcon x:Name="notifyIcon" Text="{Binding Title, ElementName=window}" Visibility="Visible" Icon="/GlobalIcon.ico" MouseDoubleClick="notifyIcon_MouseDoubleClick" Grid.ColumnSpan="2">
+        <hc:NotifyIcon x:Name="notifyIcon" Text="{Binding Title, ElementName=window}" Visibility="Visible" Icon="/hk416_happy.ico" MouseDoubleClick="notifyIcon_MouseDoubleClick" Grid.ColumnSpan="2">
             <hc:NotifyIcon.ContextMenu>
                 <ContextMenu Width="120" >
                     <MenuItem Command="hc:ControlCommands.PushMainWindow2Top" Header="显示" Click="notifyIcon_MouseDoubleClick"/>
@@ -25,12 +27,12 @@
                 </ContextMenu>
             </hc:NotifyIcon.ContextMenu>
         </hc:NotifyIcon>
-        <Label Content="当前主程序状态：" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20"/>
+        <Label Content="当前主实例状态：" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20"/>
         <Label Content="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=未运行/正在运行}" Foreground="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=Red/Green}" HorizontalAlignment="Left" Margin="110,10,0,0" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20"/>
         <Label Content="版本" x:Name="lblVersion" Margin="0,10,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20" Grid.ColumnSpan="2" HorizontalContentAlignment="Right"/>
-        <Button Content="多开" HorizontalAlignment="Left" Margin="10,39,0,0" VerticalAlignment="Top" Width="90" Click="StartNewInstance" ToolTip="基于当前选中的桌宠配置，新开一个桌宠实例"/>
+        <Button Content="人形扩编" HorizontalAlignment="Left" Margin="10,39,0,0" VerticalAlignment="Top" Width="90" Click="StartNewInstance" ToolTip="基于当前选中的桌宠配置，新开一个桌宠实例"/>
         <Button Content="{Binding Path=IsAutoRun, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=开启自启/关闭自启}" Margin="110,39,0,0" VerticalAlignment="Top" Width="90" Click="ChangeAutoRun" HorizontalAlignment="Left"/>
-        <CheckBox VerticalAlignment="Top" HorizontalAlignment="Right" Content="将此窗口置顶" Margin="0,35,10,0" Width="100" Height="32" IsChecked="{Binding Topmost, ElementName=window}" Grid.Column="1" />
+        <CheckBox VerticalAlignment="Top" HorizontalAlignment="Right" Content="窗口置顶(_T)" Margin="0,42,10,0" Width="90" Height="22" IsChecked="{Binding Topmost, ElementName=window}" Grid.Column="1" />
         <Grid x:Name="ConfigZoneGrid" Margin="0,72,0,0" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
