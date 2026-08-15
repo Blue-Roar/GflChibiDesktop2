@@ -31,8 +31,8 @@
                 <StackPanel Orientation="Horizontal"  Width="167" Height="48">
                     <Image x:Name="avatar_BrightSu" RenderTransformOrigin="0,0" Height="48" Width="48" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Source="hk416_happy.ico" StretchDirection="Both" Stretch="UniformToFill" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,3,0"/>
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                        <hc:SimpleText x:Name="name_BrightSu" Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="13827887" HorizontalAlignment="Center" Margin="0" FontSize="13"/>
-                        <hc:SimpleText Foreground="{StaticResource SecondaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="摸鱼摆烂" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0" FontSize="11"/>
+                        <hc:SimpleText x:Name="name_BrightSu" Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="BrightSu02" HorizontalAlignment="Center" Margin="0" FontSize="13"/>
+                        <hc:SimpleText Foreground="{StaticResource SecondaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="数据配置程序、HDTLPanel适配" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0" FontSize="11"/>
                     </StackPanel>
                 </StackPanel>
             </Button>
@@ -40,7 +40,7 @@
                 <StackPanel Orientation="Horizontal" Width="167" Height="48">
                     <Image x:Name="avatar_Huix" RenderTransformOrigin="0,0" Height="48" Width="48" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Source="hk416_angry.ico" StretchDirection="Both" Stretch="UniformToFill" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,3,0"/>
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                        <hc:SimpleText x:Name="name_Huix" Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="102421353" HorizontalAlignment="Center" Margin="0" FontSize="13"/>
+                        <hc:SimpleText x:Name="name_Huix" Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="老猫不发威你当我病危" HorizontalAlignment="Center" Margin="0" FontSize="13"/>
                         <hc:SimpleText Foreground="{StaticResource SecondaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="HuiDesktop 主程序" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0" FontSize="11"/>
                     </StackPanel>
                 </StackPanel>

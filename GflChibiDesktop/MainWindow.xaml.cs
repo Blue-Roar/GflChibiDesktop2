@@ -435,23 +435,26 @@ namespace GflChibiDesktop.Windows
                             }
                             else if (content.category == "ENEMY")
                             {
-                                switch (content.type.ToUpper().Substring(0, content.type.Length - 1))
+                                if (content.type != "")
                                 {
-                                    case "SANGVIS":
-                                       node.ParentID = 82;
-                                       break;
-                                    case "KCCO":
-                                       node.ParentID = 83;
-                                       break;
-                                    case "PARADEUS":
-                                       node.ParentID = 84;
-                                       break;
-                                    case "ETC":
-                                       node.ParentID = 85;
-                                       break;
-                                    default:
-                                        node.ParentID = 89;
-                                        break;
+                                    switch (content.type.ToUpper().Substring(0, content.type.Length - 1))
+                                    {
+                                        case "SANGVIS":
+                                           node.ParentID = 82;
+                                           break;
+                                        case "KCCO":
+                                           node.ParentID = 83;
+                                           break;
+                                        case "PARADEUS":
+                                           node.ParentID = 84;
+                                           break;
+                                        case "ETC":
+                                           node.ParentID = 85;
+                                           break;
+                                        default:
+                                            node.ParentID = 89;
+                                            break;
+                                    }
                                 }
                             }
                             initializeDataSet.Add(node);
@@ -479,6 +482,13 @@ namespace GflChibiDesktop.Windows
                 }
 
 
+                // 移除没有子节点的一级分类（Level<3 并且没有其他项的 ParentID 指向它）
+                var emptyParents = initializeDataSet.Where(n => n.Level < 3 && !initializeDataSet.Any(m => m.ParentID == n.ComponentID)).ToList();
+                foreach (var ep in emptyParents)
+                {
+                    initializeDataSet.Remove(ep);
+                }
+
                 //加载数据
                 tv_InternalSelector.ItemsSource = LoadTreeView(0);
 
@@ -498,6 +508,8 @@ namespace GflChibiDesktop.Windows
                 tii.ProgressValue = 100;
                 tii.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
                 //tv_InternalSelector.Items.Add(treeViewItemTemp);
+
+
             }
             catch (Exception ex)
             {
@@ -709,7 +721,7 @@ namespace GflChibiDesktop.Windows
                 }
                 else
                 {
-                    MessageBoxResult downloadListResult = MessageBox.Show("本地战术人形数据表不存在，且 API 接口调用失败。加载进程已中止。\n是否重试？", "数据表加载失败", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes);
+                    MessageBoxResult downloadListResult = MessageBox.Show("本地数据表不存在，且 API 接口调用失败。加载进程已中止。\n是否重试？", "数据表加载失败", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes);
                     if (downloadListResult == MessageBoxResult.Yes)
                     {
                         btn_LoadDummyList_Click(this, null);
