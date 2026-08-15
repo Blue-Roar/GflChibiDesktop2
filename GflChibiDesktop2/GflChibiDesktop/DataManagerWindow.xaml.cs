@@ -54,22 +54,8 @@ namespace GflChibiDesktop.Windows
         {
             InitializeComponent();
 
-            lblVersion.Content = $"{Environment.MachineName}\\{Environment.UserName}\n{currentBuild} {productBuild}";
+            lblVersion.Content = $"{productBuild}\n{currentBuild}";
 
-            bool StartupPost = false;
-            string StartupStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/startup", $"build={productBuild}", Encoding.UTF8, ref StartupPost);
-            if (StartupPost)
-            {
-                StartupRoot rt = JsonConvert.DeserializeObject<StartupRoot>(StartupStr);
-                if (rt.ret != 200)
-                {
-                    HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt.ret}");
-                }
-            }
-            else
-            {
-                HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n{StartupStr}");
-            }
             UpdateLinks();
             //CheckForUpdates();
 

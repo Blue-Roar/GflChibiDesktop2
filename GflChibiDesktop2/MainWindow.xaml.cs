@@ -1,12 +1,17 @@
-﻿using System;
+﻿using GflChibiDesktop;
+using Newtonsoft.Json;
+using System;
 using System.ComponentModel;
 using System.Globalization;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
+using static GflChibiDesktop.WebAPI;
 
 namespace HDTLPanel
 {
@@ -17,6 +22,10 @@ namespace HDTLPanel
     {
         const string settingsPath = "settings.json";
 
+        public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version);
+        public readonly Version productBuild = Assembly.GetExecutingAssembly().GetName().Version;
+        public readonly string currentBuild = ((AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute))).InformationalVersion;
+
         readonly MainWindowDataContext context = new();
         ProcessManager? manager;
         bool isExiting = false;
@@ -25,6 +34,24 @@ namespace HDTLPanel
         public MainWindow()
         {
             InitializeComponent();
+            window.Title += $" {productVersion}";
+            lblVersion.Content = $"程序版本 {productBuild}";
+
+            bool StartupPost = false;
+            string StartupStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/startup", $"version={productVersion}&build={productBuild}/{currentBuild}", Encoding.UTF8, ref StartupPost);
+            if (StartupPost)
+            {
+                StartupRoot rt = JsonConvert.DeserializeObject<StartupRoot>(StartupStr);
+                if (rt.ret != 200)
+                {
+                    HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt.ret}");
+                }
+            }
+            else
+            {
+                HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n{StartupStr}");
+            }
+
             DataContext = context;
             SwitchSubprogramRunningStatus(null, new());
             notifyIcon.Init();
@@ -34,13 +61,22 @@ namespace HDTLPanel
 
         async private void SwitchSubprogramRunningStatus(object? sender, RoutedEventArgs e)
         {
-            if (context.IsRunning)
+            try
             {
-                await StopSubprogram();
+                if (context.IsRunning)
+                {
+                    await StopSubprogram();
+                }
+                else
+                {
+                    StartSubprogram();
+                }
             }
-            else
+            catch (OperationCanceledException)
             {
-                StartSubprogram();
+            }
+            catch (ObjectDisposedException)
+            {
             }
         }
 
@@ -52,7 +88,18 @@ namespace HDTLPanel
                 context.IsChanged = false;
                 MainStackPanel.Children.Clear();
                 manager.TryCloseWindow();
-                await Task.Delay(1000);
+                try
+                {
+                    await Task.Delay(1000);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                if (isExiting)
+                {
+                    context.IsBusyClosing = false;
+                    return;
+                }
                 if (context.IsRunning)
                 {
                     manager.ForceCloseWindow();
@@ -66,26 +113,42 @@ namespace HDTLPanel
 
         private void StartSubprogram()
         {
-            context.IsRunning = true;
-            manager = new ProcessManager(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"), System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app"), "main.lua", () => Dispatcher.Invoke(ReadIpc));
-            manager.Exited += (_, _) =>
+            if (isExiting)
             {
-                context.IsRunning = false;
-                context.IsChanged = false;
-                Dispatcher.Invoke(() => {
-                    MainStackPanel.Children.Clear();
-                    if (WindowState == WindowState.Minimized)
-                    {
-                        WindowState = WindowState.Normal;
-                    }
-                });
-            };
+                return;
+            }
+            try
+            {
+                context.IsRunning = true;
+                manager = new ProcessManager(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"), System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app"), "main.lua", () => Dispatcher.Invoke(ReadIpc));
+                manager.Exited += (_, _) =>
+                {
+                    context.IsRunning = false;
+                    context.IsChanged = false;
+                    Dispatcher.Invoke(() => {
+                        MainStackPanel.Children.Clear();
+                        if (WindowState == WindowState.Minimized)
+                        {
+                            WindowState = WindowState.Normal;
+                        }
+                    });
+                };
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
         }
 
         private async Task RestartSubprogram()
         {
             await StopSubprogram();
-            StartSubprogram();
+            if (!isExiting)
+            {
+                StartSubprogram();
+            }
         }
 
         private void Window_Closing(object? sender, CancelEventArgs e)
@@ -115,6 +178,7 @@ namespace HDTLPanel
 
         private void Window_Closed(object sender, EventArgs e)
         {
+            isExiting = true;
             notifyIcon.Visibility = Visibility.Hidden;
             notifyIcon.Dispose();
             if (manager is not null)
@@ -222,7 +286,8 @@ namespace HDTLPanel
             {
                 ShowInTaskbar = false;
                 Hide();
-                notifyIcon.ShowBalloonTip("HuiDesktop Light", "双击还原喵", HandyControl.Data.NotifyIconInfoType.Info);
+                HandyControl.Controls.Growl.InfoGlobal("少前桌宠已最小化到系统托盘。双击托盘图标显示主窗口。");
+                //notifyIcon.ShowBalloonTip("少女前线桌面Q宠", "双击托盘图标显示主窗口", HandyControl.Data.NotifyIconInfoType.Info);
             }
         }
 
@@ -253,8 +318,17 @@ namespace HDTLPanel
 
         private async void DataManagerWindow_ModelLoadRequested(GflChibiDesktop.Windows.ChibiModelData data)
         {
-            await RestartSubprogram();
-            HandyControl.Controls.Growl.InfoGlobal($"已加载 {data.DisplayName}，战术人形已应用。");
+            try
+            {
+                await RestartSubprogram();
+                HandyControl.Controls.Growl.InfoGlobal($"已加载 {data.DisplayName}，战术人形已应用。");
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
         }
     }
 

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GflChibiDesktop.Windows"
         mc:Ignorable="d"
-        Title="战术人形数据配置" WindowStartupLocation="CenterScreen" Icon="/hk416_happy.ico" Background="#FF1B1B1C" Foreground="White" ResizeMode="CanResizeWithGrip" MinHeight="600" MinWidth="600" Width="600" Height="600" Visibility="Visible" SnapsToDevicePixels="True" >
+        Title="人形数据配置" WindowStartupLocation="CenterScreen" Icon="/hk416_happy.ico" Background="#FF1B1B1C" Foreground="White" ResizeMode="CanResizeWithGrip" MinHeight="600" MinWidth="600" Width="600" Height="600" Visibility="Visible" SnapsToDevicePixels="True" >
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
@@ -100,7 +100,7 @@
                 <Label x:Name="lblVersion" Content="程序版本" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="4,0,4,0" HorizontalContentAlignment="Left" Grid.Row="1" Foreground="{DynamicResource InfoBrush}" FontSize="10" MouseDoubleClick="lblVersion_MouseDoubleClick" Cursor="UpArrow" ToolTip="双击查看程序信息" />
                 <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" Margin="2" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center">
                     <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_save_cg" IsChecked="True" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" HorizontalAlignment="Center" />
-                    <Label Content="保存到本地" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_save_cg}" Margin="2" />
+                    <Label Content="保存到本地" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_save_cg}" />
                 </StackPanel>
                 <Label x:Name="lblSelectedItem" Content="未选择" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" />
                 <!--<Label Content="供数据崩溃时使用" Foreground="{DynamicResource SecondaryTextBrush}" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" Visibility="{Binding Visibility, ElementName=btn_deleteData}" />
@@ -108,7 +108,7 @@
                 <hc:SimpleText x:Name="lblListVersion" Text="数据列表版本" ToolTip="战术人形数据列表版本" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.ColumnSpan="1" Foreground="{StaticResource PrimaryTextBrush}" />
                 <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" Margin="2" Grid.Row="1" Grid.Column="4" HorizontalAlignment="Center">
                     <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_force_load" IsChecked="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" HorizontalAlignment="Center" />
-                    <Label Content="强制加载 [!]" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_force_load}" Margin="2" />
+                    <Label Content="强制加载 [!]" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_force_load}" />
                 </StackPanel>
             </Grid>
         </Grid>
