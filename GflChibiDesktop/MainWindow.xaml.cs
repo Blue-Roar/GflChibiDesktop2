@@ -196,18 +196,22 @@ namespace GflChibiDesktop.Windows
             initializeDataSet.Add(new ComponentModel() { ComponentID = 62, ComponentName = "MTRclass", Level = 2, ParentID = 61, ToolTip = "迫击炮人形", Header = "迫击炮(MTR)", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 63, ComponentName = "ATWclass", Level = 2, ParentID = 61, ToolTip = "反坦克武器人形", Header = "反坦克武器(ATW)", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 64, ComponentName = "AGLclass", Level = 2, ParentID = 61, ToolTip = "榴弹发射器人形", Header = "榴弹发射器(AGL)", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 69, ComponentName = "HOCunclass", Level = 2, ParentID = 61, ToolTip = "未分类其它", Header = "未分类其它", Foreground = defaultColor });
 
             initializeDataSet.Add(new ComponentModel() { ComponentID = 71, ComponentName = "NPCclass", Level = 1, ParentID = 0, ToolTip = "NPC", Header = "NPC", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 72, ComponentName = "HUMANclass", Level = 2, ParentID = 71, ToolTip = "人类", Header = "人类", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 79, ComponentName = "NPCunclass", Level = 2, ParentID = 71, ToolTip = "未分类其它", Header = "未分类其它", Foreground = defaultColor });
 
             initializeDataSet.Add(new ComponentModel() { ComponentID = 81, ComponentName = "ENEMYclass", Level = 1, ParentID = 0, ToolTip = "敌方势力单位", Header = "敌方势力", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 82, ComponentName = "SANGVISclass", Level = 2, ParentID = 81, ToolTip = "铁血工造势力", Header = "铁血工造", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 83, ComponentName = "KCCOclass", Level = 2, ParentID = 81, ToolTip = "正规军势力", Header = "正规军", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 84, ComponentName = "PARADEUSclass", Level = 2, ParentID = 81, ToolTip = "帕拉蒂斯势力", Header = "帕拉蒂斯", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 85, ComponentName = "ETCclass", Level = 2, ParentID = 81, ToolTip = "其它势力", Header = "其它", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 89, ComponentName = "ENEMYunclass", Level = 2, ParentID = 81, ToolTip = "未分类其它", Header = "未分类其它", Foreground = defaultColor });
 
             initializeDataSet.Add(new ComponentModel() { ComponentID = 101, ComponentName = "OTHERclass", Level = 1, ParentID = 0, ToolTip = "其它人形", Header = "其它", Foreground = defaultColor });
-            initializeDataSet.Add(new ComponentModel() { ComponentID = 102, ComponentName = "UNKNOWNclass", Level = 2, ParentID = 101, ToolTip = "未分类的数据", Header = "未分类", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 102, ComponentName = "TDOLLunclass", Level = 2, ParentID = 101, ToolTip = "未分类的战术人形", Header = "战术人形", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 109, ComponentName = "UNKNOWNclass", Level = 2, ParentID = 101, ToolTip = "未分类的数据", Header = "未分类", Foreground = defaultColor });
 
             try
             {
@@ -227,15 +231,15 @@ namespace GflChibiDesktop.Windows
                 foreach (Content content in rb.content)
                 {
                     counter++;
+                    content.type = content.type ?? "";
+                    content.display = content.display ?? content.name;
+                    content.display_full = content.display_full ?? content.display;
 
                     lbl_loader.Content = $"正在处理：{counter} / {total}";
                     pb_loader.Value ++;
                     tii.ProgressValue = pb_loader.Value / pb_loader.Maximum;
                     try
                     {
-                        content.type = content.type ?? "";
-                        content.display = content.display ?? content.name;
-                        content.display_full = content.display_full ?? content.display;
                         bool displaySwitch = true;
                         ComponentModel node = new ComponentModel();
                         node.ComponentName = $"dummy_{content.name.Replace(" ", string.Empty)}";
@@ -277,7 +281,7 @@ namespace GflChibiDesktop.Windows
                             if (content.type.Contains("3")) { node.Foreground = type5color; }
                         }
 
-                        node.ParentID = 102;
+                        node.ParentID = 109;
 
                         if (content.name == content.parent)
                         {
@@ -413,7 +417,7 @@ namespace GflChibiDesktop.Windows
                                         node.ParentID = 64;
                                         break;
                                     default:
-                                        node.ParentID = 61;
+                                        node.ParentID = 69;
                                         break;
                                 }
                             }
@@ -425,7 +429,7 @@ namespace GflChibiDesktop.Windows
                                         node.ParentID = 72;
                                         break;
                                     default:
-                                        node.ParentID = 71;
+                                        node.ParentID = 79;
                                         break;
                                 }
                             }
@@ -446,7 +450,7 @@ namespace GflChibiDesktop.Windows
                                        node.ParentID = 85;
                                        break;
                                     default:
-                                        node.ParentID = 81;
+                                        node.ParentID = 89;
                                         break;
                                 }
                             }
@@ -456,7 +460,7 @@ namespace GflChibiDesktop.Windows
                         {
                             node.Level = 4;
                             //if (content.type == "HUMAN") { node.Level = 3; }
-                            node.ParentID = 102;
+                            node.ParentID = 109;
                             foreach (ComponentModel item in initializeDataSet)
                             {
                                 if (item.ComponentName == $"dummy_{content.parent.Replace(" ", string.Empty)}")
@@ -504,7 +508,7 @@ namespace GflChibiDesktop.Windows
         private ComponentModel SelectedItem;
         private void tv_InternalSelector_Selected(object sender, RoutedEventArgs e)
         {
-            lbl_InternalSelected.Content = "请选择要加载的战术人形";
+            lbl_InternalSelected.Text = "请选择要加载的战术人形";
             lbl_InternalSelected.Foreground = defaultColor;
             lblSelectedItem.Content = "未选择";
             lblSelectedItem.Foreground = defaultColor;
@@ -536,7 +540,7 @@ namespace GflChibiDesktop.Windows
 
             if (item != null)
             {
-                lbl_InternalSelected.Content = item.ToolTip;
+                lbl_InternalSelected.Text = item.ToolTip;
                 lbl_InternalSelected.Foreground = item.Foreground;
                 if (!item.ComponentName.Contains("class"))
                 {
@@ -1139,14 +1143,15 @@ namespace GflChibiDesktop.Windows
 
         private void SearchBar_SearchStarted(object sender, HandyControl.Data.FunctionEventArgs<string> e)
         {
-            if (sbQuery.Text != string.Empty)
+            string queryText = sbQuery.Text;
+            if (queryText != string.Empty)
             {
                 initializeDataSet.Clear();
                 try
                 {
                     string str = File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}chibi_list.json");
                     RootObject rb = JsonConvert.DeserializeObject<RootObject>(str);
-                    btn_LoadDummyList.ToolTip = $"当前战术人形数据列表版本 {rb.meta.version}";
+                    btn_LoadDummyList.ToolTip = $"当前数据列表版本 {rb.meta.version}";
                     lblListVersion.Text = rb.meta.version;
                     int total = rb.content.Count;
 
@@ -1155,7 +1160,11 @@ namespace GflChibiDesktop.Windows
                     foreach (Content content in rb.content)
                     {
                         counter++;
-                        if (content.name.Contains(sbQuery.Text) || content.parent.Contains(sbQuery.Text) || content.display.Contains(sbQuery.Text) || content.display_full.Contains(sbQuery.Text))
+                        content.type = content.type ?? "";
+                        content.display = content.display ?? content.name;
+                        content.display_full = content.display_full ?? content.display;
+
+                        if (content.name.Contains(queryText) || content.parent.Contains(queryText) || content.display.Contains(queryText) || content.display_full.Contains(queryText))
                         {
                             try
                             {

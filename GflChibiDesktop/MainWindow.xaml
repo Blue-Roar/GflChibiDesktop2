@@ -40,7 +40,7 @@
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Label x:Name="lbl_InternalSelected" Content="请选择要加载的战术人形" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.ColumnSpan="2"/>
+            <TextBlock x:Name="lbl_InternalSelected" Text="请选择要加载的战术人形" TextAlignment="Center" Padding="0" Grid.ColumnSpan="2" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             <Image x:Name="img_Preview" Grid.Row="1" RenderTransformOrigin="0,0" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality"></Image>
             <StackPanel Grid.Row="1" FlowDirection="LeftToRight" HorizontalAlignment="Right" VerticalAlignment="Top" >
                 <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="2" >
@@ -88,7 +88,7 @@
                 </Grid.RowDefinitions>
                 <Button x:Name="btn_sources" Content="下载源设置" Click="btn_sources_Click" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" />
                 <Button x:Name="btn_loadCG" Content="加载立绘" Click="btn_loadCG_Click" IsEnabled="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" ToolTip="加载选定战术人形的立绘" Grid.Column="1"/>
-                <hc:SearchBar x:Name="sbQuery" Grid.Column="2" SearchStarted="SearchBar_SearchStarted" OverridesDefaultStyle="True" ToolTip="搜索战术人形" Margin="2,0,2,0" ShowClearButton="True" />
+                <hc:SearchBar x:Name="sbQuery" Grid.Column="2" SearchStarted="SearchBar_SearchStarted" OverridesDefaultStyle="True" ToolTip="搜索战术人形" Margin="2,0,2,0" IsRealTime="True" hc:InfoElement.ShowClearButton="True" />
                 <!--<hc:AnimationPath Duration="0:0:5" Stretch="Uniform" StrokeThickness="2" Stroke="{DynamicResource PrimaryBrush}" Data="{StaticResource SubGeometry}" Grid.Column="2"/>-->
                 <Button x:Name="btn_downloadData" Grid.Column="3" Content="下载数据" IsEnabled="False" Click="btn_downloadData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="下载选定战术人形的骨骼数据" VerticalAlignment="Stretch"/>
                 <Button x:Name="btn_deleteData" Grid.Column="3" Content="删除数据" IsEnabled="False" Click="btn_deleteData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="删除选定战术人形的骨骼数据" VerticalAlignment="Stretch"/>
@@ -112,7 +112,7 @@
                 </StackPanel>
             </Grid>
         </Grid>
-        <Label Content="战术人形骨骼数据、立绘图片等少女前线游戏素材版权均归云母组所有。&#xD;&#xA;仅供个人学习研究与交流用，严禁用于商业用途。使用此程序一切风险自负。" Grid.Row="3" Grid.ColumnSpan="2" VerticalContentAlignment="Center" Margin="2,0,0,0" Padding="10,5,5,5" Background="{x:Null}" BorderBrush="{x:Null}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch"/>
+        <Label Content="战术人形骨骼数据、立绘图片等少女前线游戏素材版权均归云母组所有。&#xD;&#xA;仅供个人学习研究与交流用，严禁用于商业用途。使用此程序一切风险自负。" Grid.Row="3" Grid.ColumnSpan="2" VerticalContentAlignment="Center" Margin="2,0,0,0" Padding="10,5,5,5" Background="{x:Null}" BorderBrush="{x:Null}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="42"/>
         <Button x:Name="btn_LoadDummyList" Content="刷新数据列表" Grid.Column="0" Grid.Row="3" Width="130" HorizontalAlignment="Right" Click="btn_LoadDummyList_Click" Margin="0,10,10,10" VerticalAlignment="Top" Grid.ColumnSpan="3" Height="30" Padding="0"/>
     </Grid>
 </Window>
