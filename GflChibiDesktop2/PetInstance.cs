@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Controls;
+using Newtonsoft.Json.Linq;
 
 namespace HDTLPanel
 {
@@ -19,6 +20,10 @@ namespace HDTLPanel
         public TextBlock? TabTitle { get; set; }
         public StackPanel Panel { get; } = new();
         public bool IsChanged { get; set; }
+        /// <summary>
+        /// 该实例当前使用的模型（用于多开持久化恢复）。
+        /// </summary>
+        public GflChibiDesktop.Windows.ChibiModelData? Model { get; set; }
 
         public PetInstance(int id, string name, string workDir)
         {
@@ -80,6 +85,7 @@ namespace HDTLPanel
                 name = File.Exists(srcName) ? File.ReadAllText(srcName) : $"桌宠 #{id}";
                 if (File.Exists(srcName)) File.Copy(srcName, Path.Combine(assetsDir, "name.txt"), true);
                 if (File.Exists(srcModel)) File.Copy(srcModel, Path.Combine(assetsDir, "model.conf.json"), true);
+                model = ParseModel(name, srcModel);
             }
 
             // 音频等共享配置
@@ -97,7 +103,31 @@ namespace HDTLPanel
             string srcSettings = Path.Combine(appDir, "settings.json");
             if (File.Exists(srcSettings)) File.Copy(srcSettings, Path.Combine(workDir, "settings.json"), true);
 
-            return new PetInstance(id, name, workDir);
+            return new PetInstance(id, name, workDir) { Model = model };
+        }
+
+        /// <summary>
+        /// 从默认的 model.conf.json 解析出模型信息。
+        /// </summary>
+        private static GflChibiDesktop.Windows.ChibiModelData? ParseModel(string name, string modelJsonPath)
+        {
+            try
+            {
+                if (File.Exists(modelJsonPath))
+                {
+                    JObject obj = JObject.Parse(File.ReadAllText(modelJsonPath));
+                    return new GflChibiDesktop.Windows.ChibiModelData
+                    {
+                        DisplayName = name,
+                        SkeletonFile = obj["skeleton"]?.ToString() ?? string.Empty,
+                        AtlasFile = obj["atlas"]?.ToString() ?? string.Empty
+                    };
+                }
+            }
+            catch
+            {
+            }
+            return null;
         }
 
         /// <summary>
@@ -105,6 +135,7 @@ namespace HDTLPanel
         /// </summary>
         public void UpdateModel(GflChibiDesktop.Windows.ChibiModelData model)
         {
+            Model = model;
             Name = model.DisplayName;
             string assetsDir = Path.Combine(WorkDir, "assets");
             Directory.CreateDirectory(assetsDir);

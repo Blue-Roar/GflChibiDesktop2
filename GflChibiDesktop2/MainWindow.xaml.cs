@@ -69,10 +69,20 @@ namespace HDTLPanel
         }
 
         /// <summary>
-        /// 启动时按默认配置自动开启第一个桌宠（若已存在默认配置）。
+        /// 启动时恢复上次会话的桌宠实例（多开也一并恢复）。
         /// </summary>
         private void AutoStartInstance()
         {
+            List<GflChibiDesktop.Windows.ChibiModelData>? saved = LoadSavedInstances();
+            if (saved != null && saved.Count > 0)
+            {
+                foreach (var m in saved)
+                {
+                    StartInstance(m);
+                }
+                return;
+            }
+
             string nameFile = Path.Combine(AppDir, "assets", "name.txt");
             string modelFile = Path.Combine(AppDir, "assets", "model.conf.json");
             if (!File.Exists(nameFile) || !File.Exists(modelFile))
@@ -80,6 +90,35 @@ namespace HDTLPanel
                 return;
             }
             StartInstance(null);
+        }
+
+        private static string InstancesFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "instances.json");
+
+        private List<GflChibiDesktop.Windows.ChibiModelData> LoadSavedInstances()
+        {
+            try
+            {
+                if (File.Exists(InstancesFilePath))
+                {
+                    return JsonConvert.DeserializeObject<List<GflChibiDesktop.Windows.ChibiModelData>>(File.ReadAllText(InstancesFilePath)) ?? new List<GflChibiDesktop.Windows.ChibiModelData>();
+                }
+            }
+            catch
+            {
+            }
+            return new List<GflChibiDesktop.Windows.ChibiModelData>();
+        }
+
+        private void SaveInstances()
+        {
+            try
+            {
+                var list = pets.Select(p => p.Model).Where(m => m != null).Cast<GflChibiDesktop.Windows.ChibiModelData>().ToList();
+                File.WriteAllText(InstancesFilePath, JsonConvert.SerializeObject(list, Newtonsoft.Json.Formatting.Indented));
+            }
+            catch
+            {
+            }
         }
 
         /// <summary>
@@ -281,6 +320,7 @@ namespace HDTLPanel
         private void Window_Closed(object sender, EventArgs e)
         {
             isExiting = true;
+            SaveInstances();
             notifyIcon.Visibility = Visibility.Hidden;
             notifyIcon.Dispose();
             foreach (PetInstance pet in pets.ToList())
