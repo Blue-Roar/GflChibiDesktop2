@@ -1,14 +1,18 @@
 ﻿using GflChibiDesktop;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using static GflChibiDesktop.WebAPI;
@@ -27,9 +31,14 @@ namespace HDTLPanel
         public readonly string currentBuild = ((AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute))).InformationalVersion;
 
         readonly MainWindowDataContext context = new();
-        ProcessManager? manager;
+        readonly List<PetInstance> pets = new();
+        int nextPetId = 1;
         bool isExiting = false;
         GflChibiDesktop.Windows.DataManagerWindow? dataManagerWindow;
+
+        string AppDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
+
+        private PetInstance? SelectedPet => (PetTabs.SelectedItem as TabItem)?.Tag as PetInstance;
 
         public MainWindow()
         {
@@ -53,65 +62,35 @@ namespace HDTLPanel
             }
 
             DataContext = context;
-            SwitchSubprogramRunningStatus(null, new());
+            AutoStartInstance();
             notifyIcon.Init();
             WindowState = WindowState.Minimized;
             Window_StateChanged(null, new());
         }
 
-        async private void SwitchSubprogramRunningStatus(object? sender, RoutedEventArgs e)
+        /// <summary>
+        /// 启动时按默认配置自动开启第一个桌宠（若已存在默认配置）。
+        /// </summary>
+        private void AutoStartInstance()
         {
-            try
+            string nameFile = Path.Combine(AppDir, "assets", "name.txt");
+            string modelFile = Path.Combine(AppDir, "assets", "model.conf.json");
+            if (!File.Exists(nameFile) || !File.Exists(modelFile))
             {
-                if (context.IsRunning)
-                {
-                    await StopSubprogram();
-                }
-                else
-                {
-                    StartSubprogram();
-                }
+                return;
             }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (ObjectDisposedException)
-            {
-            }
+            StartInstance(null);
         }
 
-        private async Task StopSubprogram()
+        /// <summary>
+        /// 开启一个新的桌宠实例。
+        /// </summary>
+        private void StartNewInstance(object sender, RoutedEventArgs e)
         {
-            if (manager is not null)
-            {
-                context.IsBusyClosing = true;
-                context.IsChanged = false;
-                MainStackPanel.Children.Clear();
-                manager.TryCloseWindow();
-                try
-                {
-                    await Task.Delay(1000);
-                }
-                catch (OperationCanceledException)
-                {
-                }
-                if (isExiting)
-                {
-                    context.IsBusyClosing = false;
-                    return;
-                }
-                if (context.IsRunning)
-                {
-                    manager.ForceCloseWindow();
-                }
-                manager.Dispose();
-                manager = null;
-                context.IsBusyClosing = false;
-            }
-            context.IsRunning = false;
+            StartInstance(null);
         }
 
-        private void StartSubprogram()
+        private void StartInstance(GflChibiDesktop.Windows.ChibiModelData? model)
         {
             if (isExiting)
             {
@@ -119,36 +98,159 @@ namespace HDTLPanel
             }
             try
             {
-                context.IsRunning = true;
-                manager = new ProcessManager(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"), System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app"), "main.lua", () => Dispatcher.Invoke(ReadIpc));
-                manager.Exited += (_, _) =>
-                {
-                    context.IsRunning = false;
-                    context.IsChanged = false;
-                    Dispatcher.Invoke(() => {
-                        MainStackPanel.Children.Clear();
-                        if (WindowState == WindowState.Minimized)
-                        {
-                            WindowState = WindowState.Normal;
-                        }
-                    });
-                };
+                PetInstance pet = PetInstance.Create(nextPetId++, model);
+                pet.Manager = new ProcessManager(
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
+                    pet.WorkDir,
+                    "main.lua",
+                    () => Dispatcher.Invoke(() => ReadIpc(pet)));
+                pet.Manager.Exited += (_, _) => Dispatcher.Invoke(() => OnPetExited(pet));
+                pets.Add(pet);
+                AddTab(pet);
+                PetTabs.SelectedItem = pet.Tab;
+                UpdateStatus();
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.Growl.ErrorGlobal($"开启桌宠实例失败。\n{ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 用新模型重启当前选中的桌宠。
+        /// </summary>
+        private async Task RestartSelected(GflChibiDesktop.Windows.ChibiModelData data)
+        {
+            PetInstance? pet = SelectedPet;
+            if (pet is null)
+            {
+                StartInstance(data);
+                return;
+            }
+            pet.UpdateModel(data);
+            if (pet.TabTitle is not null)
+            {
+                pet.TabTitle.Text = pet.Name;
+            }
+            await StopManager(pet);
+            pet.Panel.Children.Clear();
+            pet.IsChanged = false;
+            pet.Manager = new ProcessManager(
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
+                pet.WorkDir,
+                "main.lua",
+                () => Dispatcher.Invoke(() => ReadIpc(pet)));
+            pet.Manager.Exited += (_, _) => Dispatcher.Invoke(() => OnPetExited(pet));
+            UpdateStatus();
+        }
+
+        private async Task StopManager(PetInstance pet)
+        {
+            if (pet.Manager is null)
+            {
+                return;
+            }
+            context.IsBusyClosing = true;
+            pet.Manager.TryCloseWindow();
+            try
+            {
+                await Task.Delay(1000);
             }
             catch (OperationCanceledException)
             {
             }
-            catch (ObjectDisposedException)
+            if (pet.Manager != null && !pet.Manager.process.HasExited)
             {
+                pet.Manager.ForceCloseWindow();
             }
+            pet.Manager?.Dispose();
+            pet.Manager = null;
+            context.IsBusyClosing = false;
         }
 
-        private async Task RestartSubprogram()
+        private async void StopSelectedInstance(object sender, RoutedEventArgs e)
         {
-            await StopSubprogram();
-            if (!isExiting)
+            PetInstance? pet = SelectedPet;
+            if (pet is null)
             {
-                StartSubprogram();
+                return;
             }
+            await StopInstance(pet);
+        }
+
+        private async Task StopInstance(PetInstance pet)
+        {
+            if (!pets.Contains(pet))
+            {
+                return;
+            }
+            await StopManager(pet);
+            RemovePet(pet);
+        }
+
+        private void OnPetExited(PetInstance pet)
+        {
+            if (!pets.Contains(pet))
+            {
+                return;
+            }
+            try
+            {
+                pet.Manager?.Dispose();
+            }
+            catch
+            {
+            }
+            pet.Manager = null;
+            RemovePet(pet);
+        }
+
+        private void RemovePet(PetInstance pet)
+        {
+            pets.Remove(pet);
+            if (pet.Tab is not null)
+            {
+                PetTabs.Items.Remove(pet.Tab);
+            }
+            try
+            {
+                pet.Dispose();
+            }
+            catch
+            {
+            }
+            UpdateStatus();
+        }
+
+        private void AddTab(PetInstance pet)
+        {
+            var tab = new TabItem();
+            pet.Tab = tab;
+            tab.Tag = pet;
+
+            var header = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+            pet.TabTitle = new TextBlock { Text = pet.Name, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
+            var close = new Button
+            {
+                Content = "✕",
+                Width = 20,
+                Height = 20,
+                Padding = new Thickness(0),
+                Margin = new Thickness(0),
+                ToolTip = "结束该桌宠"
+            };
+            close.Click += (_, _) => _ = StopInstance(pet);
+            header.Children.Add(pet.TabTitle);
+            header.Children.Add(close);
+            tab.Header = header;
+
+            var scroller = new ScrollViewer
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Content = pet.Panel
+            };
+            tab.Content = scroller;
+            PetTabs.Items.Add(tab);
         }
 
         private void Window_Closing(object? sender, CancelEventArgs e)
@@ -181,50 +283,69 @@ namespace HDTLPanel
             isExiting = true;
             notifyIcon.Visibility = Visibility.Hidden;
             notifyIcon.Dispose();
-            if (manager is not null)
+            foreach (PetInstance pet in pets.ToList())
             {
-                manager.TryCloseWindow();
-                Thread.Sleep(2000);
-                if (context.IsRunning)
+                try
                 {
-                    manager.ForceCloseWindow();
+                    pet.Manager?.TryCloseWindow();
                 }
-                manager.Dispose();
+                catch
+                {
+                }
             }
+            Thread.Sleep(2000);
+            foreach (PetInstance pet in pets.ToList())
+            {
+                try
+                {
+                    pet.Manager?.ForceCloseWindow();
+                }
+                catch
+                {
+                }
+                try
+                {
+                    pet.Manager?.Dispose();
+                }
+                catch
+                {
+                }
+            }
+            pets.Clear();
         }
 
         private void SaveConfig(object sender, RoutedEventArgs e)
         {
-            if (manager is null) throw new NullReferenceException();
-            using var w = manager.txIpc.BeginWrite();
+            PetInstance? pet = SelectedPet;
+            if (pet?.Manager is null)
+            {
+                throw new NullReferenceException();
+            }
+            using var w = pet.Manager.txIpc.BeginWrite();
             w.Write(2);
-            foreach (var i in MainStackPanel.Children)
+            foreach (var i in pet.Panel.Children)
             {
                 (i as ISaveableControl)?.Save(w);
             }
             w.Write(0);
+            pet.IsChanged = false;
             context.IsChanged = false;
         }
 
         private void DiscardConfigChange(object sender, RoutedEventArgs e)
         {
-            if (manager is null) throw new NullReferenceException();
-            using var w = manager.txIpc.BeginWrite();
+            PetInstance? pet = SelectedPet;
+            if (pet?.Manager is null)
+            {
+                throw new NullReferenceException();
+            }
+            using var w = pet.Manager.txIpc.BeginWrite();
             w.Write(3);
         }
 
-        private void FlipModel(object sender, RoutedEventArgs e)
+        private void ReadIpc(PetInstance pet)
         {
-            if (manager is not null)
-            {
-                using var writer = manager.txIpc.BeginWrite();
-                writer.Write(1);
-            }
-        }
-
-        private void ReadIpc()
-        {
-            var reader = manager?.rxIpc.GetReader();
+            var reader = pet.Manager?.rxIpc.GetReader();
             if (reader is not null)
             {
                 while (reader.Next())
@@ -232,12 +353,16 @@ namespace HDTLPanel
                     switch (reader.ReadInt())
                     {
                         case 0:
-                            MainStackPanel.Children.Clear();
-                            context.IsChanged = false;
+                            pet.Panel.Children.Clear();
+                            pet.IsChanged = false;
+                            if (SelectedPet == pet)
+                            {
+                                context.IsChanged = false;
+                            }
                             break;
                         case 1:
                             {
-                                SingleLineTextControl c = new(MainStackPanel.Children.Count + 1);
+                                SingleLineTextControl c = new(pet.Panel.Children.Count + 1);
                                 c.PromptText = reader.ReadString();
                                 c.HintText = reader.ReadString();
                                 if (reader.ReadInt() == 1)
@@ -245,39 +370,60 @@ namespace HDTLPanel
                                     c.Type = SingleLineTextControl.SingleLineTextType.Integer;
                                     c.InputContent = reader.ReadInt().ToString();
                                 }
-                                c.PropertyChanged += (_, _) => context.IsChanged = true;
+                                c.PropertyChanged += (_, _) => OnPetControlChanged(pet);
                                 c.changed = false;
-                                MainStackPanel.Children.Add(c);
+                                pet.Panel.Children.Add(c);
                             }
                             break;
                         case 2:
                             {
-                                BoolControl c = new(MainStackPanel.Children.Count + 1);
+                                BoolControl c = new(pet.Panel.Children.Count + 1);
                                 c.PromptText = reader.ReadString();
                                 c.HintText = reader.ReadString();
                                 c.Choice = reader.ReadInt() != 0;
-                                c.PropertyChanged += (_, _) => context.IsChanged = true;
+                                c.PropertyChanged += (_, _) => OnPetControlChanged(pet);
                                 c.changed = false;
-                                MainStackPanel.Children.Add(c);
+                                pet.Panel.Children.Add(c);
                             }
                             break;
                         case 3:
                             {
                                 ReadonlyTextControl c = new(reader.ReadString());
-                                MainStackPanel.Children.Add(c);
+                                pet.Panel.Children.Add(c);
                             }
                             break;
                         case 4:
                             {
-                                ButtonControl c = new(MainStackPanel.Children.Count + 1, manager!.txIpc);
+                                ButtonControl c = new(pet.Panel.Children.Count + 1, pet.Manager!.txIpc);
                                 c.PromptText = reader.ReadString();
                                 c.HintText = reader.ReadString();
-                                MainStackPanel.Children.Add(c);
+                                pet.Panel.Children.Add(c);
                             }
                             break;
                     }
                 }
             }
+        }
+
+        private void OnPetControlChanged(PetInstance pet)
+        {
+            pet.IsChanged = true;
+            if (SelectedPet == pet)
+            {
+                context.IsChanged = true;
+            }
+        }
+
+        private void PetTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateStatus();
+        }
+
+        private void UpdateStatus()
+        {
+            PetInstance? pet = SelectedPet;
+            context.IsRunning = pet?.Manager != null;
+            context.IsChanged = pet?.IsChanged ?? false;
         }
 
         private void Window_StateChanged(object? sender, EventArgs e)
@@ -287,7 +433,6 @@ namespace HDTLPanel
                 ShowInTaskbar = false;
                 Hide();
                 HandyControl.Controls.Growl.InfoGlobal("少前桌宠已最小化到系统托盘。双击托盘图标显示主窗口。");
-                //notifyIcon.ShowBalloonTip("少女前线桌面Q宠", "双击托盘图标显示主窗口", HandyControl.Data.NotifyIconInfoType.Info);
             }
         }
 
@@ -320,8 +465,16 @@ namespace HDTLPanel
         {
             try
             {
-                await RestartSubprogram();
-                HandyControl.Controls.Growl.InfoGlobal($"已加载 {data.DisplayName}，战术人形已应用。");
+                if (data.NewInstance)
+                {
+                    StartInstance(data);
+                    HandyControl.Controls.Growl.InfoGlobal($"已多开 {data.DisplayName}。");
+                }
+                else
+                {
+                    await RestartSelected(data);
+                    HandyControl.Controls.Growl.InfoGlobal($"已加载 {data.DisplayName}，战术人形已应用。");
+                }
             }
             catch (OperationCanceledException)
             {

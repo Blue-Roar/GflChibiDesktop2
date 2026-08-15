@@ -28,7 +28,7 @@
         <Label Content="当前主程序状态：" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20"/>
         <Label Content="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=未运行/正在运行}" Foreground="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=Red/Green}" HorizontalAlignment="Left" Margin="110,10,0,0" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20"/>
         <Label Content="版本" x:Name="lblVersion" Margin="0,10,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20" Grid.ColumnSpan="2" HorizontalContentAlignment="Right"/>
-        <Button Content="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=启动程序/结束程序}" HorizontalAlignment="Left" Margin="10,39,0,0" VerticalAlignment="Top" Width="90" Click="SwitchSubprogramRunningStatus" IsEnabled="{Binding Path=IsBusyClosing, Converter={StaticResource reverseBooleanConverter}}"/>
+        <Button Content="多开" HorizontalAlignment="Left" Margin="10,39,0,0" VerticalAlignment="Top" Width="90" Click="StartNewInstance" ToolTip="基于当前选中的桌宠配置，新开一个桌宠实例"/>
         <Button Content="{Binding Path=IsAutoRun, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=开启自启/关闭自启}" Margin="110,39,0,0" VerticalAlignment="Top" Width="90" Click="ChangeAutoRun" HorizontalAlignment="Left"/>
         <CheckBox VerticalAlignment="Top" HorizontalAlignment="Right" Content="将此窗口置顶" Margin="0,35,10,0" Width="100" Height="32" IsChecked="{Binding Topmost, ElementName=window}" Grid.Column="1" />
         <Grid x:Name="ConfigZoneGrid" Margin="0,72,0,0" Grid.ColumnSpan="2">
@@ -39,11 +39,10 @@
             <Grid Height="40" VerticalAlignment="Center" Background="{StaticResource DefaultBrush}">
                 <Button Content="保存配置" HorizontalAlignment="Left" Margin="10,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="SaveConfig"/>
                 <Button Content="放弃更改" HorizontalAlignment="Left" Margin="110,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="DiscardConfigChange"/>
+                <Button Content="结束选中" HorizontalAlignment="Left" Margin="210,0,0,0" Width="90" Click="StopSelectedInstance" IsEnabled="{Binding Path=IsBusyClosing, Converter={StaticResource reverseBooleanConverter}}" ToolTip="结束当前选中的桌宠实例"/>
                 <Button Content="获取数据与生成配置" HorizontalAlignment="Right" Margin="0,0,10,0" Width="132" Click="GflChibiDesktop"/>
             </Grid>
-            <ScrollViewer Margin="0,1,0,0" Grid.Row="1">
-                <StackPanel x:Name="MainStackPanel"/>
-            </ScrollViewer>
+            <TabControl x:Name="PetTabs" Grid.Row="1" Margin="0,1,0,0" SelectionChanged="PetTabs_SelectionChanged"/>
         </Grid>
     </Grid>
 </Window>

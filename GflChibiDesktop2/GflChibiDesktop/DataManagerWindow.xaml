@@ -108,7 +108,7 @@
                 <hc:SimpleText x:Name="lblListVersion" Text="数据列表版本" ToolTip="战术人形数据列表版本" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.ColumnSpan="1" Foreground="{StaticResource PrimaryTextBrush}" />
                 <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" Margin="2" Grid.Row="1" Grid.Column="4" HorizontalAlignment="Center">
                     <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_force_load" IsChecked="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" HorizontalAlignment="Center" />
-                    <Label Content="强制加载 [!]" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_force_load}" />
+                    <Label Content="多开" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_force_load}" ToolTip="勾选后加载为多开一个新桌宠实例，而不是应用到当前选中的实例" />
                 </StackPanel>
             </Grid>
         </Grid>

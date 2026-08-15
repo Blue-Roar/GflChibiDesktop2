@@ -37,8 +37,8 @@ namespace HDTLPanel
                 UseShellExecute = false
             };
 
-            outWriter = new StreamWriter(File.OpenWrite(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "out.log")));
-            errWriter = new StreamWriter(File.OpenWrite(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "err.log")));
+            outWriter = new StreamWriter(File.OpenWrite(Path.Combine(workingDirectory, "out.log")));
+            errWriter = new StreamWriter(File.OpenWrite(Path.Combine(workingDirectory, "err.log")));
 
             process = Process.Start(processStartInfo) ?? throw new Exception("Failed to start process");
             process.Exited += Process_Exited;

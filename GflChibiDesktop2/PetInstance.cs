@@ -1,0 +1,190 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Windows.Controls;
+
+namespace HDTLPanel
+{
+    /// <summary>
+    /// 一个桌宠实例（一个 luajit 子进程 + 一个标签页）。
+    /// </summary>
+    internal class PetInstance
+    {
+        public int Id { get; }
+        public string Name { get; set; }
+        public string WorkDir { get; }
+        public ProcessManager? Manager { get; set; }
+        public TabItem? Tab { get; set; }
+        public TextBlock? TabTitle { get; set; }
+        public StackPanel Panel { get; } = new();
+        public bool IsChanged { get; set; }
+
+        public PetInstance(int id, string name, string workDir)
+        {
+            Id = id;
+            Name = name;
+            WorkDir = workDir;
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                Manager?.Dispose();
+            }
+            catch
+            {
+            }
+            SafeDelete(WorkDir);
+        }
+
+        /// <summary>
+        /// 创建实例工作目录，复用共享的 lua 模块与素材。
+        /// </summary>
+        public static PetInstance Create(int id, GflChibiDesktop.Windows.ChibiModelData? model)
+        {
+            string appDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app");
+            string workDir = Path.Combine(appDir, "instances", id.ToString());
+            if (Directory.Exists(workDir))
+            {
+                SafeDelete(workDir);
+            }
+            Directory.CreateDirectory(workDir);
+            string assetsDir = Path.Combine(workDir, "assets");
+            Directory.CreateDirectory(assetsDir);
+
+            // 入口 lua 文件
+            foreach (string f in new[] { "main.lua", "hdtbase.lua", "hdtmodule.lua" })
+            {
+                string src = Path.Combine(appDir, f);
+                if (File.Exists(src)) File.Copy(src, Path.Combine(workDir, f), true);
+            }
+
+            // 共享模块目录
+            LinkDir(Path.Combine(workDir, "lua"), Path.Combine(appDir, "lua"));
+
+            // 实例配置
+            string name;
+            if (model != null)
+            {
+                name = model.DisplayName;
+                File.WriteAllText(Path.Combine(assetsDir, "name.txt"), model.DisplayName);
+                File.WriteAllText(Path.Combine(assetsDir, "model.conf.json"),
+                    "{\"skeleton\":\"" + model.SkeletonFile + "\",\"type\":\"skel\",\"atlas\":\"" + model.AtlasFile + "\",\"h\":448,\"w\":448,\"x\":224,\"y\":224}");
+            }
+            else
+            {
+                string srcName = Path.Combine(appDir, "assets", "name.txt");
+                string srcModel = Path.Combine(appDir, "assets", "model.conf.json");
+                name = File.Exists(srcName) ? File.ReadAllText(srcName) : $"桌宠 #{id}";
+                if (File.Exists(srcName)) File.Copy(srcName, Path.Combine(assetsDir, "name.txt"), true);
+                if (File.Exists(srcModel)) File.Copy(srcModel, Path.Combine(assetsDir, "model.conf.json"), true);
+            }
+
+            // 音频等共享配置
+            foreach (string f in new[] { "audio.conf.json", "pet.conf.json" })
+            {
+                string src = Path.Combine(appDir, "assets", f);
+                if (File.Exists(src)) File.Copy(src, Path.Combine(assetsDir, f), true);
+            }
+
+            // 共享素材
+            LinkDir(Path.Combine(assetsDir, "spine"), Path.Combine(appDir, "assets", "spine"));
+            LinkDir(Path.Combine(assetsDir, "pic"), Path.Combine(appDir, "assets", "pic"));
+
+            // 窗口位置等设置，从默认拷贝一份
+            string srcSettings = Path.Combine(appDir, "settings.json");
+            if (File.Exists(srcSettings)) File.Copy(srcSettings, Path.Combine(workDir, "settings.json"), true);
+
+            return new PetInstance(id, name, workDir);
+        }
+
+        /// <summary>
+        /// 用新模型重写当前实例的配置。
+        /// </summary>
+        public void UpdateModel(GflChibiDesktop.Windows.ChibiModelData model)
+        {
+            Name = model.DisplayName;
+            string assetsDir = Path.Combine(WorkDir, "assets");
+            Directory.CreateDirectory(assetsDir);
+            File.WriteAllText(Path.Combine(assetsDir, "name.txt"), model.DisplayName);
+            File.WriteAllText(Path.Combine(assetsDir, "model.conf.json"),
+                "{\"skeleton\":\"" + model.SkeletonFile + "\",\"type\":\"skel\",\"atlas\":\"" + model.AtlasFile + "\",\"h\":448,\"w\":448,\"x\":224,\"y\":224}");
+        }
+
+        /// <summary>
+        /// 创建目录联接（优先 junction，失败则回退为复制）。
+        /// </summary>
+        private static void LinkDir(string linkPath, string targetPath)
+        {
+            if (Directory.Exists(linkPath)) return;
+            if (!Directory.Exists(targetPath))
+            {
+                Directory.CreateDirectory(linkPath);
+                return;
+            }
+            try
+            {
+                var psi = new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{linkPath}\" \"{targetPath}\"")
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false
+                };
+                using (var p = Process.Start(psi))
+                {
+                    p?.WaitForExit();
+                }
+                if (Directory.Exists(linkPath)) return;
+            }
+            catch
+            {
+            }
+            CopyDirectory(targetPath, linkPath);
+        }
+
+        private static void CopyDirectory(string src, string dst)
+        {
+            Directory.CreateDirectory(dst);
+            foreach (string f in Directory.GetFiles(src))
+            {
+                File.Copy(f, Path.Combine(dst, Path.GetFileName(f)), true);
+            }
+            foreach (string d in Directory.GetDirectories(src))
+            {
+                CopyDirectory(d, Path.Combine(dst, Path.GetFileName(d)));
+            }
+        }
+
+        /// <summary>
+        /// 安全删除目录：先删联接点（避免跟随 junction 删除共享内容），再递归删除。
+        /// </summary>
+        private static void SafeDelete(string dir)
+        {
+            if (!Directory.Exists(dir)) return;
+            try
+            {
+                foreach (string sub in Directory.GetDirectories(dir))
+                {
+                    var info = new DirectoryInfo(sub);
+                    if ((info.Attributes & FileAttributes.ReparsePoint) != 0)
+                    {
+                        Directory.Delete(sub, false);
+                    }
+                    else
+                    {
+                        SafeDelete(sub);
+                    }
+                }
+                foreach (string f in Directory.GetFiles(dir))
+                {
+                    File.Delete(f);
+                }
+                Directory.Delete(dir, false);
+            }
+            catch
+            {
+            }
+        }
+    }
+}

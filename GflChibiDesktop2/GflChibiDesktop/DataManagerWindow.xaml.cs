@@ -25,6 +25,10 @@ namespace GflChibiDesktop.Windows
         public string DisplayName { get; set; }
         public string SkeletonFile { get; set; }
         public string AtlasFile { get; set; }
+        /// <summary>
+        /// 是否为多开（新开一个桌宠实例），而不是应用到当前选中实例。
+        /// </summary>
+        public bool NewInstance { get; set; }
     }
 
     public partial class DataManagerWindow : Window
@@ -656,7 +660,7 @@ namespace GflChibiDesktop.Windows
         {
             btn_LoadDummyList.IsEnabled = false;
             bool DummyListPost = false;
-            string DummyListStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/dummy_list", string.Empty, Encoding.UTF8, ref DummyListPost);
+            string DummyListStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GFL/chibi_list", string.Empty, Encoding.UTF8, ref DummyListPost);
             if (DummyListPost)
             {
                 DummyListRoot rt = JsonConvert.DeserializeObject<DummyListRoot>(DummyListStr);
@@ -943,7 +947,6 @@ namespace GflChibiDesktop.Windows
             LoadInternalSpine(item.Tag, true);
         }
 
-        bool isForceLoadHintPopped = false;
         private void LoadInternalSpine(string[] tagString, bool dormMode)
         {
             //tagString[0] = $"{displaySwitch}";
@@ -982,29 +985,13 @@ namespace GflChibiDesktop.Windows
             File.WriteAllText($@"{AppDir}assets/model.conf.json", "{\"skeleton\":\"" + SpineFile + "\",\"type\":\"skel\",\"atlas\":\"" + AtlasFile + "\",\"h\":448,\"w\":448,\"x\":224,\"y\":224}");
 
             //Process.Start($@"{Path.GetFullPath("..")}/HDTLPanel.exe");
-            if (chb_force_load.IsChecked.Value)
+            ModelLoadRequested?.Invoke(new ChibiModelData
             {
-                if (!isForceLoadHintPopped)
-                {
-                    MessageBox.Show("由于强制加载跳过了 HuiDesktop Light Panel，因此并不能对战术人形进行控制，配置选项亦不可用。\n\n▲强制加载的战术人形将会使用加载时已有的配置。\n▲强制加载的战术人形无法使用程序控制。\n▲强制加载的战术人形需要通过关闭对应控制台窗口关闭。\n\n►强制加载不会限制启动数量，但并不建议多开，将占用大量系统资源。\n\n此说明不会重复显示。", "说明", MessageBoxButton.OK, MessageBoxImage.Information);
-                    isForceLoadHintPopped = true;
-                }
-                ProcessStartInfo startInfo = new ProcessStartInfo($@"{AppDir}luajit.exe", "main.lua");
-                startInfo.WorkingDirectory = AppDir;
-                startInfo.WindowStyle = ProcessWindowStyle.Minimized;
-                startInfo.CreateNoWindow = false;
-                startInfo.UseShellExecute = true;
-                Process.Start(startInfo);
-            }
-            else
-            {
-                ModelLoadRequested?.Invoke(new ChibiModelData
-                {
-                    DisplayName = DisplayName,
-                    SkeletonFile = SpineFile,
-                    AtlasFile = AtlasFile
-                });
-            }
+                DisplayName = DisplayName,
+                SkeletonFile = SpineFile,
+                AtlasFile = AtlasFile,
+                NewInstance = chb_force_load.IsChecked == true
+            });
             tvAfterSelect();
         }
 
