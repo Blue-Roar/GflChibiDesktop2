@@ -38,7 +38,7 @@ namespace GflChibiDesktop
             //MainWindow.AboutWindowState(true);
 
             //lbl_product.Text = productName;
-            lbl_version.Content = $"当前版本：{productVersion} 构建 {currentBuild} {productBuild}";
+            txt_version.Text = $"当前：{productVersion}/{productBuild}/{currentBuild}";
 
             lbl_status.Content = string.Empty;
             txt_description.Text = string.Empty;
@@ -50,7 +50,7 @@ namespace GflChibiDesktop
         private void Check4Update()
         {
             lbl_status.Content = string.Empty;
-            lbl_latest_version.Content = string.Empty;
+            txt_latest_version.Text = string.Empty;
             txt_description.Text = string.Empty;
             try
             {
@@ -83,7 +83,7 @@ namespace GflChibiDesktop
                     bool urgentUpdate = false;
                     if (rt.data.urgent == 1) { urgentUpdate = true; }
 
-                    lbl_latest_version.Content = $"线上版本：{version} 构建 {build} {buildver}";
+                    txt_latest_version.Text = $"最新：{version}/{buildver}/{build}";
                     if (version > productVersion) //大版本号不同
                     {
                         lbl_status.Content = "有大版本更新可用";
@@ -120,11 +120,29 @@ namespace GflChibiDesktop
         {
             if (btn_Actions.Content.ToString() == "前往主页")
             {
-                System.Diagnostics.Process.Start(homepageLink);
+                OpenUrl(homepageLink);
             }
             else if (btn_Actions.Content.ToString() == "前往更新")
             {
-                System.Diagnostics.Process.Start(updateLink);
+                OpenUrl(updateLink);
+            }
+        }
+
+        /// <summary>
+        /// 用系统默认程序打开链接（.NET Core 需 UseShellExecute=true 才会走 Shell）。
+        /// </summary>
+        private static void OpenUrl(string url)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
+                {
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.Growl.ErrorGlobal($"无法打开链接。\n{ex.Message}");
             }
         }
         private void FetchBiliInfo()
@@ -158,12 +176,12 @@ namespace GflChibiDesktop
 
         private void btn_BrightSu_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Process.Start("https://space.bilibili.com/13827887/");
+            OpenUrl("https://space.bilibili.com/13827887/");
         }
 
         private void btn_Huix_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Process.Start("https://space.bilibili.com/102421353/");
+            OpenUrl("https://space.bilibili.com/102421353/");
         }
 
         int easterCount = 0;

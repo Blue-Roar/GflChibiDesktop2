@@ -45,6 +45,7 @@ namespace GflChibiDesktop.Windows
         public string homepageLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/";
         public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/download";
         public string donateLink = "https://projects.brightsu.cn/GflChibiDesktop/donate";
+        public string chibiListLink = "https://projects.brightsu.cn/GFL/chibi-list";
         public string extraStr = string.Empty;
 
         /// <summary>
@@ -58,7 +59,7 @@ namespace GflChibiDesktop.Windows
         {
             InitializeComponent();
 
-            lblVersion.Content = $"{productBuild}\n{currentBuild}";
+            btnVersion.Content = $"程序版本：{productBuild}";
 
             UpdateLinks();
             //CheckForUpdates();
@@ -81,6 +82,7 @@ namespace GflChibiDesktop.Windows
                         if (CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
                         if (CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
                         if (CheckIsUrlFormat(rt.data.donate_link)) { donateLink = rt.data.donate_link; }
+                        if (CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
                         extraStr = "通知："+rt.data.msg.announcement;
                     }
                     else
@@ -148,6 +150,7 @@ namespace GflChibiDesktop.Windows
         public void LoadDummyList()
         {
             KillEmptyDirectory($@"{AppDir}assets/spine");
+            sbQuery.Clear();
 
             initializeDataSet.Clear();
 
@@ -224,7 +227,7 @@ namespace GflChibiDesktop.Windows
             {
                 string str = File.ReadAllText($"{AppDir}chibi_list.json");
                 RootObject rb = JsonConvert.DeserializeObject<RootObject>(str);
-                btn_LoadDummyList.ToolTip = $"当前战术人形数据列表版本 {rb.meta.version}";
+                btn_LoadDummyList.ToolTip = $"当前人形数据列表版本 {rb.meta.version}";
                 lblListVersion.Text = rb.meta.version;
                 int total = rb.content.Count;
                 pb_loader.IsIndeterminate = false;
@@ -660,7 +663,7 @@ namespace GflChibiDesktop.Windows
         {
             btn_LoadDummyList.IsEnabled = false;
             bool DummyListPost = false;
-            string DummyListStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GFL/chibi_list", string.Empty, Encoding.UTF8, ref DummyListPost);
+            string DummyListStr = HttpRequestHelper.PostWebRequest(chibiListLink, string.Empty, Encoding.UTF8, ref DummyListPost);
             if (DummyListPost)
             {
                 DummyListRoot rt = JsonConvert.DeserializeObject<DummyListRoot>(DummyListStr);
@@ -1271,17 +1274,18 @@ namespace GflChibiDesktop.Windows
         }
 
         AboutDialog _about = new AboutDialog();
-        private void lblVersion_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+
+        private void chb_preview_d_Click(object sender, RoutedEventArgs e)
+        {
+            tvAfterSelect();
+        }
+
+        private void btnVersion_Click(object sender, RoutedEventArgs e)
         {
             _about.homepageLink = homepageLink;
             _about.updateLink = updateLink;
             _about.donateLink = donateLink;
             HandyControl.Controls.Dialog.Show(_about);
-        }
-
-        private void chb_preview_d_Click(object sender, RoutedEventArgs e)
-        {
-            tvAfterSelect();
         }
     }
 }

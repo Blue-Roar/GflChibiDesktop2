@@ -34,6 +34,7 @@ namespace HDTLPanel
         readonly List<PetInstance> pets = new();
         int nextPetId = 1;
         bool isExiting = false;
+        bool hasCentered = false;
         GflChibiDesktop.Windows.DataManagerWindow? dataManagerWindow;
 
         string AppDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
@@ -47,7 +48,7 @@ namespace HDTLPanel
             lblVersion.Content = $"程序版本 {productBuild}";
 
             bool StartupPost = false;
-            string StartupStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/startup", $"version={productVersion}&build={productBuild}/{currentBuild}", Encoding.UTF8, ref StartupPost);
+            string StartupStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/startup", $"version={productVersion}&build={currentBuild}", Encoding.UTF8, ref StartupPost);
             if (StartupPost)
             {
                 StartupRoot rt = JsonConvert.DeserializeObject<StartupRoot>(StartupStr);
@@ -62,16 +63,20 @@ namespace HDTLPanel
             }
 
             DataContext = context;
-            AutoStartInstance();
+            bool started = AutoStartInstance();
             notifyIcon.Init();
-            WindowState = WindowState.Minimized;
-            Window_StateChanged(null, new());
+            if (started)
+            {
+                WindowState = WindowState.Minimized;
+                Window_StateChanged(null, new());
+            }
         }
 
         /// <summary>
         /// 启动时恢复上次会话的桌宠实例（多开也一并恢复）。
         /// </summary>
-        private void AutoStartInstance()
+        /// <returns>是否成功启动了至少一个桌宠实例（false 表示无任何配置，此时主窗口保持可见）。</returns>
+        private bool AutoStartInstance()
         {
             List<GflChibiDesktop.Windows.ChibiModelData>? saved = LoadSavedInstances();
             if (saved != null && saved.Count > 0)
@@ -81,7 +86,7 @@ namespace HDTLPanel
                     StartInstance(m);
                 }
                 UpdateCanStartNewInstance();
-                return;
+                return true;
             }
 
             string nameFile = Path.Combine(AppDir, "assets", "name.txt");
@@ -89,9 +94,10 @@ namespace HDTLPanel
             if (!File.Exists(nameFile) || !File.Exists(modelFile))
             {
                 UpdateCanStartNewInstance();
-                return;
+                return false;
             }
             StartInstance(null);
+            return true;
         }
 
         /// <summary>
@@ -530,7 +536,25 @@ namespace HDTLPanel
             Show();
             ShowInTaskbar = true;
             WindowState = WindowState.Normal;
+            if (!hasCentered)
+            {
+                CenterWindow();
+                hasCentered = true;
+            }
             Activate();
+        }
+
+        /// <summary>
+        /// 将窗口居中于当前工作区（托盘唤起后 CenterScreen 不重新生效，需手动居中）。
+        /// </summary>
+        private void CenterWindow()
+        {
+            double waW = SystemParameters.WorkArea.Width;
+            double waH = SystemParameters.WorkArea.Height;
+            double waX = SystemParameters.WorkArea.Left;
+            double waY = SystemParameters.WorkArea.Top;
+            Left = waX + (waW - ActualWidth) / 2;
+            Top = waY + (waH - ActualHeight) / 2;
         }
 
         private void GflChibiDesktop(object sender, RoutedEventArgs e)

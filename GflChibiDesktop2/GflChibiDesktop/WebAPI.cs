@@ -18,6 +18,7 @@ namespace GflChibiDesktop
             public string homepage_link { get; set; }
             public string update_link { get; set; }
             public string donate_link { get; set; }
+            public string chibi_list_link { get; set; }
             public IndexMsgData msg { get; set; }
         }
 

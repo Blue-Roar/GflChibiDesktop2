@@ -18,10 +18,10 @@
             <Border CornerRadius="5" VerticalAlignment="Center" HorizontalAlignment="Right" Height="167" Width="300" Canvas.Left="10" Canvas.Top="10" Background="{DynamicResource PrimaryBrush}">
                 <Canvas>
                     <Label Content="程序版本信息" Canvas.Left="10" Canvas.Top="5" Width="280" Height="27" FontSize="16" VerticalContentAlignment="Center" Background="{x:Null}" HorizontalContentAlignment="Center" BorderBrush="{x:Null}" Padding="0" />
-                    <Label x:Name="lbl_version" Content="当前版本：Version 构建 BuildDate Build"  Canvas.Left="10" Canvas.Top="32" Width="280" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" />
-                    <Label x:Name="lbl_latest_version" Content="线上版本：Version 构建 BuildDate Build" Canvas.Left="10" Canvas.Top="48" Width="280" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" />
-                    <Label x:Name="lbl_status" Content="版本状态" Canvas.Left="10" Canvas.Top="64" Width="280" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" FontWeight="Bold" />
-                    <hc:TextBox x:Name="txt_description" Canvas.Left="10" Canvas.Top="80" Width="280" Height="77" Padding="0" Background="{x:Null}" IsReadOnly="True" Text="版本更新内容信息&#xD;&#xA;1&#xD;&#xA;2&#xD;&#xA;3&#xD;&#xA;4" VerticalContentAlignment="Top" HorizontalContentAlignment="Center" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextWrapping="Wrap" BorderBrush="{x:Null}" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                    <hc:TextBox IsReadOnly="True" x:Name="txt_version" Text="当前：Version/Build/BuildDate" Canvas.Left="10" Canvas.Top="24" Width="280" VerticalContentAlignment="Center" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" />
+                    <hc:TextBox IsReadOnly="True" x:Name="txt_latest_version" Text="最新：Version/Build/BuildDate" Canvas.Left="10" Canvas.Top="42" Width="280" VerticalContentAlignment="Center" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" />
+                    <Label x:Name="lbl_status" Content="版本状态" Canvas.Left="10" Canvas.Top="64" Width="280" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" FontWeight="Bold" />
+                    <hc:TextBox x:Name="txt_description" Canvas.Left="10" Canvas.Top="80" Width="280" Height="77" Padding="0" Background="{x:Null}" IsReadOnly="True" Text="版本更新内容信息&#xD;&#xA;1&#xD;&#xA;2&#xD;&#xA;3&#xD;&#xA;4" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextWrapping="Wrap" BorderBrush="{x:Null}" HorizontalAlignment="Left" VerticalAlignment="Center" />
                 </Canvas>
             </Border>
             <Label Content="此程序仅供个人学习研究与交流用，严禁用于商业用途。&#xD;&#xA;作者不对因使用此程序而产生的各种后果承担任何责任。" Canvas.Left="10" Canvas.Top="183" Width="300" Height="33" VerticalContentAlignment="Top" Background="{x:Null}" HorizontalContentAlignment="Center" BorderBrush="{x:Null}" Padding="0" VerticalAlignment="Top" />
@@ -32,7 +32,7 @@
                     <Image x:Name="avatar_BrightSu" RenderTransformOrigin="0,0" Height="48" Width="48" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Source="/hk416_happy.ico" StretchDirection="Both" Stretch="UniformToFill" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,3,0"/>
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center">
                         <hc:SimpleText x:Name="name_BrightSu" Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="BrightSu02" HorizontalAlignment="Center" Margin="0" FontSize="13"/>
-                        <hc:SimpleText Foreground="{StaticResource SecondaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="数据配置程序、HDTLPanel适配" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0" FontSize="11"/>
+                        <hc:SimpleText Foreground="{StaticResource SecondaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="数据配置程序&#xD;&#xA;HDTLPanel适配" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0" FontSize="11"/>
                     </StackPanel>
                 </StackPanel>
             </Button>
@@ -40,7 +40,7 @@
                 <StackPanel Orientation="Horizontal" Width="167" Height="48">
                     <Image x:Name="avatar_Huix" RenderTransformOrigin="0,0" Height="48" Width="48" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Source="/hk416_angry.ico" StretchDirection="Both" Stretch="UniformToFill" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,3,0"/>
                     <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                        <hc:SimpleText x:Name="name_Huix" Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="老猫不发威你当我病危" HorizontalAlignment="Center" Margin="0" FontSize="13"/>
+                        <hc:SimpleText x:Name="name_Huix" Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="老猫不发威&#xD;&#xA;你当我病危" HorizontalAlignment="Center" Margin="0" FontSize="13"/>
                         <hc:SimpleText Foreground="{StaticResource SecondaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="HuiDesktop 主程序" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0" FontSize="11"/>
                     </StackPanel>
                 </StackPanel>
