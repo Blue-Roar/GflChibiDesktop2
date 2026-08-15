@@ -24,6 +24,10 @@ namespace HDTLPanel
         /// 该实例当前使用的模型（用于多开持久化恢复）。
         /// </summary>
         public GflChibiDesktop.Windows.ChibiModelData? Model { get; set; }
+        /// <summary>
+        /// 是否正在重启中（进程退出事件在重启期间被忽略，避免被当作正常结束而移除）。
+        /// </summary>
+        public bool IsRestarting { get; set; }
 
         public PetInstance(int id, string name, string workDir)
         {

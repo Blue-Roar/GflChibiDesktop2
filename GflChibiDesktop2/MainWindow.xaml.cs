@@ -80,6 +80,7 @@ namespace HDTLPanel
                 {
                     StartInstance(m);
                 }
+                UpdateCanStartNewInstance();
                 return;
             }
 
@@ -87,9 +88,34 @@ namespace HDTLPanel
             string modelFile = Path.Combine(AppDir, "assets", "model.conf.json");
             if (!File.Exists(nameFile) || !File.Exists(modelFile))
             {
+                UpdateCanStartNewInstance();
                 return;
             }
             StartInstance(null);
+        }
+
+        /// <summary>
+        /// 判断是否存在可多开的数据来源（历史实例 或 默认模型配置）。
+        /// </summary>
+        private void UpdateCanStartNewInstance()
+        {
+            bool hasHistory = false;
+            try
+            {
+                if (File.Exists(InstancesFilePath))
+                {
+                    string json = File.ReadAllText(InstancesFilePath);
+                    var list = JsonConvert.DeserializeObject<List<GflChibiDesktop.Windows.ChibiModelData>>(json);
+                    hasHistory = list != null && list.Count > 0;
+                }
+            }
+            catch
+            {
+            }
+
+            string nameFile = Path.Combine(AppDir, "assets", "name.txt");
+            string modelFile = Path.Combine(AppDir, "assets", "model.conf.json");
+            context.CanStartNewInstance = hasHistory || (File.Exists(nameFile) && File.Exists(modelFile));
         }
 
         private static string InstancesFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "instances.json");
@@ -143,7 +169,7 @@ namespace HDTLPanel
                     pet.WorkDir,
                     "main.lua",
                     () => Dispatcher.Invoke(() => ReadIpc(pet)));
-                pet.Manager.Exited += (_, _) => Dispatcher.Invoke(() => OnPetExited(pet));
+                pet.Manager.Exited += (s, _) => Dispatcher.Invoke(() => OnPetExited(pet, s as ProcessManager));
                 pets.Add(pet);
                 AddTab(pet);
                 PetTabs.SelectedItem = pet.Tab;
@@ -171,6 +197,7 @@ namespace HDTLPanel
             {
                 pet.TabTitle.Text = pet.Name;
             }
+            pet.IsRestarting = true;
             await StopManager(pet);
             pet.Panel.Children.Clear();
             pet.IsChanged = false;
@@ -179,7 +206,8 @@ namespace HDTLPanel
                 pet.WorkDir,
                 "main.lua",
                 () => Dispatcher.Invoke(() => ReadIpc(pet)));
-            pet.Manager.Exited += (_, _) => Dispatcher.Invoke(() => OnPetExited(pet));
+            pet.Manager.Exited += (s, _) => Dispatcher.Invoke(() => OnPetExited(pet, s as ProcessManager));
+            pet.IsRestarting = false;
             UpdateStatus();
         }
 
@@ -227,9 +255,19 @@ namespace HDTLPanel
             RemovePet(pet);
         }
 
-        private void OnPetExited(PetInstance pet)
+        private void OnPetExited(PetInstance pet, ProcessManager? exitedManager)
         {
             if (!pets.Contains(pet))
+            {
+                return;
+            }
+            // 重启中（RestartSelected 主动结束旧进程）：忽略退出事件，等待新进程就绪
+            if (pet.IsRestarting)
+            {
+                return;
+            }
+            // 只处理当前 manager 的退出；旧 manager 延迟触发的退出事件忽略
+            if (pet.Manager != exitedManager)
             {
                 return;
             }
@@ -521,6 +559,7 @@ namespace HDTLPanel
                     await RestartSelected(data);
                     HandyControl.Controls.Growl.InfoGlobal($"已加载 {data.DisplayName}，战术人形已应用。");
                 }
+                UpdateCanStartNewInstance();
             }
             catch (OperationCanceledException)
             {
@@ -536,8 +575,19 @@ namespace HDTLPanel
         private bool isRunning = false;
         private bool isBusyClosing = false;
         private bool isChanged = false;
+        private bool canStartNewInstance = false;
 
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        public bool CanStartNewInstance
+        {
+            get => canStartNewInstance;
+            set
+            {
+                canStartNewInstance = value;
+                OnPropertyChanged();
+            }
+        }
 
         public bool IsRunning
         {
