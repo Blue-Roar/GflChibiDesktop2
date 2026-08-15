@@ -20,6 +20,7 @@ namespace HDTLPanel
         readonly MainWindowDataContext context = new();
         ProcessManager? manager;
         bool isExiting = false;
+        GflChibiDesktop.Windows.DataManagerWindow? dataManagerWindow;
 
         public MainWindow()
         {
@@ -35,39 +36,56 @@ namespace HDTLPanel
         {
             if (context.IsRunning)
             {
-                if (manager is not null)
-                {
-                    context.IsBusyClosing = true;
-                    context.IsChanged = false;
-                    MainStackPanel.Children.Clear();
-                    manager.TryCloseWindow();
-                    await Task.Delay(1000);
-                    if (context.IsRunning)
-                    {
-                        manager.ForceCloseWindow();
-                    }
-                    manager.Dispose();
-                    manager = null;
-                    context.IsBusyClosing = false;
-                }
+                await StopSubprogram();
             }
             else
             {
-                context.IsRunning = true;
-                manager = new ProcessManager(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"), System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app"), "main.lua", () => Dispatcher.Invoke(ReadIpc));
-                manager.Exited += (_, _) =>
-                {
-                    context.IsRunning = false;
-                    context.IsChanged = false;
-                    Dispatcher.Invoke(() => {
-                        MainStackPanel.Children.Clear();
-                        if (WindowState == WindowState.Minimized)
-                        {
-                            WindowState = WindowState.Normal;
-                        }
-                    });
-                };
+                StartSubprogram();
             }
+        }
+
+        private async Task StopSubprogram()
+        {
+            if (manager is not null)
+            {
+                context.IsBusyClosing = true;
+                context.IsChanged = false;
+                MainStackPanel.Children.Clear();
+                manager.TryCloseWindow();
+                await Task.Delay(1000);
+                if (context.IsRunning)
+                {
+                    manager.ForceCloseWindow();
+                }
+                manager.Dispose();
+                manager = null;
+                context.IsBusyClosing = false;
+            }
+            context.IsRunning = false;
+        }
+
+        private void StartSubprogram()
+        {
+            context.IsRunning = true;
+            manager = new ProcessManager(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"), System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app"), "main.lua", () => Dispatcher.Invoke(ReadIpc));
+            manager.Exited += (_, _) =>
+            {
+                context.IsRunning = false;
+                context.IsChanged = false;
+                Dispatcher.Invoke(() => {
+                    MainStackPanel.Children.Clear();
+                    if (WindowState == WindowState.Minimized)
+                    {
+                        WindowState = WindowState.Normal;
+                    }
+                });
+            };
+        }
+
+        private async Task RestartSubprogram()
+        {
+            await StopSubprogram();
+            StartSubprogram();
         }
 
         private void Window_Closing(object? sender, CancelEventArgs e)
@@ -223,7 +241,20 @@ namespace HDTLPanel
 
         private void GflChibiDesktop(object sender, RoutedEventArgs e)
         {
-            new GflChibiDesktop.Windows.DataManagerWindow().Show();
+            if (dataManagerWindow is null)
+            {
+                dataManagerWindow = new GflChibiDesktop.Windows.DataManagerWindow();
+                dataManagerWindow.ModelLoadRequested += DataManagerWindow_ModelLoadRequested;
+                dataManagerWindow.Closed += (_, _) => dataManagerWindow = null;
+            }
+            dataManagerWindow.Show();
+            dataManagerWindow.Activate();
+        }
+
+        private async void DataManagerWindow_ModelLoadRequested(GflChibiDesktop.Windows.ChibiModelData data)
+        {
+            await RestartSubprogram();
+            HandyControl.Controls.Growl.InfoGlobal($"已加载 {data.DisplayName}，战术人形已应用。");
         }
     }
 

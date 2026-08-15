@@ -17,6 +17,16 @@ using System.Reflection;
 
 namespace GflChibiDesktop.Windows
 {
+    /// <summary>
+    /// 数据加载结果，直接传递给主窗口。
+    /// </summary>
+    public class ChibiModelData
+    {
+        public string DisplayName { get; set; }
+        public string SkeletonFile { get; set; }
+        public string AtlasFile { get; set; }
+    }
+
     public partial class DataManagerWindow : Window
     {
         public static string AppDir => Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
@@ -32,6 +42,11 @@ namespace GflChibiDesktop.Windows
         public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/download";
         public string donateLink = "https://projects.brightsu.cn/GflChibiDesktop/donate";
         public string extraStr = string.Empty;
+
+        /// <summary>
+        /// 数据加载完成后触发，把加载结果直接传递给主窗口。
+        /// </summary>
+        public event Action<ChibiModelData> ModelLoadRequested;
 
         List<ComponentModel> initializeDataSet = new List<ComponentModel>();
 
@@ -942,7 +957,6 @@ namespace GflChibiDesktop.Windows
             LoadInternalSpine(item.Tag, true);
         }
 
-        bool isLoadHintPopped = false;
         bool isForceLoadHintPopped = false;
         private void LoadInternalSpine(string[] tagString, bool dormMode)
         {
@@ -998,15 +1012,12 @@ namespace GflChibiDesktop.Windows
             }
             else
             {
-                if (!isLoadHintPopped)
+                ModelLoadRequested?.Invoke(new ChibiModelData
                 {
-                    MessageBox.Show("目前战术人形的绘制是由 HuiDesktop 实现,此程序仅用于获取战术人形数据并生成配置文档将其导入，你需要通过 HuiDesktop Light Panel 启动并对战术人形进行控制与配置。\n\n现在配置文件已经生成，在下次启动时将会加载新选择的战术人形。\n你也可以在 HuiDesktop Light Panel 重新启动程序以使更改立刻生效。\n\n此说明不会重复显示。", "说明", MessageBoxButton.OK, MessageBoxImage.Information);
-                    isLoadHintPopped = true;
-                }
-                else
-                {
-                    MessageBox.Show("已成功生成配置文件，在 HuiDesktop Light Panel 重新启动程序即可生效。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
+                    DisplayName = DisplayName,
+                    SkeletonFile = SpineFile,
+                    AtlasFile = AtlasFile
+                });
             }
             tvAfterSelect();
         }
