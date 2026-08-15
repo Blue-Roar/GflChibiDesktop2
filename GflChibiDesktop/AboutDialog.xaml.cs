@@ -133,14 +133,20 @@ namespace GflChibiDesktop
                 string IndexStr = HttpRequestHelper.GetWebRequest("https://api.bilibili.com/x/space/acc/info?mid=13827887", Encoding.UTF8);
                 Console.WriteLine(IndexStr);
                 BiliSpaceInfoRoot rt = JsonConvert.DeserializeObject<BiliSpaceInfoRoot>(IndexStr);
-                name_BrightSu.Text = rt.data.name;
-                avatar_BrightSu.Source = new BitmapImage(new Uri(rt.data.face, UriKind.Absolute));
+                if (rt.code == 200)
+                {
+                    name_BrightSu.Text = rt.data.name;
+                    avatar_BrightSu.Source = new BitmapImage(new Uri(rt.data.face, UriKind.Absolute));
+                }
 
                 IndexStr = HttpRequestHelper.GetWebRequest("https://api.bilibili.com/x/space/acc/info?mid=102421353", Encoding.UTF8);
                 Console.WriteLine(IndexStr);
                 rt = JsonConvert.DeserializeObject<BiliSpaceInfoRoot>(IndexStr);
-                name_Huix.Text = rt.data.name;
-                avatar_Huix.Source = new BitmapImage(new Uri(rt.data.face, UriKind.Absolute));
+                if (rt.code == 200)
+                {
+                    name_Huix.Text = rt.data.name;
+                    avatar_Huix.Source = new BitmapImage(new Uri(rt.data.face, UriKind.Absolute));
+                }
             }
             catch (Exception ex)
             {

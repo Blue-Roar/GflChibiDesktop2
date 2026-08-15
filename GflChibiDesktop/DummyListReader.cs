@@ -19,9 +19,10 @@ namespace GflChibiDesktop
 		{
 			public string name { get; set; }
 			public string parent { get; set; }
+			public string category { get; set; }
 			public string type { get; set; }
-			public string display_name { get; set; }
-			public string fullname { get; set; }
+			public string display { get; set; }
+			public string display_full { get; set; }
 			public string path { get; set; }
 			public string filename { get; set; }
 			public string filename_r { get; set; }

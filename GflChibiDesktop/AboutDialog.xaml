@@ -25,7 +25,7 @@
                 </Canvas>
             </Border>
             <Label Content="此程序仅供个人学习研究与交流用，严禁用于商业用途。&#xD;&#xA;作者不对因使用此程序而产生的各种后果承担任何责任。" Canvas.Left="10" Canvas.Top="183" Width="300" Height="33" VerticalContentAlignment="Top" Background="{x:Null}" HorizontalContentAlignment="Center" BorderBrush="{x:Null}" Padding="0" VerticalAlignment="Top" />
-            <Label x:Name="lblCopyright" Content="© 2020~2022 BrightSu  / 由 HuiDesktop 驱动" Canvas.Left="10" Canvas.Top="221" Width="300" Height="19" VerticalContentAlignment="Bottom" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" VerticalAlignment="Top" />
+            <Label x:Name="lblCopyright" Content="© 2020~2026 BrightSu  / 由 HuiDesktop 驱动" Canvas.Left="10" Canvas.Top="221" Width="300" Height="19" VerticalContentAlignment="Bottom" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" VerticalAlignment="Top" />
             <hc:SimpleText Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" Width="175" Text="开发者信息" Canvas.Left="315" Canvas.Top="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             <Button x:Name="btn_BrightSu" Height="56" Width="175" Canvas.Left="315" Canvas.Top="30" Padding="0" Click="btn_BrightSu_Click" HorizontalAlignment="Left" Cursor="Hand">
                 <StackPanel Orientation="Horizontal"  Width="167" Height="48">

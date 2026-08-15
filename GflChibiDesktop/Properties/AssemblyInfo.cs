@@ -8,11 +8,11 @@ using System.Windows;
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
 [assembly: AssemblyTitle("少女前线桌面Q宠 数据配置")]
-[assembly: AssemblyDescription("GflChibiDesktop Data Configuration")]
+[assembly: AssemblyDescription("少女前线桌面Q宠 数据配置程序")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("BrightSu")]
 [assembly: AssemblyProduct("GflChibiDesktop")]
-[assembly: AssemblyCopyright("© 2020~2022 BrightSu")]
+[assembly: AssemblyCopyright("© 2020~2026 BrightSu")]
 
 // 将 ComVisible 设置为 false 会使此程序集中的类型
 //对 COM 组件不可见。如果需要从 COM 访问此程序集中的类型
@@ -32,7 +32,7 @@ using System.Windows;
 //可以指定所有这些值，也可以使用“生成号”和“修订号”的默认值
 //通过使用 "*"，如下所示:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.0.0")]
-[assembly: AssemblyFileVersion("2.0.0.0")]
-[assembly: AssemblyInformationalVersion("20220820")]
+[assembly: AssemblyVersion("2.0.0.1")]
+[assembly: AssemblyFileVersion("2.0.0.1")]
+[assembly: AssemblyInformationalVersion("20260815")]
 [assembly: AssemblyTrademark("GflChibiDesktop")]

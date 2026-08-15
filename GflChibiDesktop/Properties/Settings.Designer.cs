@@ -25,7 +25,7 @@ namespace GflChibiDesktop.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://gfl.brightsu.cn/data/resource/")]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://gfl-data.brightsu.cn/res/")]
         public string DownloadSource {
             get {
                 return ((string)(this["DownloadSource"]));

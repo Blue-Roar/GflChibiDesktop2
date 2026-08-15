@@ -26,8 +26,8 @@ namespace GflChibiDesktop.Windows
         public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version);
         public readonly Version productBuild = Assembly.GetExecutingAssembly().GetName().Version;
         public readonly string currentBuild = ((AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute))).InformationalVersion;
-        public string homepageLink = "https://projects.brightsu.cn/GflChibiDesktop";
-        public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/update";
+        public string homepageLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/";
+        public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/download";
         public string donateLink = "https://projects.brightsu.cn/GflChibiDesktop/donate";
         public string extraStr = string.Empty;
 
@@ -130,6 +130,7 @@ namespace GflChibiDesktop.Windows
         //}
 
         SolidColorBrush defaultColor = new SolidColorBrush(Color.FromRgb(255, 255, 255));
+        SolidColorBrush type0color = new SolidColorBrush(Color.FromRgb(255, 111, 181));
         SolidColorBrush type2color = new SolidColorBrush(Color.FromRgb(234, 234, 234));
         SolidColorBrush type3color = new SolidColorBrush(Color.FromRgb(107, 218, 199));
         SolidColorBrush type4color = new SolidColorBrush(Color.FromRgb(209, 223, 91));
@@ -149,6 +150,7 @@ namespace GflChibiDesktop.Windows
             initializeDataSet.Add(new ComponentModel() { ComponentID = 4, ComponentName = "HG4class", Level = 2, ParentID = 1, ToolTip = "初始四星手枪人形", Header = "★★★★", Foreground = type4color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 5, ComponentName = "HG5class", Level = 2, ParentID = 1, ToolTip = "初始五星手枪人形", Header = "★★★★★", Foreground = type5color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 7, ComponentName = "HG7class", Level = 2, ParentID = 1, ToolTip = "特典手枪人形", Header = "★EXTRA", Foreground = type7color });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 9, ComponentName = "HG0class", Level = 2, ParentID = 1, ToolTip = "特殊手枪人形", Header = "SPECIAL", Foreground = type0color });
 
             initializeDataSet.Add(new ComponentModel() { ComponentID = 11, ComponentName = "SMGclass", Level = 1, ParentID = 0, ToolTip = "冲锋枪人形", Header = "冲锋枪(SMG)", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 12, ComponentName = "SMG2class", Level = 2, ParentID = 11, ToolTip = "初始二星冲锋枪人形", Header = "★★", Foreground = type2color });
@@ -156,6 +158,7 @@ namespace GflChibiDesktop.Windows
             initializeDataSet.Add(new ComponentModel() { ComponentID = 14, ComponentName = "SMG4class", Level = 2, ParentID = 11, ToolTip = "初始四星冲锋枪人形", Header = "★★★★", Foreground = type4color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 15, ComponentName = "SMG5class", Level = 2, ParentID = 11, ToolTip = "初始五星冲锋枪人形", Header = "★★★★★", Foreground = type5color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 17, ComponentName = "SMG7class", Level = 2, ParentID = 11, ToolTip = "特典冲锋枪人形", Header = "★EXTRA", Foreground = type7color });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 19, ComponentName = "SMG0class", Level = 2, ParentID = 11, ToolTip = "特殊冲锋枪人形", Header = "SPECIAL", Foreground = type0color });
 
             initializeDataSet.Add(new ComponentModel() { ComponentID = 21, ComponentName = "RFclass", Level = 1, ParentID = 0, ToolTip = "步枪人形", Header = "步枪(RF)", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 22, ComponentName = "RF2class", Level = 2, ParentID = 21, ToolTip = "初始二星步枪人形", Header = "★★", Foreground = type2color });
@@ -163,6 +166,7 @@ namespace GflChibiDesktop.Windows
             initializeDataSet.Add(new ComponentModel() { ComponentID = 24, ComponentName = "RF4class", Level = 2, ParentID = 21, ToolTip = "初始四星步枪人形", Header = "★★★★", Foreground = type4color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 25, ComponentName = "RF5class", Level = 2, ParentID = 21, ToolTip = "初始五星步枪人形", Header = "★★★★★", Foreground = type5color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 27, ComponentName = "RF7class", Level = 2, ParentID = 21, ToolTip = "特典步枪人形", Header = "★EXTRA", Foreground = type7color });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 29, ComponentName = "RF0class", Level = 2, ParentID = 21, ToolTip = "特殊步枪人形", Header = "SPECIAL", Foreground = type0color });
 
             initializeDataSet.Add(new ComponentModel() { ComponentID = 31, ComponentName = "ARclass", Level = 1, ParentID = 0, ToolTip = "突击步枪人形", Header = "突击步枪(AR)", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 32, ComponentName = "AR2class", Level = 2, ParentID = 31, ToolTip = "初始二星突击步枪人形", Header = "★★", Foreground = type2color });
@@ -170,6 +174,7 @@ namespace GflChibiDesktop.Windows
             initializeDataSet.Add(new ComponentModel() { ComponentID = 34, ComponentName = "AR4class", Level = 2, ParentID = 31, ToolTip = "初始四星突击步枪人形", Header = "★★★★", Foreground = type4color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 35, ComponentName = "AR5class", Level = 2, ParentID = 31, ToolTip = "初始五星突击步枪人形", Header = "★★★★★", Foreground = type5color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 37, ComponentName = "AR7class", Level = 2, ParentID = 31, ToolTip = "特典突击步枪人形", Header = "★EXTRA", Foreground = type7color });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 39, ComponentName = "AR0class", Level = 2, ParentID = 31, ToolTip = "特殊突击步枪人形", Header = "SPECIAL", Foreground = type0color });
 
             initializeDataSet.Add(new ComponentModel() { ComponentID = 41, ComponentName = "MGclass", Level = 1, ParentID = 0, ToolTip = "机枪人形", Header = "机枪(MG)", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 42, ComponentName = "MG2class", Level = 2, ParentID = 41, ToolTip = "初始二星机枪人形", Header = "★★", Foreground = type2color });
@@ -177,6 +182,7 @@ namespace GflChibiDesktop.Windows
             initializeDataSet.Add(new ComponentModel() { ComponentID = 44, ComponentName = "MG4class", Level = 2, ParentID = 41, ToolTip = "初始四星机枪人形", Header = "★★★★", Foreground = type4color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 45, ComponentName = "MG5class", Level = 2, ParentID = 41, ToolTip = "初始五星机枪人形", Header = "★★★★★", Foreground = type5color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 47, ComponentName = "MG7class", Level = 2, ParentID = 41, ToolTip = "特典机枪人形", Header = "★EXTRA", Foreground = type7color });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 49, ComponentName = "MG0class", Level = 2, ParentID = 41, ToolTip = "特殊机枪人形", Header = "SPECIAL", Foreground = type0color });
 
             initializeDataSet.Add(new ComponentModel() { ComponentID = 51, ComponentName = "SGclass", Level = 1, ParentID = 0, ToolTip = "霰弹枪人形", Header = "霰弹枪(SG)", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 52, ComponentName = "SG2class", Level = 2, ParentID = 51, ToolTip = "初始二星霰弹枪人形", Header = "★★", Foreground = type2color });
@@ -184,22 +190,28 @@ namespace GflChibiDesktop.Windows
             initializeDataSet.Add(new ComponentModel() { ComponentID = 54, ComponentName = "SG4class", Level = 2, ParentID = 51, ToolTip = "初始四星霰弹枪人形", Header = "★★★★", Foreground = type4color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 55, ComponentName = "SG5class", Level = 2, ParentID = 51, ToolTip = "初始五星霰弹枪人形", Header = "★★★★★", Foreground = type5color });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 57, ComponentName = "SG7class", Level = 2, ParentID = 51, ToolTip = "特典霰弹枪人形", Header = "★EXTRA", Foreground = type7color });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 59, ComponentName = "SG0class", Level = 2, ParentID = 51, ToolTip = "特殊霰弹枪人形", Header = "SPECIAL", Foreground = type0color });
 
-            initializeDataSet.Add(new ComponentModel() { ComponentID = 61, ComponentName = "OTHERclass", Level = 1, ParentID = 0, ToolTip = "其它人形", Header = "其它", Foreground = defaultColor });
-            initializeDataSet.Add(new ComponentModel() { ComponentID = 62, ComponentName = "HOCclass", Level = 2, ParentID = 61, ToolTip = "重装部队人形", Header = "重装部队", Foreground = defaultColor });
-            initializeDataSet.Add(new ComponentModel() { ComponentID = 63, ComponentName = "HUMANclass", Level = 2, ParentID = 61, ToolTip = "人类", Header = "人类", Foreground = defaultColor });
-            initializeDataSet.Add(new ComponentModel() { ComponentID = 64, ComponentName = "UNKNOWNclass", Level = 2, ParentID = 61, ToolTip = "未分类的数据", Header = "未分类", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 61, ComponentName = "HOCclass", Level = 1, ParentID = 0, ToolTip = "重装部队人形", Header = "重装部队(HOC)", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 62, ComponentName = "MTRclass", Level = 2, ParentID = 61, ToolTip = "迫击炮人形", Header = "迫击炮(MTR)", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 63, ComponentName = "ATWclass", Level = 2, ParentID = 61, ToolTip = "反坦克武器人形", Header = "反坦克武器(ATW)", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 64, ComponentName = "AGLclass", Level = 2, ParentID = 61, ToolTip = "榴弹发射器人形", Header = "榴弹发射器(AGL)", Foreground = defaultColor });
 
-            //initializeDataSet.Add(new ComponentModel() { ComponentID = 71, ComponentName = "COALITIONclass", Level = 1, ParentID = 0, ToolTip = "融合势力人形", Header = "融合势力", Foreground = defaultColor });
-            //initializeDataSet.Add(new ComponentModel() { ComponentID = 72, ComponentName = "SANGVISFERRIclass", Level = 2, ParentID = 71, ToolTip = "铁血工造人形", Header = "铁血工造", Foreground = defaultColor });
-            //initializeDataSet.Add(new ComponentModel() { ComponentID = 73, ComponentName = "KCCOclass", Level = 2, ParentID = 71, ToolTip = "正规军人形", Header = "正规军", Foreground = defaultColor });
-            //initializeDataSet.Add(new ComponentModel() { ComponentID = 74, ComponentName = "PARADEUSclass", Level = 2, ParentID = 71, ToolTip = "帕拉蒂斯人形", Header = "帕拉蒂斯", Foreground = defaultColor });
-            //initializeDataSet.Add(new ComponentModel() { ComponentID = 75, ComponentName = "ETCclass", Level = 2, ParentID = 71, ToolTip = "其他势力人形", Header = "其他势力", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 71, ComponentName = "NPCclass", Level = 1, ParentID = 0, ToolTip = "NPC", Header = "NPC", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 72, ComponentName = "HUMANclass", Level = 2, ParentID = 71, ToolTip = "人类", Header = "人类", Foreground = defaultColor });
 
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 81, ComponentName = "ENEMYclass", Level = 1, ParentID = 0, ToolTip = "敌方势力单位", Header = "敌方势力", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 82, ComponentName = "SANGVISclass", Level = 2, ParentID = 81, ToolTip = "铁血工造势力", Header = "铁血工造", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 83, ComponentName = "KCCOclass", Level = 2, ParentID = 81, ToolTip = "正规军势力", Header = "正规军", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 84, ComponentName = "PARADEUSclass", Level = 2, ParentID = 81, ToolTip = "帕拉蒂斯势力", Header = "帕拉蒂斯", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 85, ComponentName = "ETCclass", Level = 2, ParentID = 81, ToolTip = "其它势力", Header = "其它", Foreground = defaultColor });
+
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 101, ComponentName = "OTHERclass", Level = 1, ParentID = 0, ToolTip = "其它人形", Header = "其它", Foreground = defaultColor });
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 102, ComponentName = "UNKNOWNclass", Level = 2, ParentID = 101, ToolTip = "未分类的数据", Header = "未分类", Foreground = defaultColor });
 
             try
             {
-                string str = File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}dummy_list.json");
+                string str = File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}chibi_list.json");
                 RootObject rb = JsonConvert.DeserializeObject<RootObject>(str);
                 btn_LoadDummyList.ToolTip = $"当前战术人形数据列表版本 {rb.meta.version}";
                 lblListVersion.Text = rb.meta.version;
@@ -221,18 +233,21 @@ namespace GflChibiDesktop.Windows
                     tii.ProgressValue = pb_loader.Value / pb_loader.Maximum;
                     try
                     {
+                        content.type = content.type ?? "";
+                        content.display = content.display ?? content.name;
+                        content.display_full = content.display_full ?? content.display;
                         bool displaySwitch = true;
                         ComponentModel node = new ComponentModel();
                         node.ComponentName = $"dummy_{content.name.Replace(" ", string.Empty)}";
-                        node.Header = content.display_name;
-                        node.ComponentID = 100 + counter;
+                        node.Header = content.display;
+                        node.ComponentID = 200 + counter;
                         string[] tagString = new string[12];
                         tagString[0] = $"{displaySwitch}";
                         tagString[1] = content.name;
                         tagString[2] = content.parent;
                         tagString[3] = content.type;
-                        tagString[4] = content.display_name;
-                        tagString[5] = content.fullname;
+                        tagString[4] = content.display;
+                        tagString[5] = content.display_full;
                         tagString[6] = content.path;
                         tagString[7] = content.filename;
                         tagString[8] = content.cg;
@@ -243,131 +258,197 @@ namespace GflChibiDesktop.Windows
                         //node.ImageKey = content.type;
                         //node.SelectedImageKey = content.type;
                         node.Foreground = defaultColor;
-                        node.ToolTip = content.fullname;
-                        if (content.type.Contains("2")) { node.Foreground = type2color; }
-                        if (content.type.Contains("3")) { node.Foreground = type3color; }
-                        if (content.type.Contains("4")) { node.Foreground = type4color; }
-                        if (content.type.Contains("5")) { node.Foreground = type5color; }
-                        if (content.type.Contains("6")) { node.Foreground = type6color; }
-                        if (content.type.Contains("7")) { node.Foreground = type7color; }
+                        node.ToolTip = content.display_full;
+                        if (content.category == "TDOLL")
+                        {
+                            if (content.type.Contains("0")) { node.Foreground = type0color; }
+                            if (content.type.Contains("2")) { node.Foreground = type2color; }
+                            if (content.type.Contains("3")) { node.Foreground = type3color; }
+                            if (content.type.Contains("4")) { node.Foreground = type4color; }
+                            if (content.type.Contains("5")) { node.Foreground = type5color; }
+                            if (content.type.Contains("6")) { node.Foreground = type6color; }
+                            if (content.type.Contains("7")) { node.Foreground = type7color; }
+                        }
+                        else if (content.category == "ENEMY")
+                        {
+                            if (content.type.Contains("0")) { node.Foreground = type0color; }
+                            if (content.type.Contains("1")) { node.Foreground = type2color; }
+                            if (content.type.Contains("2")) { node.Foreground = type3color; }
+                            if (content.type.Contains("3")) { node.Foreground = type5color; }
+                        }
 
-                        node.ParentID = 64;
+                        node.ParentID = 102;
+
                         if (content.name == content.parent)
                         {
                             node.Level = 3;
-                            switch (content.type)
+                            if (content.category == "TDOLL")
                             {
-                                case "HG2":
-                                    node.ParentID = 2;
-                                    break;
-                                case "HG3":
-                                    node.ParentID = 3;
-                                    break;
-                                case "HG4":
-                                    node.ParentID = 4;
-                                    break;
-                                case "HG5":
-                                    node.ParentID = 5;
-                                    break;
-                                case "HG7":
-                                    node.ParentID = 7;
-                                    break;
-                                case "SMG2":
-                                    node.ParentID = 12;
-                                    break;
-                                case "SMG3":
-                                    node.ParentID = 13;
-                                    break;
-                                case "SMG4":
-                                    node.ParentID = 14;
-                                    break;
-                                case "SMG5":
-                                    node.ParentID = 15;
-                                    break;
-                                case "SMG7":
-                                    node.ParentID = 17;
-                                    break;
-                                case "RF2":
-                                    node.ParentID = 22;
-                                    break;
-                                case "RF3":
-                                    node.ParentID = 23;
-                                    break;
-                                case "RF4":
-                                    node.ParentID = 24;
-                                    break;
-                                case "RF5":
-                                    node.ParentID = 25;
-                                    break;
-                                case "RF7":
-                                    node.ParentID = 27;
-                                    break;
-                                case "AR2":
-                                    node.ParentID = 32;
-                                    break;
-                                case "AR3":
-                                    node.ParentID = 33;
-                                    break;
-                                case "AR4":
-                                    node.ParentID = 34;
-                                    break;
-                                case "AR5":
-                                    node.ParentID = 35;
-                                    break;
-                                case "AR7":
-                                    node.ParentID = 37;
-                                    break;
-                                case "MG2":
-                                    node.ParentID = 42;
-                                    break;
-                                case "MG3":
-                                    node.ParentID = 43;
-                                    break;
-                                case "MG4":
-                                    node.ParentID = 44;
-                                    break;
-                                case "MG5":
-                                    node.ParentID = 45;
-                                    break;
-                                case "MG7":
-                                    node.ParentID = 47;
-                                    break;
-                                case "SG2":
-                                    node.ParentID = 52;
-                                    break;
-                                case "SG3":
-                                    node.ParentID = 53;
-                                    break;
-                                case "SG4":
-                                    node.ParentID = 54;
-                                    break;
-                                case "SG5":
-                                    node.ParentID = 55;
-                                    break;
-                                case "SG7":
-                                    node.ParentID = 57;
-                                    break;
-                                case "HOC":
-                                    node.ParentID = 62;
-                                    break;
-                                case "HUMAN":
-                                    node.ParentID = 63;
-                                    break;
-                                //case "SANGVISFERRI":
-                                //    node.ParentID = 72;
-                                //    break;
-                                //case "KCCO":
-                                //    node.ParentID = 73;
-                                //    break;
-                                //case "PARADEUS":
-                                //    node.ParentID = 74;
-                                //    break;
-                                //case "ETC":
-                                //    node.ParentID = 75;
-                                //    break;
-                                default:
-                                    node.ParentID = 64;
-                                    break;
+                                switch (content.type.ToUpper())
+                                {
+                                    case "HG2":
+                                        node.ParentID = 2;
+                                        break;
+                                    case "HG3":
+                                        node.ParentID = 3;
+                                        break;
+                                    case "HG4":
+                                        node.ParentID = 4;
+                                        break;
+                                    case "HG5":
+                                        node.ParentID = 5;
+                                        break;
+                                    case "HG7":
+                                        node.ParentID = 7;
+                                        break;
+                                    case "HG0":
+                                        node.ParentID = 9;
+                                        break;
+                                    case "SMG2":
+                                        node.ParentID = 12;
+                                        break;
+                                    case "SMG3":
+                                        node.ParentID = 13;
+                                        break;
+                                    case "SMG4":
+                                        node.ParentID = 14;
+                                        break;
+                                    case "SMG5":
+                                        node.ParentID = 15;
+                                        break;
+                                    case "SMG7":
+                                        node.ParentID = 17;
+                                        break;
+                                    case "SMG0":
+                                        node.ParentID = 19;
+                                        break;
+                                    case "RF2":
+                                        node.ParentID = 22;
+                                        break;
+                                    case "RF3":
+                                        node.ParentID = 23;
+                                        break;
+                                    case "RF4":
+                                        node.ParentID = 24;
+                                        break;
+                                    case "RF5":
+                                        node.ParentID = 25;
+                                        break;
+                                    case "RF7":
+                                        node.ParentID = 27;
+                                        break;
+                                    case "RF0":
+                                        node.ParentID = 29;
+                                        break;
+                                    case "AR2":
+                                        node.ParentID = 32;
+                                        break;
+                                    case "AR3":
+                                        node.ParentID = 33;
+                                        break;
+                                    case "AR4":
+                                        node.ParentID = 34;
+                                        break;
+                                    case "AR5":
+                                        node.ParentID = 35;
+                                        break;
+                                    case "AR7":
+                                        node.ParentID = 37;
+                                        break;
+                                    case "AR0":
+                                        node.ParentID = 39;
+                                        break;
+                                    case "MG2":
+                                        node.ParentID = 42;
+                                        break;
+                                    case "MG3":
+                                        node.ParentID = 43;
+                                        break;
+                                    case "MG4":
+                                        node.ParentID = 44;
+                                        break;
+                                    case "MG5":
+                                        node.ParentID = 45;
+                                        break;
+                                    case "MG7":
+                                        node.ParentID = 47;
+                                        break;
+                                    case "MG0":
+                                        node.ParentID = 49;
+                                        break;
+                                    case "SG2":
+                                        node.ParentID = 52;
+                                        break;
+                                    case "SG3":
+                                        node.ParentID = 53;
+                                        break;
+                                    case "SG4":
+                                        node.ParentID = 54;
+                                        break;
+                                    case "SG5":
+                                        node.ParentID = 55;
+                                        break;
+                                    case "SG7":
+                                        node.ParentID = 57;
+                                        break;
+                                    case "SG0":
+                                        node.ParentID = 59;
+                                        break;
+                                    default:
+                                        node.ParentID = 102;
+                                        break;
+                                }
+                            }
+                            else if (content.category == "HOC")
+                            {
+                                switch (content.type.ToUpper())
+                                {
+                                    case "MTR":
+                                        node.ParentID = 62;
+                                        break;
+                                    case "ATW":
+                                        node.ParentID = 63;
+                                        break;
+                                    case "AGL":
+                                        node.ParentID = 64;
+                                        break;
+                                    default:
+                                        node.ParentID = 61;
+                                        break;
+                                }
+                            }
+                            else if (content.category == "NPC")
+                            {
+                                switch (content.type.ToUpper())
+                                {
+                                    case "HUMAN":
+                                        node.ParentID = 72;
+                                        break;
+                                    default:
+                                        node.ParentID = 71;
+                                        break;
+                                }
+                            }
+                            else if (content.category == "ENEMY")
+                            {
+                                switch (content.type.ToUpper().Substring(0, content.type.Length - 1))
+                                {
+                                    case "SANGVIS":
+                                       node.ParentID = 82;
+                                       break;
+                                    case "KCCO":
+                                       node.ParentID = 83;
+                                       break;
+                                    case "PARADEUS":
+                                       node.ParentID = 84;
+                                       break;
+                                    case "ETC":
+                                       node.ParentID = 85;
+                                       break;
+                                    default:
+                                        node.ParentID = 81;
+                                        break;
+                                }
                             }
                             initializeDataSet.Add(node);
                         }
@@ -375,7 +456,7 @@ namespace GflChibiDesktop.Windows
                         {
                             node.Level = 4;
                             //if (content.type == "HUMAN") { node.Level = 3; }
-                            node.ParentID = 64;
+                            node.ParentID = 102;
                             foreach (ComponentModel item in initializeDataSet)
                             {
                                 if (item.ComponentName == $"dummy_{content.parent.Replace(" ", string.Empty)}")
@@ -466,8 +547,8 @@ namespace GflChibiDesktop.Windows
                     tagString[1] = item.Tag[1];//content.name;
                     tagString[2] = item.Tag[2];//content.parent;
                     tagString[3] = item.Tag[3];//content.type;
-                    tagString[4] = item.Tag[4];//content.display_name;
-                    tagString[5] = item.Tag[5];//content.fullname;
+                    tagString[4] = item.Tag[4];//content.display;
+                    tagString[5] = item.Tag[5];//content.display_full;
                     tagString[6] = item.Tag[6];//content.path;
                     tagString[7] = item.Tag[7];//content.filename;
                     tagString[8] = item.Tag[8];//content.cg;
@@ -563,7 +644,7 @@ namespace GflChibiDesktop.Windows
 
                 if (rt.ret != 200) //API请求失败
                 {
-                    if (File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}dummy_list.json"))//本地存在即加载本地
+                    if (File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}chibi_list.json"))//本地存在即加载本地
                     {
                         LoadDummyList();
                     }
@@ -578,15 +659,15 @@ namespace GflChibiDesktop.Windows
                     return;
                 }
 
-                if (File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}dummy_list.json"))//API请求成功，本地存在
+                if (File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}chibi_list.json"))//API请求成功，本地存在
                 {
-                    string str = File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}dummy_list.json");
+                    string str = File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}chibi_list.json");
                     RootObject rb = JsonConvert.DeserializeObject<RootObject>(str);
                     if (rt.data.uuid != rb.meta.uuid)//有新版本
                     {
                         sp_downloader.Visibility = Visibility.Visible;
                         lbl_loader.Content = "正在更新战术人形数据表";
-                        HttpClass.DownloadFile(rt.data.url, $"{AppDomain.CurrentDomain.BaseDirectory}dummy_list.json", pb_downloader, lbl_downloader);
+                        HttpClass.DownloadFile(rt.data.url, $"{AppDomain.CurrentDomain.BaseDirectory}chibi_list.json", pb_downloader, lbl_downloader);
                         sp_downloader.Visibility = Visibility.Collapsed;
                         btn_LoadDummyList_Click(this, null);
                         return;
@@ -600,7 +681,7 @@ namespace GflChibiDesktop.Windows
                 {
                     try
                     {
-                        bool downloaded = HttpClass.DownloadFile(rt.data.url, $"{AppDomain.CurrentDomain.BaseDirectory}dummy_list.json", pb_loader, lbl_loader);
+                        bool downloaded = HttpClass.DownloadFile(rt.data.url, $"{AppDomain.CurrentDomain.BaseDirectory}chibi_list.json", pb_loader, lbl_loader);
                         if (downloaded)
                         {
                             btn_LoadDummyList_Click(this, null);
@@ -618,7 +699,7 @@ namespace GflChibiDesktop.Windows
             }
             else //API请求失败
             {
-                if (File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}dummy_list.json"))//存在本地即加载本地
+                if (File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}chibi_list.json"))//存在本地即加载本地
                 {
                     LoadDummyList();
                 }
@@ -643,8 +724,8 @@ namespace GflChibiDesktop.Windows
             tagString[1] = item.Tag[1];//content.name;
             tagString[2] = item.Tag[2];//content.parent;
             tagString[3] = item.Tag[3];//content.type;
-            tagString[4] = item.Tag[4];//content.display_name;
-            tagString[5] = item.Tag[5];//content.fullname;
+            tagString[4] = item.Tag[4];//content.display;
+            tagString[5] = item.Tag[5];//content.display_full;
             tagString[6] = item.Tag[6];//content.path;
             tagString[7] = item.Tag[7];//content.filename;
             tagString[8] = item.Tag[8];//content.cg;
@@ -721,8 +802,8 @@ namespace GflChibiDesktop.Windows
             //tagString[1] = item.Tag[1];//content.name;
             //tagString[2] = item.Tag[2];//content.parent;
             //tagString[3] = item.Tag[3];//content.type;
-            //tagString[4] = item.Tag[4];//content.display_name;
-            //tagString[5] = item.Tag[5];//content.fullname;
+            //tagString[4] = item.Tag[4];//content.display;
+            //tagString[5] = item.Tag[5];//content.display_full;
             //tagString[6] = item.Tag[6];//content.path;
             //tagString[7] = item.Tag[7];//content.filename;
             //tagString[8] = item.Tag[8];//content.cg;
@@ -851,8 +932,8 @@ namespace GflChibiDesktop.Windows
             //tagString[1] = content.name;
             //tagString[2] = content.parent;
             //tagString[3] = content.type;
-            //tagString[4] = content.display_name;
-            //tagString[5] = content.fullname;
+            //tagString[4] = content.display;
+            //tagString[5] = content.display_full;
             //tagString[6] = content.path;
             //tagString[7] = content.filename;
             //tagString[8] = content.cg;
@@ -934,8 +1015,8 @@ namespace GflChibiDesktop.Windows
             //tagString[1] = content.name;
             //tagString[2] = content.parent;
             //tagString[3] = content.type;
-            //tagString[4] = content.display_name;
-            //tagString[5] = content.fullname;
+            //tagString[4] = content.display;
+            //tagString[5] = content.display_full;
             //tagString[6] = content.path;
             //tagString[7] = content.filename;
             //tagString[8] = content.cg;
@@ -1007,8 +1088,8 @@ namespace GflChibiDesktop.Windows
             tagString[1] = item.Tag[1];//content.name;
             tagString[2] = item.Tag[2];//content.parent;
             tagString[3] = item.Tag[3];//content.type;
-            tagString[4] = item.Tag[4];//content.display_name;
-            tagString[5] = item.Tag[5];//content.fullname;
+            tagString[4] = item.Tag[4];//content.display;
+            tagString[5] = item.Tag[5];//content.display_full;
             tagString[6] = item.Tag[6];//content.path;
             tagString[7] = item.Tag[7];//content.filename;
             DeleteData(tagString[1]);
@@ -1063,7 +1144,7 @@ namespace GflChibiDesktop.Windows
                 initializeDataSet.Clear();
                 try
                 {
-                    string str = File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}dummy_list.json");
+                    string str = File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}chibi_list.json");
                     RootObject rb = JsonConvert.DeserializeObject<RootObject>(str);
                     btn_LoadDummyList.ToolTip = $"当前战术人形数据列表版本 {rb.meta.version}";
                     lblListVersion.Text = rb.meta.version;
@@ -1074,22 +1155,22 @@ namespace GflChibiDesktop.Windows
                     foreach (Content content in rb.content)
                     {
                         counter++;
-                        if (content.name.Contains(sbQuery.Text) || content.parent.Contains(sbQuery.Text) || content.display_name.Contains(sbQuery.Text) || content.fullname.Contains(sbQuery.Text))
+                        if (content.name.Contains(sbQuery.Text) || content.parent.Contains(sbQuery.Text) || content.display.Contains(sbQuery.Text) || content.display_full.Contains(sbQuery.Text))
                         {
                             try
                             {
                                 bool displaySwitch = true;
                                 ComponentModel node = new ComponentModel();
                                 node.ComponentName = $"dummy_{content.name.Replace(" ", string.Empty)}";
-                                node.Header = content.display_name;
+                                node.Header = content.display;
                                 node.ComponentID = 100 + counter;
                                 string[] tagString = new string[12];
                                 tagString[0] = $"{displaySwitch}";
                                 tagString[1] = content.name;
                                 tagString[2] = content.parent;
                                 tagString[3] = content.type;
-                                tagString[4] = content.display_name;
-                                tagString[5] = content.fullname;
+                                tagString[4] = content.display;
+                                tagString[5] = content.display_full;
                                 tagString[6] = content.path;
                                 tagString[7] = content.filename;
                                 tagString[8] = content.cg;
@@ -1100,7 +1181,7 @@ namespace GflChibiDesktop.Windows
                                 //node.ImageKey = content.type;
                                 //node.SelectedImageKey = content.type;
                                 node.Foreground = defaultColor;
-                                node.ToolTip = content.fullname;
+                                node.ToolTip = content.display_full;
                                 if (content.type.Contains("2")) { node.Foreground = type2color; }
                                 if (content.type.Contains("3")) { node.Foreground = type3color; }
                                 if (content.type.Contains("4")) { node.Foreground = type4color; }
