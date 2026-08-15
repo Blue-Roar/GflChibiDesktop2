@@ -1,9 +1,0 @@
-﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="GflChibiDesktop.Properties" GeneratedClassName="Settings">
-  <Profiles />
-  <Settings>
-    <Setting Name="DownloadSource" Type="System.String" Scope="User">
-      <Value Profile="(Default)">https://gfl-data.brightsu.cn/res/</Value>
-    </Setting>
-  </Settings>
-</SettingsFile>

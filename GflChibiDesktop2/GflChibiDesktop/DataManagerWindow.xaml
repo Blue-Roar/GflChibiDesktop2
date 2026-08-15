@@ -1,0 +1,118 @@
+﻿<Window xmlns:hc="https://handyorg.github.io/handycontrol"  x:Class="GflChibiDesktop.Windows.DataManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GflChibiDesktop.Windows"
+        mc:Ignorable="d"
+        Title="战术人形数据配置" WindowStartupLocation="CenterScreen" Icon="/hk416_happy.ico" Background="#FF1B1B1C" Foreground="White" ResizeMode="CanResizeWithGrip" MinHeight="600" MinWidth="600" Width="600" Height="600" Visibility="Visible" SnapsToDevicePixels="True" >
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+    <!--<Window.DataContext>
+        <viewmodel:TreeViewViewModel/>
+    </Window.DataContext>-->
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo x:Name="tii"/>
+    </Window.TaskbarItemInfo>
+    <Grid MinHeight="256" MaxHeight="{DynamicResource {x:Static SystemParameters.PrimaryScreenHeightKey}}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="192"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="24"/>
+            <RowDefinition />
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Label x:Name="lblExtraStr" Content="ExtraStr" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Background="{x:Null}" BorderBrush="{x:Null}" Padding="4,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        <CheckBox Grid.Row="0" Grid.Column="1" x:Name="chb_thinList" VerticalAlignment="Stretch" HorizontalAlignment="Right" Content="紧凑列表" Margin="0,0,104,0" Width="80" Click="chb_thinList_Click" IsChecked="True" />
+        <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Right" Content="将此窗口置顶" Margin="0" Width="100" IsChecked="{Binding Topmost, ElementName=window}"/>
+
+        <Grid Grid.Row="1" Grid.ColumnSpan="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="24"/>
+                <RowDefinition/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="60"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="lbl_InternalSelected" Text="请选择要加载的战术人形" TextAlignment="Center" Padding="0" Grid.ColumnSpan="2" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Image x:Name="img_Preview" Grid.Row="1" RenderTransformOrigin="0,0" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality"></Image>
+            <StackPanel Grid.Row="1" FlowDirection="LeftToRight" HorizontalAlignment="Right" VerticalAlignment="Top" >
+                <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="2" >
+                    <Label Content="在线预览" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_preview}" />
+                    <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_preview" VerticalAlignment="Stretch" HorizontalAlignment="Left" IsChecked="True" />
+                </StackPanel>
+                <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="2" >
+                    <Label Content="大破立绘" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_preview_d}" />
+                    <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_preview_d" VerticalAlignment="Stretch" HorizontalAlignment="Left" Click="chb_preview_d_Click" />
+                </StackPanel>
+            </StackPanel>
+            <TreeView x:Name="tv_InternalSelector" Grid.Row="1" IsTextSearchEnabled="True" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" TreeViewItem.Selected="tv_InternalSelector_Selected" TreeViewItem.Unselected="tv_InternalSelector_Unselected" Grid.Column="1" Style="{StaticResource TreeView.Small}">
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate DataType="{x:Type local:ComponentModel}" ItemsSource="{Binding Path=Children}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center" Text="{Binding Header}" Foreground="{Binding Foreground}" Tag="{Binding Tag}"></TextBlock>
+                            <StackPanel.ToolTip>
+                                <TextBlock VerticalAlignment="Center" Text="{Binding ToolTip}" TextWrapping="Wrap" MaxWidth="200"></TextBlock>
+                            </StackPanel.ToolTip>
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+            <StackPanel Grid.Row="2" MinHeight="34" Grid.ColumnSpan="2">
+                <StackPanel x:Name="sp_loader">
+                    <Label x:Name="lbl_loader" Content="请先加载数据列表" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" ScrollViewer.VerticalScrollBarVisibility="Disabled" BorderBrush="{x:Null}" HorizontalAlignment="Stretch" Padding="0"/>
+                    <ProgressBar x:Name="pb_loader" Style="{DynamicResource ProgressBarFlat}" Grid.Row="2" Grid.ColumnSpan="2" Height="16" Background="{x:Null}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" VerticalAlignment="Bottom" />
+                </StackPanel>
+                <StackPanel x:Name="sp_downloader" Visibility="Collapsed">
+                    <Label x:Name="lbl_downloader" Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" ScrollViewer.VerticalScrollBarVisibility="Disabled" BorderBrush="{x:Null}" HorizontalAlignment="Stretch" Padding="0"/>
+                    <ProgressBar x:Name="pb_downloader" Style="{DynamicResource ProgressBarFlat}" Grid.Row="3" Grid.ColumnSpan="2" Height="16" Background="{x:Null}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" VerticalAlignment="Bottom" />
+                </StackPanel>
+            </StackPanel>
+            <Grid Grid.Row="4" Grid.ColumnSpan="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="4*" />
+                    <ColumnDefinition Width="4*" />
+                    <ColumnDefinition Width="5*" />
+                    <ColumnDefinition Width="4*" />
+                    <ColumnDefinition Width="4*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                </Grid.RowDefinitions>
+                <Button x:Name="btn_sources" Content="下载源设置" Click="btn_sources_Click" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" />
+                <Button x:Name="btn_loadCG" Content="加载立绘" Click="btn_loadCG_Click" IsEnabled="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" ToolTip="加载选定战术人形的立绘" Grid.Column="1"/>
+                <hc:SearchBar x:Name="sbQuery" Grid.Column="2" SearchStarted="SearchBar_SearchStarted" OverridesDefaultStyle="True" ToolTip="搜索战术人形" Margin="2,0,2,0" IsRealTime="True" hc:InfoElement.ShowClearButton="True" />
+                <!--<hc:AnimationPath Duration="0:0:5" Stretch="Uniform" StrokeThickness="2" Stroke="{DynamicResource PrimaryBrush}" Data="{StaticResource SubGeometry}" Grid.Column="2"/>-->
+                <Button x:Name="btn_downloadData" Grid.Column="3" Content="下载数据" IsEnabled="False" Click="btn_downloadData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="下载选定战术人形的骨骼数据" VerticalAlignment="Stretch"/>
+                <Button x:Name="btn_deleteData" Grid.Column="3" Content="删除数据" IsEnabled="False" Click="btn_deleteData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="删除选定战术人形的骨骼数据" VerticalAlignment="Stretch"/>
+                <Button x:Name="btn_loadData" Content="加载数据" VerticalAlignment="Stretch" Grid.Column="4" Click="btn_loadData_Click" Margin="2,0,2,0" IsEnabled="False" ToolTip="加载选定战术人形的骨骼数据" HorizontalAlignment="Stretch" />
+                <hc:ButtonGroup x:Name="btng_loadData" VerticalAlignment="Stretch" Grid.Column="4" Margin="2,0,2,0">
+                    <Button x:Name="btn_loadDefaultData" Content="默认" Click="btn_loadData_Click" IsEnabled="False" ToolTip="加载选定战术人形的默认骨骼数据" />
+                    <Button x:Name="btn_loadDormData" Content="宿舍" Click="btn_loadDormData_Click" IsEnabled="False" ToolTip="加载选定战术人形的宿舍骨骼数据"/>
+                </hc:ButtonGroup>
+                <Label x:Name="lblVersion" Content="程序版本" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="4,0,4,0" HorizontalContentAlignment="Left" Grid.Row="1" Foreground="{DynamicResource InfoBrush}" FontSize="10" MouseDoubleClick="lblVersion_MouseDoubleClick" Cursor="UpArrow" ToolTip="双击查看程序信息" />
+                <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" Margin="2" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center">
+                    <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_save_cg" IsChecked="True" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" HorizontalAlignment="Center" />
+                    <Label Content="保存到本地" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_save_cg}" Margin="2" />
+                </StackPanel>
+                <Label x:Name="lblSelectedItem" Content="未选择" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" />
+                <!--<Label Content="供数据崩溃时使用" Foreground="{DynamicResource SecondaryTextBrush}" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" Visibility="{Binding Visibility, ElementName=btn_deleteData}" />
+                <Label Content="选择要加载的数据" Foreground="{DynamicResource SecondaryTextBrush}" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" Visibility="{Binding Visibility, ElementName=btng_loadData}" />-->
+                <hc:SimpleText x:Name="lblListVersion" Text="数据列表版本" ToolTip="战术人形数据列表版本" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.ColumnSpan="1" Foreground="{StaticResource PrimaryTextBrush}" />
+                <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" Margin="2" Grid.Row="1" Grid.Column="4" HorizontalAlignment="Center">
+                    <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_force_load" IsChecked="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" HorizontalAlignment="Center" />
+                    <Label Content="强制加载 [!]" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_force_load}" Margin="2" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+        <Label Content="战术人形骨骼数据、立绘图片等少女前线游戏素材版权均归云母组所有。&#xD;&#xA;仅供个人学习研究与交流用，严禁用于商业用途。使用此程序一切风险自负。" Grid.Row="3" Grid.ColumnSpan="2" VerticalContentAlignment="Center" Margin="2,0,0,0" Padding="10,5,5,5" Background="{x:Null}" BorderBrush="{x:Null}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="42"/>
+        <Button x:Name="btn_LoadDummyList" Content="刷新数据列表" Grid.Column="0" Grid.Row="3" Width="130" HorizontalAlignment="Right" Click="btn_LoadDummyList_Click" Margin="0,10,10,10" VerticalAlignment="Top" Grid.ColumnSpan="3" Height="30" Padding="0"/>
+    </Grid>
+</Window>

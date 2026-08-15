@@ -1,0 +1,17 @@
+﻿<UserControl xmlns:hc="https://handyorg.github.io/handycontrol" x:Class="HDTLPanel.BoolControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:HDTLPanel"
+             mc:Ignorable="d" 
+             d:DesignHeight="50" d:DesignWidth="400" Height="50">
+    <Grid Height="50" VerticalAlignment="Top" d:DataContext="{d:DesignInstance {x:Type local:BoolControl}, IsDesignTimeCreatable=True}" Margin="0">
+        <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="14,6,10,0">
+            <ToggleButton Style="{StaticResource ToggleButtonSwitch}" Grid.Row="1" Grid.Column="4" VerticalAlignment="Stretch" HorizontalAlignment="Left" IsChecked="{Binding Path=Choice}"/>
+            <Label Content="{Binding Path=PromptText}" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" Grid.Column="4" />
+        </StackPanel>
+        <Label x:Name="HintTextBox" Content="{Binding Path=HintText}" Margin="10,25,10,0" VerticalAlignment="Bottom"  Foreground="{StaticResource SecondaryTextBrush}" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" HorizontalAlignment="Stretch"/>
+        <Border BorderBrush="DimGray" BorderThickness="0, 1, 0, 0"/>
+    </Grid>
+</UserControl>
