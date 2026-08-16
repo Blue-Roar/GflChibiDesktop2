@@ -70,6 +70,12 @@ namespace GflChibiDesktop.Windows
         /// </summary>
         public event Action<ChibiModelData> ModelLoadRequested;
 
+        /// <summary>
+        /// 当前已加载（正被桌宠实例使用）的模型数据目录集合（相对 assets/spine/ 的 path）。
+        /// 由主窗口在打开时提供，用于禁止删除正在使用的数据。
+        /// </summary>
+        public System.Collections.Generic.HashSet<string> LoadedPaths { get; set; } = new System.Collections.Generic.HashSet<string>();
+
         List<ComponentModel> initializeDataSet = new List<ComponentModel>();
         /// <summary>
         /// 数据表是否已完成加载（防止排队的进度刷新覆盖完成提示）。
@@ -81,12 +87,31 @@ namespace GflChibiDesktop.Windows
             InitializeComponent();
 
             btnVersion.Content = $"程序版本：{productVersion}";
-
-            // 网络请求与数据表构建放后台线程，避免阻塞 UI（主窗口由同线程创建，会因此卡住）
-            System.Threading.Tasks.Task.Run(() => UpdateLinks());
-            System.Threading.Tasks.Task.Run(() => LoadDummyList());
-
             lblExtraStr.Content = extraStr;
+        }
+
+        /// <summary>
+        /// 窗口显示后：鼠标改为 hourglass 并禁用窗口，后台自动加载各项内容，完成后恢复。
+        /// </summary>
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Cursor = System.Windows.Input.Cursors.Wait;
+            IsEnabled = false;
+            try
+            {
+                // 网络请求与数据表构建并行在后台线程执行（数据表方法内部用 Dispatcher 回 UI）
+                await System.Threading.Tasks.Task.Run(() => UpdateLinks());
+                await System.Threading.Tasks.Task.Run(() => LoadDummyList());
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.Growl.ErrorGlobal($"初始化加载失败。\n{ex.Message}");
+            }
+            finally
+            {
+                Cursor = System.Windows.Input.Cursors.Arrow;
+                IsEnabled = true;
+            }
         }
 
         private void UpdateLinks()
@@ -107,17 +132,17 @@ namespace GflChibiDesktop.Windows
                     }
                     else
                     {
-                        Dispatcher.Invoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt.ret}"));
+                        Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt.ret}"));
                     }
                 }
                 else
                 {
-                    Dispatcher.Invoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{IndexStr}"));
+                    Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{IndexStr}"));
                 }
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{ex}"));
+                Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{ex}"));
                 return;
             }
         }
@@ -585,7 +610,7 @@ namespace GflChibiDesktop.Windows
                     }
                     catch (Exception ex)
                     {
-                        Dispatcher.Invoke(() => HandyControl.Controls.Growl.ErrorGlobal($"构建战术人形数据列表时出错。\n{ex}"));
+                        Dispatcher.Invoke(() => HandyControl.Controls.Growl.ErrorGlobal($"构建人形数据列表时出错。\n{ex}"));
                     }
                 }
 
@@ -621,14 +646,14 @@ namespace GflChibiDesktop.Windows
             }
             catch (Exception ex)
             {
-                Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"加载战术人形数据列表时出错。\n{ex}"));
+                Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"加载人形数据列表时出错。\n{ex}"));
             }
             Dispatcher.BeginInvoke(() => tvAfterSelect());
         }
         private ComponentModel SelectedItem;
         private void tv_InternalSelector_Selected(object sender, RoutedEventArgs e)
         {
-            lbl_InternalSelected.Text = "请选择要加载的战术人形";
+            lbl_InternalSelected.Text = "请选择要加载的人形";
             lbl_InternalSelected.Foreground = defaultColor;
             lblSelectedItem.Content = "未选择";
             lblSelectedItem.Foreground = defaultColor;
@@ -733,14 +758,20 @@ namespace GflChibiDesktop.Windows
                             }
                             if (checkResult)
                             {
+                                // 数据已完整下载：隐藏下载，显示删除（但正在使用的数据不允许删除）
                                 btn_downloadData.IsEnabled = false;
-                                btn_downloadData.Visibility = Visibility.Visible;
-                                //if ((tagString[1] != Properties.Settings.Default.DummyName) && (tagString[1] != App.globalValues.Dummy))
-                                //{
-                                //    btn_deleteData.IsEnabled = true;
-                                //    btn_deleteData.Visibility = Visibility.Visible;
-                                //    btn_downloadData.Visibility = Visibility.Collapsed;
-                                //}
+                                btn_downloadData.Visibility = Visibility.Collapsed;
+                                bool inUse = LoadedPaths.Contains(tagString[6]);
+                                btn_deleteData.IsEnabled = !inUse;
+                                btn_deleteData.Visibility = Visibility.Visible;
+                                if (inUse)
+                                {
+                                    btn_deleteData.ToolTip = "该数据正在被桌宠使用，无法删除";
+                                }
+                                else
+                                {
+                                    btn_deleteData.ToolTip = "删除选定人形的骨骼数据";
+                                }
 
                                 btn_loadData.IsEnabled = true;
                                 btn_loadDefaultData.IsEnabled = true;
@@ -774,7 +805,7 @@ namespace GflChibiDesktop.Windows
                     }
                     else
                     {
-                        MessageBoxResult downloadListResult = MessageBox.Show("本地战术人形数据表不存在，且 API 接口调用失败。加载进程已中止。\n是否重试？", "数据表加载失败", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes);
+                        MessageBoxResult downloadListResult = MessageBox.Show("本地人形数据表不存在，且 API 接口调用失败。加载进程已中止。\n是否重试？", "数据表加载失败", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes);
                         if (downloadListResult == MessageBoxResult.Yes)
                         {
                             btn_LoadDummyList_Click(this, null);
@@ -789,7 +820,7 @@ namespace GflChibiDesktop.Windows
                     if (rt.data.uuid != rb.meta.uuid)//有新版本
                     {
                         sp_downloader.Visibility = Visibility.Visible;
-                        lbl_loader.Content = "正在更新战术人形数据表";
+                        lbl_loader.Content = "正在更新人形数据表";
                         HttpClass.DownloadFile(rt.data.url, $"{AppDir}chibi_list.json", pb_downloader, lbl_downloader);
                         sp_downloader.Visibility = Visibility.Collapsed;
                         btn_LoadDummyList_Click(this, null);
@@ -1164,12 +1195,12 @@ namespace GflChibiDesktop.Windows
                 }
                 else
                 {
-                    HandyControl.Controls.Growl.ErrorGlobal("战术人形数据下载失败。\nURL 无效。请检查下载源设置。");
+                    HandyControl.Controls.Growl.ErrorGlobal("人形数据下载失败。\nURL 无效。请检查下载源设置。");
                 }
             }
             else
             {
-                HandyControl.Controls.Growl.ErrorGlobal("战术人形数据下载失败。\n服务器端未包含该人形的有效数据。");
+                HandyControl.Controls.Growl.ErrorGlobal("人形数据下载失败。\n服务器端未包含该人形的有效数据。");
             }
 
             tv_InternalSelector.IsEnabled = true;
@@ -1189,7 +1220,17 @@ namespace GflChibiDesktop.Windows
             tagString[5] = item.Tag[5];//content.display_full;
             tagString[6] = item.Tag[6];//content.path;
             tagString[7] = item.Tag[7];//content.filename;
-            DeleteData(tagString[1]);
+            if (LoadedPaths.Contains(tagString[6]))
+            {
+                HandyControl.Controls.Growl.InfoGlobal($"“{tagString[5]}”的数据正在被桌宠使用，无法删除。");
+                return;
+            }
+
+            MessageBoxResult deleteDataResult = MessageBox.Show($"是否删除人形“{tagString[5]}”的骨骼数据？\n\n注意：删除后将无法使用该人形的骨骼数据，除非重新下载。", "数据删除确认", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+            if (deleteDataResult == MessageBoxResult.Yes)
+            {
+                DeleteData(tagString[6]);
+            }
         }
 
         private void DeleteData(string dummy)
@@ -1293,7 +1334,7 @@ namespace GflChibiDesktop.Windows
                             }
                             catch (Exception ex)
                             {
-                                HandyControl.Controls.Growl.ErrorGlobal($"构建战术人形数据列表时出错。\n{ex}");
+                                HandyControl.Controls.Growl.ErrorGlobal($"构建人形数据列表时出错。\n{ex}");
                             }
                         }
 
@@ -1307,7 +1348,7 @@ namespace GflChibiDesktop.Windows
                 }
                 catch (Exception ex)
                 {
-                    HandyControl.Controls.Growl.ErrorGlobal($"加载战术人形数据列表时出错。\n{ex}");
+                    HandyControl.Controls.Growl.ErrorGlobal($"加载人形数据列表时出错。\n{ex}");
                 }
                 tvAfterSelect();
             }

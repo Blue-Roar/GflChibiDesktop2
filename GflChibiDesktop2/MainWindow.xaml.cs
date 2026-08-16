@@ -44,7 +44,7 @@ namespace HDTLPanel
         {
             InitializeComponent();
             window.Title += $" {productVersion.Major}.{productVersion.Minor}";
-            lblVersion.Content = $"程序版本 {productVersion}";
+            //lblVersion.Content = $"程序版本 {productVersion}";
 
             try
             {
@@ -99,7 +99,6 @@ namespace HDTLPanel
                 {
                     StartInstance(m);
                 }
-                UpdateCanStartNewInstance();
                 return true;
             }
 
@@ -107,35 +106,10 @@ namespace HDTLPanel
             string modelFile = Path.Combine(AppDir, "assets", "model.conf.json");
             if (!File.Exists(nameFile) || !File.Exists(modelFile))
             {
-                UpdateCanStartNewInstance();
                 return false;
             }
             StartInstance(null);
             return true;
-        }
-
-        /// <summary>
-        /// 判断是否存在可多开的数据来源（历史实例 或 默认模型配置）。
-        /// </summary>
-        private void UpdateCanStartNewInstance()
-        {
-            bool hasHistory = false;
-            try
-            {
-                if (File.Exists(InstancesFilePath))
-                {
-                    string json = File.ReadAllText(InstancesFilePath);
-                    var list = JsonConvert.DeserializeObject<List<GflChibiDesktop.Windows.ChibiModelData>>(json);
-                    hasHistory = list != null && list.Count > 0;
-                }
-            }
-            catch
-            {
-            }
-
-            string nameFile = Path.Combine(AppDir, "assets", "name.txt");
-            string modelFile = Path.Combine(AppDir, "assets", "model.conf.json");
-            context.CanStartNewInstance = hasHistory || (File.Exists(nameFile) && File.Exists(modelFile));
         }
 
         private static string InstancesFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "instances.json");
@@ -168,11 +142,11 @@ namespace HDTLPanel
         }
 
         /// <summary>
-        /// 开启一个新的桌宠实例。
+        /// 开启一个新的桌宠实例（基于当前选中的桌宠配置）。
         /// </summary>
         private void StartNewInstance(object sender, RoutedEventArgs e)
         {
-            StartInstance(null);
+            StartInstance(SelectedPet?.Model);
         }
 
         private void StartInstance(GflChibiDesktop.Windows.ChibiModelData? model)
@@ -434,6 +408,7 @@ namespace HDTLPanel
             w.Write(0);
             pet.IsChanged = false;
             context.IsChanged = false;
+            SaveInstances();
         }
 
         private void DiscardConfigChange(object sender, RoutedEventArgs e)
@@ -528,6 +503,7 @@ namespace HDTLPanel
             PetInstance? pet = SelectedPet;
             context.IsRunning = pet?.Manager != null;
             context.IsChanged = pet?.IsChanged ?? false;
+            context.HasActiveTab = pet != null;
         }
 
         private void Window_StateChanged(object? sender, EventArgs e)
@@ -538,11 +514,6 @@ namespace HDTLPanel
                 Hide();
                 HandyControl.Controls.Growl.InfoGlobal("少女前线桌面Q宠已在后台静默启动。\n双击托盘图标显示主窗口。");
             }
-        }
-
-        private void ChangeAutoRun(object sender, RoutedEventArgs e)
-        {
-            context.IsAutoRun = !context.IsAutoRun;
         }
 
         private void notifyIcon_MouseDoubleClick(object sender, RoutedEventArgs e)
@@ -580,8 +551,30 @@ namespace HDTLPanel
                 dataManagerWindow.Closed += (_, _) => dataManagerWindow = null;
             }
             dataManagerWindow.AnnouncementMsg = announcementMsg;
+            dataManagerWindow.LoadedPaths = GetLoadedPaths();
             dataManagerWindow.Show();
             dataManagerWindow.Activate();
+        }
+
+        /// <summary>
+        /// 收集所有运行中桌宠实例正在使用的模型数据目录（相对 assets/spine/ 的 path）。
+        /// </summary>
+        private System.Collections.Generic.HashSet<string> GetLoadedPaths()
+        {
+            var paths = new System.Collections.Generic.HashSet<string>();
+            foreach (var pet in pets)
+            {
+                if (pet.Model?.SkeletonFile is string s)
+                {
+                    // 形如 assets/spine/{path}/{file}.skel
+                    string[] parts = s.Split('/');
+                    if (parts.Length >= 3 && parts[0] == "assets" && parts[1] == "spine")
+                    {
+                        paths.Add(parts[2]);
+                    }
+                }
+            }
+            return paths;
         }
 
         private async void DataManagerWindow_ModelLoadRequested(GflChibiDesktop.Windows.ChibiModelData data)
@@ -596,9 +589,9 @@ namespace HDTLPanel
                 else
                 {
                     await RestartSelected(data);
-                    HandyControl.Controls.Growl.InfoGlobal($"已加载 {data.DisplayName}，战术人形已应用。");
+                    HandyControl.Controls.Growl.InfoGlobal($"已加载 {data.DisplayName}，人形已应用。");
                 }
-                UpdateCanStartNewInstance();
+                SaveInstances();
             }
             catch (OperationCanceledException)
             {
@@ -614,16 +607,16 @@ namespace HDTLPanel
         private bool isRunning = false;
         private bool isBusyClosing = false;
         private bool isChanged = false;
-        private bool canStartNewInstance = false;
+        private bool hasActiveTab = false;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public bool CanStartNewInstance
+        public bool HasActiveTab
         {
-            get => canStartNewInstance;
+            get => hasActiveTab;
             set
             {
-                canStartNewInstance = value;
+                hasActiveTab = value;
                 OnPropertyChanged();
             }
         }
@@ -679,20 +672,6 @@ namespace HDTLPanel
         public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is bool v && parameter is string s) return s.Split('/')[v ? 1 : 0];
-            return null;
-        }
-
-        public object? ConvertBack(object value, Type targetTypes, object parameter, CultureInfo culture)
-        {
-            return null;
-        }
-    }
-
-    public class ReverseBooleanValueConverter : IValueConverter
-    {
-        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is bool v) return !v;
             return null;
         }
 

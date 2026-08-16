@@ -12,8 +12,8 @@
     <AssemblyTitle>少女前线桌面Q宠</AssemblyTitle>
     <Description>少女前线桌面Q宠</Description>
     <Copyright>© 2020~2026 BrightSu</Copyright>
-    <AssemblyVersion>2.1.0.2</AssemblyVersion>
-    <FileVersion>2.1.0.2</FileVersion>
+    <AssemblyVersion>2.1.0.3</AssemblyVersion>
+    <FileVersion>2.1.0.3</FileVersion>
     <InformationalVersion>20260816</InformationalVersion>
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <PackageProjectUrl>https://projects.brightsu.cn/GflChibiDesktop/V2/</PackageProjectUrl>
@@ -46,6 +46,21 @@
     <None Include="GflChibiDesktop\chibi_list.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>app\chibi_list.json</Link>
+    </None>
+  </ItemGroup>
+
+  <!-- HDTL 运行时（luajit、lua 模块、素材等），托管于 runtime/ 目录，拷贝到输出 app/ -->
+  <ItemGroup>
+    <Content Include="runtime\**\*" Exclude="runtime\instances\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>app\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- huMessageQueue.dll 由 Ipc.cs 通过 P/Invoke 加载，必须与主程序同目录 -->
+    <None Include="huMessageQueue.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

@@ -11,7 +11,6 @@
         Background="#FF1B1B1C" Foreground="White" Icon="/hk416_happy.ico">
     <Window.Resources>
         <local:BoolToStringValueConverter x:Key="runningStatusConverter"/>
-        <local:ReverseBooleanValueConverter x:Key="reverseBooleanConverter"/>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -30,22 +29,24 @@
         </hc:NotifyIcon>
         <Label Content="当前主实例状态：" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20"/>
         <Label Content="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=未运行/正在运行}" Foreground="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=Red/Green}" HorizontalAlignment="Left" Margin="110,10,0,0" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20"/>
-        <Label Content="版本" x:Name="lblVersion" Margin="0,10,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20" Grid.ColumnSpan="2" HorizontalContentAlignment="Right"/>
-        <Button Content="人形扩编(_E)" HorizontalAlignment="Left" Margin="10,39,0,0" VerticalAlignment="Top" Width="90" Click="StartNewInstance" IsEnabled="{Binding CanStartNewInstance}" ToolTip="基于当前选中的桌宠配置，新开一个桌宠实例"/>
-        <Button Content="{Binding Path=IsAutoRun, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=开启自启(_B)/关闭自启(_B)}" Margin="110,39,0,0" VerticalAlignment="Top" Width="90" Click="ChangeAutoRun" HorizontalAlignment="Left"/>
-        <CheckBox VerticalAlignment="Top" HorizontalAlignment="Right" Content="窗口置顶(_T)" Margin="0,42,10,0" Width="90" Height="22" IsChecked="{Binding Topmost, ElementName=window}" Grid.Column="1" />
-        <Grid x:Name="ConfigZoneGrid" Margin="0,72,0,0" Grid.ColumnSpan="2">
+        <CheckBox VerticalAlignment="Top" HorizontalAlignment="Right" Content="窗口置顶(_T)" Margin="0,10,10,0" Width="90" Height="20" IsChecked="{Binding Topmost, ElementName=window}" Grid.Column="1" />
+        <Grid x:Name="ConfigZoneGrid" Margin="0,40,0,0" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
                 <RowDefinition/>
+                <RowDefinition Height="40"/>
             </Grid.RowDefinitions>
-            <Grid Height="40" VerticalAlignment="Center" Background="{StaticResource DefaultBrush}">
-                <Button Content="保存配置(_S)" HorizontalAlignment="Left" Margin="10,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="SaveConfig"/>
-                <Button Content="放弃更改(_Q)" HorizontalAlignment="Left" Margin="110,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="DiscardConfigChange"/>
-                <Button Content="关闭当前(_W)" HorizontalAlignment="Left" Margin="210,0,0,0" Width="90" Click="StopSelectedInstance" IsEnabled="{Binding Path=IsBusyClosing, Converter={StaticResource reverseBooleanConverter}}" ToolTip="结束当前选中的桌宠实例"/>
-                <Button Content="人形数据配置(_D)" HorizontalAlignment="Right" Margin="0,0,10,0" Width="132" Click="GflChibiDesktop"/>
+            <Grid Height="40" VerticalAlignment="Center" Background="{StaticResource DefaultBrush}" Grid.Row="0">
+                <Button Content="人形扩编(_E)" HorizontalAlignment="Left" Margin="10,0,0,0" Width="90" Click="StartNewInstance" IsEnabled="{Binding HasActiveTab}" ToolTip="基于当前选中的桌宠配置，新开一个桌宠实例"/>
+                <Button Content="关闭当前(_W)" HorizontalAlignment="Left" Margin="110,0,0,0" Width="90" Click="StopSelectedInstance" IsEnabled="{Binding HasActiveTab}" ToolTip="结束当前选中的桌宠实例"/>
+                <ToggleButton Style="{StaticResource ToggleButtonSwitch}" Content="开机自启(_B)" HorizontalAlignment="Right" Margin="0,0,10,0" Width="125" IsChecked="{Binding IsAutoRun}" ToolTip="登录 Windows 时自动启动本程序" Height="28" HorizontalContentAlignment="Left" Grid.ColumnSpan="2"/>
             </Grid>
             <TabControl x:Name="PetTabs" Grid.Row="1" Margin="0,1,0,0" SelectionChanged="PetTabs_SelectionChanged"/>
+            <Grid Height="40" VerticalAlignment="Center" Background="{StaticResource DefaultBrush}" Grid.Row="2">
+                <Button Content="保存配置(_S)" HorizontalAlignment="Left" Margin="10,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="SaveConfig"/>
+                <Button Content="放弃更改(_Q)" HorizontalAlignment="Left" Margin="110,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="DiscardConfigChange"/>
+                <Button Content="人形数据配置(_D)" HorizontalAlignment="Right" Margin="0,0,10,0" Width="132" Click="GflChibiDesktop"/>
+            </Grid>
         </Grid>
     </Grid>
 </Window>
