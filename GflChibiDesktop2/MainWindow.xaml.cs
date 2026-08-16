@@ -278,7 +278,7 @@ namespace HDTLPanel
             pet.UpdateModel(data);
             if (pet.TabTitle is not null)
             {
-                pet.TabTitle.Text = pet.Name;
+                pet.TabTitle.Text = GetTabTitle(pet);
             }
             pet.IsRestarting = true;
             await StopManager(pet);
@@ -382,6 +382,11 @@ namespace HDTLPanel
             UpdateStatus();
         }
 
+        /// <summary>
+        /// 生成标签页标题：实例编号 + 人形名称。
+        /// </summary>
+        private static string GetTabTitle(PetInstance pet) => $"{pet.Id}. {pet.Name}";
+
         private void AddTab(PetInstance pet)
         {
             var tab = new TabItem();
@@ -389,7 +394,7 @@ namespace HDTLPanel
             tab.Tag = pet;
 
             var header = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-            pet.TabTitle = new TextBlock { Text = pet.Name, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
+            pet.TabTitle = new TextBlock { Text = GetTabTitle(pet), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
             var close = new Button
             {
                 Content = "✕",
