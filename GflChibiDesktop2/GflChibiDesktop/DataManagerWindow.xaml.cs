@@ -167,6 +167,104 @@ namespace GflChibiDesktop.Windows
         SolidColorBrush type6color = new SolidColorBrush(Color.FromRgb(252, 79, 0));
         SolidColorBrush type7color = new SolidColorBrush(Color.FromRgb(222, 182, 255));
 
+        /// <summary>
+        /// 读取并反序列化人形数据表。
+        /// </summary>
+        private RootObject ReadChibiList()
+        {
+            string str = File.ReadAllText($"{AppDir}chibi_list.json");
+            return JsonConvert.DeserializeObject<RootObject>(str);
+        }
+
+        /// <summary>
+        /// 从人形条目构建节点 Tag（12 个字段，供下载/加载/立绘逻辑使用）。
+        /// </summary>
+        private string[] CreateTag(Content content)
+        {
+            string[] tag = new string[12];
+            tag[0] = "True"; // displaySwitch
+            tag[1] = content.name;
+            tag[2] = content.parent;
+            tag[3] = content.type;
+            tag[4] = content.display;
+            tag[5] = content.display_full;
+            tag[6] = content.path;
+            tag[7] = content.filename;
+            tag[8] = content.cg;
+            tag[9] = content.cg_d;
+            tag[10] = content.filename_r;
+            tag[11] = content.files;
+            return tag;
+        }
+
+        /// <summary>
+        /// 按 type 设置节点前景色。
+        /// </summary>
+        private void SetNodeColor(ComponentModel node, Content content)
+        {
+            if (content.category == "TDOLL")
+            {
+                if (content.type.Contains("0")) { node.Foreground = type0color; }
+                if (content.type.Contains("2")) { node.Foreground = type2color; }
+                if (content.type.Contains("3")) { node.Foreground = type3color; }
+                if (content.type.Contains("4")) { node.Foreground = type4color; }
+                if (content.type.Contains("5")) { node.Foreground = type5color; }
+                if (content.type.Contains("6")) { node.Foreground = type6color; }
+                if (content.type.Contains("7")) { node.Foreground = type7color; }
+            }
+            else if (content.category == "ENEMY")
+            {
+                if (content.type.Contains("0")) { node.Foreground = type0color; }
+                if (content.type.Contains("1")) { node.Foreground = type2color; }
+                if (content.type.Contains("2")) { node.Foreground = type3color; }
+                if (content.type.Contains("3")) { node.Foreground = type5color; }
+            }
+        }
+
+        /// <summary>
+        /// 构建树：按 ParentID 建立索引一次扫描，递归时 O(1) 查找，避免 O(n²)。
+        /// </summary>
+        private List<ComponentModel> BuildTree()
+        {
+            var index = new Dictionary<int, List<ComponentModel>>();
+            foreach (var item in initializeDataSet)
+            {
+                if (!index.TryGetValue(item.ParentID, out var list))
+                {
+                    list = new List<ComponentModel>();
+                    index[item.ParentID] = list;
+                }
+                list.Add(item);
+            }
+            return BuildTree(0, index);
+        }
+
+        private List<ComponentModel> BuildTree(int id, Dictionary<int, List<ComponentModel>> index)
+        {
+            if (!index.TryGetValue(id, out var node)) return new List<ComponentModel>();
+            foreach (var item in node)
+            {
+                item.Children = BuildTree(item.ComponentID, index);
+            }
+            return node;
+        }
+
+        /// <summary>
+        /// 移除没有子节点的一级分类（Level&lt;3 且没有子项指向它）。
+        /// </summary>
+        private void RemoveEmptyParents(Dictionary<int, List<ComponentModel>> index)
+        {
+            var emptyParents = initializeDataSet.Where(n => n.Level < 3 && !index.ContainsKey(n.ComponentID)).ToList();
+            foreach (var ep in emptyParents)
+            {
+                initializeDataSet.Remove(ep);
+                if (index.TryGetValue(ep.ParentID, out var pl))
+                {
+                    pl.Remove(ep);
+                }
+            }
+        }
+
         public void LoadDummyList()
         {
             dummyListLoaded = false;
@@ -246,8 +344,7 @@ namespace GflChibiDesktop.Windows
 
             try
             {
-                string str = File.ReadAllText($"{AppDir}chibi_list.json");
-                RootObject rb = JsonConvert.DeserializeObject<RootObject>(str);
+                RootObject rb = ReadChibiList();
                 int total = rb.content.Count;
                 Dispatcher.Invoke(() =>
                 {
@@ -283,46 +380,14 @@ namespace GflChibiDesktop.Windows
                     }
                     try
                     {
-                        bool displaySwitch = true;
                         ComponentModel node = new ComponentModel();
                         node.ComponentName = $"dummy_{content.name.Replace(" ", string.Empty)}";
                         node.Header = content.display;
                         node.ComponentID = 200 + counter;
-                        string[] tagString = new string[12];
-                        tagString[0] = $"{displaySwitch}";
-                        tagString[1] = content.name;
-                        tagString[2] = content.parent;
-                        tagString[3] = content.type;
-                        tagString[4] = content.display;
-                        tagString[5] = content.display_full;
-                        tagString[6] = content.path;
-                        tagString[7] = content.filename;
-                        tagString[8] = content.cg;
-                        tagString[9] = content.cg_d;
-                        tagString[10] = content.filename_r;
-                        tagString[11] = content.files;
-                        node.Tag = tagString;
-                        //node.ImageKey = content.type;
-                        //node.SelectedImageKey = content.type;
+                        node.Tag = CreateTag(content);
                         node.Foreground = defaultColor;
                         node.ToolTip = content.display_full;
-                        if (content.category == "TDOLL")
-                        {
-                            if (content.type.Contains("0")) { node.Foreground = type0color; }
-                            if (content.type.Contains("2")) { node.Foreground = type2color; }
-                            if (content.type.Contains("3")) { node.Foreground = type3color; }
-                            if (content.type.Contains("4")) { node.Foreground = type4color; }
-                            if (content.type.Contains("5")) { node.Foreground = type5color; }
-                            if (content.type.Contains("6")) { node.Foreground = type6color; }
-                            if (content.type.Contains("7")) { node.Foreground = type7color; }
-                        }
-                        else if (content.category == "ENEMY")
-                        {
-                            if (content.type.Contains("0")) { node.Foreground = type0color; }
-                            if (content.type.Contains("1")) { node.Foreground = type2color; }
-                            if (content.type.Contains("2")) { node.Foreground = type3color; }
-                            if (content.type.Contains("3")) { node.Foreground = type5color; }
-                        }
+                        SetNodeColor(node, content);
 
                         node.ParentID = 109;
 
@@ -525,8 +590,7 @@ namespace GflChibiDesktop.Windows
                 }
 
 
-                // 移除没有子节点的一级分类（Level<3 并且没有其他项的 ParentID 指向它）
-                // 预构建 ParentID 索引，避免 O(n²) 扫描
+                // 移除没有子节点的一级分类并构建树（索引化，避免 O(n²)）
                 var childrenIndex = new Dictionary<int, List<ComponentModel>>();
                 foreach (var item in initializeDataSet)
                 {
@@ -537,28 +601,8 @@ namespace GflChibiDesktop.Windows
                     }
                     list.Add(item);
                 }
-                var emptyParents = initializeDataSet.Where(n => n.Level < 3 && !childrenIndex.ContainsKey(n.ComponentID)).ToList();
-                foreach (var ep in emptyParents)
-                {
-                    initializeDataSet.Remove(ep);
-                    if (childrenIndex.TryGetValue(ep.ParentID, out var pl))
-                    {
-                        pl.Remove(ep);
-                    }
-                }
-
-                //加载数据（LoadTreeView 为纯数据处理，用索引避免 O(n²)）
-                List<ComponentModel> tree = LoadTreeView(0, childrenIndex);
-
-                List<ComponentModel> LoadTreeView(int id, Dictionary<int, List<ComponentModel>> index)
-                {
-                    if (!index.TryGetValue(id, out var node)) return new List<ComponentModel>();
-                    foreach (var item in node)
-                    {
-                        item.Children = LoadTreeView(item.ComponentID, index);
-                    }
-                    return node;
-                }
+                RemoveEmptyParents(childrenIndex);
+                List<ComponentModel> tree = BuildTree(0, childrenIndex);
 
                 //});
                 int loaded = counter;
@@ -741,8 +785,7 @@ namespace GflChibiDesktop.Windows
 
                 if (File.Exists($"{AppDir}chibi_list.json"))//API请求成功，本地存在
                 {
-                    string str = File.ReadAllText($"{AppDir}chibi_list.json");
-                    RootObject rb = JsonConvert.DeserializeObject<RootObject>(str);
+                    RootObject rb = ReadChibiList();
                     if (rt.data.uuid != rb.meta.uuid)//有新版本
                     {
                         sp_downloader.Visibility = Visibility.Visible;
@@ -1199,8 +1242,7 @@ namespace GflChibiDesktop.Windows
                 initializeDataSet.Clear();
                 try
                 {
-                    string str = File.ReadAllText($"{AppDir}chibi_list.json");
-                    RootObject rb = JsonConvert.DeserializeObject<RootObject>(str);
+                    RootObject rb = ReadChibiList();
                     btn_LoadDummyList.ToolTip = $"当前数据列表版本 {rb.meta.version}";
                     lblListVersion.Text = rb.meta.version;
                     int total = rb.content.Count;
@@ -1218,35 +1260,14 @@ namespace GflChibiDesktop.Windows
                         {
                             try
                             {
-                                bool displaySwitch = true;
                                 ComponentModel node = new ComponentModel();
                                 node.ComponentName = $"dummy_{content.name.Replace(" ", string.Empty)}";
                                 node.Header = content.display;
                                 node.ComponentID = 100 + counter;
-                                string[] tagString = new string[12];
-                                tagString[0] = $"{displaySwitch}";
-                                tagString[1] = content.name;
-                                tagString[2] = content.parent;
-                                tagString[3] = content.type;
-                                tagString[4] = content.display;
-                                tagString[5] = content.display_full;
-                                tagString[6] = content.path;
-                                tagString[7] = content.filename;
-                                tagString[8] = content.cg;
-                                tagString[9] = content.cg_d;
-                                tagString[10] = content.filename_r;
-                                tagString[11] = content.files;
-                                node.Tag = tagString;
-                                //node.ImageKey = content.type;
-                                //node.SelectedImageKey = content.type;
+                                node.Tag = CreateTag(content);
                                 node.Foreground = defaultColor;
                                 node.ToolTip = content.display_full;
-                                if (content.type.Contains("2")) { node.Foreground = type2color; }
-                                if (content.type.Contains("3")) { node.Foreground = type3color; }
-                                if (content.type.Contains("4")) { node.Foreground = type4color; }
-                                if (content.type.Contains("5")) { node.Foreground = type5color; }
-                                if (content.type.Contains("6")) { node.Foreground = type6color; }
-                                if (content.type.Contains("7")) { node.Foreground = type7color; }
+                                SetNodeColor(node, content);
 
                                 node.ParentID = 0;
                                 if (content.name == content.parent)
@@ -1279,17 +1300,7 @@ namespace GflChibiDesktop.Windows
                     }
 
                     //加载数据
-                    tv_InternalSelector.ItemsSource = LoadTreeView(0);
-
-                    List<ComponentModel> LoadTreeView(int id)
-                    {
-                        List<ComponentModel> node = initializeDataSet.FindAll(s => s.ParentID.Equals(id));
-                        foreach (var item in node)
-                        {
-                            item.Children = LoadTreeView(item.ComponentID);
-                        }
-                        return node;
-                    }
+                    tv_InternalSelector.ItemsSource = BuildTree();
 
                     //});
                     //tv_InternalSelector.Items.Add(treeViewItemTemp);
