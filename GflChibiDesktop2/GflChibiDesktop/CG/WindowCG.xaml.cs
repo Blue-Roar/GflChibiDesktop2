@@ -27,8 +27,8 @@ namespace GflChibiDesktop
         }
 
 
-        Uri cg_n_uri;
-        Uri cg_d_uri;
+        Uri? cg_n_uri;
+        Uri? cg_d_uri;
 
         private void Window_IsHitTestVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
@@ -99,7 +99,7 @@ namespace GflChibiDesktop
             {
                 sld_zoomScale.Value--;
             }
-            sld_zoomScale_ValueChanged(this, null);
+            ApplyZoomScale(sld_zoomScale.Value);
         }
 
         private void menuItem_Close_Click(object sender, RoutedEventArgs e)
@@ -139,7 +139,12 @@ namespace GflChibiDesktop
 
         private void sld_zoomScale_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            int scale = (int)sld_zoomScale.Value;
+            ApplyZoomScale(e.NewValue);
+        }
+
+        private void ApplyZoomScale(double value)
+        {
+            int scale = (int)value;
 
             vb_img.Width = 1024 * scale / 100;
             vb_img.Height = 1024 * scale / 100;
@@ -176,12 +181,18 @@ namespace GflChibiDesktop
 
         private void menuItem_d_Unchecked(object sender, RoutedEventArgs e)
         {
-            ImageCG.Source = new BitmapImage(cg_n_uri);
+            if (cg_n_uri != null)
+            {
+                ImageCG.Source = new BitmapImage(cg_n_uri);
+            }
         }
 
         private void menuItem_d_Checked(object sender, RoutedEventArgs e)
         {
-            ImageCG.Source = new BitmapImage(cg_d_uri);
+            if (cg_d_uri != null)
+            {
+                ImageCG.Source = new BitmapImage(cg_d_uri);
+            }
         }
 
         private void sld_alpha_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

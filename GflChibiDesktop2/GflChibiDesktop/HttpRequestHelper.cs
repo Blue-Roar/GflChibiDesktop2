@@ -7,6 +7,7 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace GflChibiDesktop
 {
@@ -115,6 +116,68 @@ namespace GflChibiDesktop
             {
                 isSuccess = false;
                 return ex.Message;
+            }
+        }
+
+        /// <summary>
+        /// 异步 POST 请求。返回 (是否成功, 响应内容或错误信息)。
+        /// </summary>
+        public static async Task<(bool Success, string Result)> PostWebRequestAsync(string postUrl, string paramData, Encoding dataEncode)
+        {
+            try
+            {
+                byte[] byteArray = dataEncode.GetBytes(paramData);
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                HttpWebRequest webReq = (HttpWebRequest)WebRequest.Create(new Uri(postUrl));
+                webReq.Method = "POST";
+                webReq.ContentType = "application/x-www-form-urlencoded";
+                webReq.UserAgent = userAgent;
+                webReq.Timeout = 5000;
+                webReq.ContentLength = byteArray.Length;
+
+                using (Stream newStream = await webReq.GetRequestStreamAsync())
+                {
+                    await newStream.WriteAsync(byteArray, 0, byteArray.Length);
+                }
+
+                using (HttpWebResponse response = (HttpWebResponse)await webReq.GetResponseAsync())
+                using (StreamReader sr = new StreamReader(response.GetResponseStream(), dataEncode))
+                {
+                    if (response.StatusCode != HttpStatusCode.OK)
+                    {
+                        int statusCode = GetHttpStatusCode(response.StatusCode);
+                        return (false, $"服务器返回了 HTTP 状态码 {statusCode}({response.StatusCode})");
+                    }
+                    return (true, await sr.ReadToEndAsync());
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 异步 GET 请求。返回 (是否成功, 响应内容或错误信息)。
+        /// </summary>
+        public static async Task<(bool Success, string Result)> GetWebRequestAsync(string getUrl, Encoding dataEncode)
+        {
+            try
+            {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(getUrl);
+                req.UserAgent = userAgent;
+                req.Timeout = 5000;
+
+                using (HttpWebResponse resp = (HttpWebResponse)await req.GetResponseAsync())
+                using (StreamReader reader = new StreamReader(resp.GetResponseStream(), dataEncode))
+                {
+                    return (true, await reader.ReadToEndAsync());
+                }
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
             }
         }
 

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GflChibiDesktop.Windows"
         mc:Ignorable="d"
-        Title="人形数据配置" WindowStartupLocation="CenterScreen" Icon="/hk416_happy.ico" Background="#FF1B1B1C" Foreground="White" ResizeMode="CanResizeWithGrip" MinHeight="600" MinWidth="600" Width="600" Height="600" Visibility="Visible" SnapsToDevicePixels="True" Loaded="Window_Loaded" >
+        Title="人形数据配置" WindowStartupLocation="CenterScreen" Icon="/hk416_happy.ico" Background="#FF1B1B1C" Foreground="White" ResizeMode="CanResizeWithGrip" MinHeight="600" MinWidth="600" Width="600" Height="600" Visibility="Visible" SnapsToDevicePixels="True" Loaded="Window_Loaded" Closing="Window_Closing" >
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
@@ -18,7 +18,7 @@
     <Grid MinHeight="256" MaxHeight="{DynamicResource {x:Static SystemParameters.PrimaryScreenHeightKey}}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"></ColumnDefinition>
-            <ColumnDefinition Width="192"></ColumnDefinition>
+            <ColumnDefinition Width="210"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="24"/>
@@ -26,8 +26,8 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Label x:Name="lblExtraStr" Content="ExtraStr" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Background="{x:Null}" BorderBrush="{x:Null}" Padding="4,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Foreground="{DynamicResource PrimaryBrush}"/>
-        <CheckBox Grid.Row="0" Grid.Column="1" x:Name="chb_thinList" VerticalAlignment="Stretch" HorizontalAlignment="Right" Content="紧凑列表" Margin="0,0,104,0" Width="80" Click="chb_thinList_Click" IsChecked="True" />
-        <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Right" Content="将此窗口置顶" Margin="0" Width="100" IsChecked="{Binding Topmost, ElementName=window}"/>
+        <CheckBox Grid.Row="0" Grid.Column="1" x:Name="chb_thinList" VerticalAlignment="Stretch" HorizontalAlignment="Right" Content="紧凑列表(_C)" Margin="0,0,105,0" Width="100" Click="chb_thinList_Click" IsChecked="True" />
+        <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Right" Content="窗口置顶(_T)" Margin="0" Width="100" IsChecked="{Binding Topmost, ElementName=window}"/>
 
         <Grid Grid.Row="1" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
@@ -87,12 +87,12 @@
                     <RowDefinition Height="1*" />
                 </Grid.RowDefinitions>
                 <Button x:Name="btn_sources" Content="下载源设置" Click="btn_sources_Click" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" />
-                <Button x:Name="btn_loadCG" Content="加载立绘" Click="btn_loadCG_Click" IsEnabled="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" ToolTip="加载选定人形的立绘" Grid.Column="1"/>
+                <Button x:Name="btn_loadCG" Content="加载立绘(_S)" Click="btn_loadCG_Click" IsEnabled="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" ToolTip="加载选定人形的立绘" Grid.Column="1"/>
                 <hc:SearchBar x:Name="sbQuery" Grid.Column="2" SearchStarted="SearchBar_SearchStarted" OverridesDefaultStyle="True" ToolTip="搜索人形" Margin="2,0,2,0" IsRealTime="True" hc:InfoElement.ShowClearButton="True" />
                 <!--<hc:AnimationPath Duration="0:0:5" Stretch="Uniform" StrokeThickness="2" Stroke="{DynamicResource PrimaryBrush}" Data="{StaticResource SubGeometry}" Grid.Column="2"/>-->
-                <Button x:Name="btn_downloadData" Grid.Column="3" Content="下载数据" IsEnabled="False" Click="btn_downloadData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="下载选定人形的骨骼数据" VerticalAlignment="Stretch"/>
-                <Button x:Name="btn_deleteData" Grid.Column="3" Content="删除数据" IsEnabled="False" Click="btn_deleteData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="删除选定人形的骨骼数据" VerticalAlignment="Stretch"/>
-                <Button x:Name="btn_loadData" Content="加载数据" VerticalAlignment="Stretch" Grid.Column="4" Click="btn_loadData_Click" Margin="2,0,2,0" IsEnabled="False" ToolTip="加载选定人形的骨骼数据" HorizontalAlignment="Stretch" />
+                <Button x:Name="btn_downloadData" Grid.Column="3" Content="下载数据(_D)" IsEnabled="False" Click="btn_downloadData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="下载选定人形的骨骼数据" VerticalAlignment="Stretch"/>
+                <Button x:Name="btn_deleteData" Grid.Column="3" Content="删除数据(_D)" IsEnabled="False" Click="btn_deleteData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="删除选定人形的骨骼数据" VerticalAlignment="Stretch"/>
+                <Button x:Name="btn_loadData" Content="加载数据(_L)" VerticalAlignment="Stretch" Grid.Column="4" Click="btn_loadData_Click" Margin="2,0,2,0" IsEnabled="False" ToolTip="加载选定人形的骨骼数据" HorizontalAlignment="Stretch" />
                 <hc:ButtonGroup x:Name="btng_loadData" VerticalAlignment="Stretch" Grid.Column="4" Margin="2,0,2,0">
                     <Button x:Name="btn_loadDefaultData" Content="默认" Click="btn_loadData_Click" IsEnabled="False" ToolTip="加载选定人形的默认骨骼数据" />
                     <Button x:Name="btn_loadDormData" Content="宿舍" Click="btn_loadDormData_Click" IsEnabled="False" ToolTip="加载选定人形的宿舍骨骼数据"/>
@@ -112,7 +112,7 @@
                 </StackPanel>
             </Grid>
         </Grid>
-        <Label Content="人形骨骼数据、立绘图片等少女前线游戏素材版权均归云母组所有。&#xD;&#xA;仅供个人学习研究与交流用，严禁用于商业用途。使用此程序一切风险自负。" Grid.Row="3" Grid.ColumnSpan="2" VerticalContentAlignment="Center" Margin="2,0,0,0" Padding="10,5,5,5" Background="{x:Null}" BorderBrush="{x:Null}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="42"/>
+        <Label Content="人形骨骼数据、立绘图片等少女前线游戏素材版权均归散爆、云母组所有。&#xD;&#xA;仅供个人学习研究与交流用，严禁用于商业用途。使用此程序一切风险自负。" Grid.Row="3" Grid.ColumnSpan="2" VerticalContentAlignment="Center" Margin="2,0,0,0" Padding="10,5,5,5" Background="{x:Null}" BorderBrush="{x:Null}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="42"/>
         <Button x:Name="btnVersion" Content="程序版本：Version" Click="btnVersion_Click"  ToolTip="查看程序信息"  Grid.Column="0" Grid.Row="3" Width="130" HorizontalAlignment="Right" Margin="0,10,10,10" VerticalAlignment="Top" Grid.ColumnSpan="3" Height="30" Padding="0"/>
     </Grid>
 </Window>

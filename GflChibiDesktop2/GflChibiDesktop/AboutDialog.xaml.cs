@@ -17,7 +17,6 @@ namespace GflChibiDesktop
     {
         Version version;
         string build;
-        Version buildver;
         string content;
 
         public readonly string productName = ((AssemblyProductAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyProductAttribute))).Product.ToString();
@@ -46,21 +45,20 @@ namespace GflChibiDesktop
             FetchBiliInfo();
         }
 
-        private void Check4Update()
+        private async void Check4Update()
         {
             lbl_status.Content = string.Empty;
             txt_latest_version.Text = string.Empty;
             txt_description.Text = string.Empty;
             try
             {
-                bool DefaultPost = false;
-                string DefaultStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/update", string.Empty, Encoding.UTF8, ref DefaultPost);
-                if (!DefaultPost)
+                var (defaultPost, defaultStr) = await HttpRequestHelper.PostWebRequestAsync("https://api.brightsu.cn/GflChibiDesktop2/update", string.Empty, Encoding.UTF8);
+                if (!defaultPost)
                 {
-                    HandyControl.Controls.Growl.WarningGlobal($"无法获取版本信息。API 接口调用失败。\n错误：{DefaultStr}");
+                    HandyControl.Controls.Growl.WarningGlobal($"无法获取版本信息。API 接口调用失败。\n错误：{defaultStr}");
                     return;
                 }
-                UpdateRoot rt = JsonConvert.DeserializeObject<UpdateRoot>(DefaultStr);
+                UpdateRoot rt = JsonConvert.DeserializeObject<UpdateRoot>(defaultStr);
 
                 if (rt.ret != 200)
                 {
@@ -147,23 +145,23 @@ namespace GflChibiDesktop
                 HandyControl.Controls.Growl.ErrorGlobal($"无法打开链接。\n{ex.Message}");
             }
         }
-        private void FetchBiliInfo()
+        private async void FetchBiliInfo()
         {
             try
             {
-                string IndexStr = HttpRequestHelper.GetWebRequest("https://api.bilibili.com/x/space/acc/info?mid=13827887", Encoding.UTF8);
-                Console.WriteLine(IndexStr);
-                BiliSpaceInfoRoot rt = JsonConvert.DeserializeObject<BiliSpaceInfoRoot>(IndexStr);
-                if (rt.code == 200)
+                var (ok1, indexStr1) = await HttpRequestHelper.GetWebRequestAsync("https://api.bilibili.com/x/space/acc/info?mid=13827887", Encoding.UTF8);
+                Console.WriteLine(indexStr1);
+                BiliSpaceInfoRoot rt = JsonConvert.DeserializeObject<BiliSpaceInfoRoot>(indexStr1);
+                if (ok1 && rt.code == 200)
                 {
                     name_BrightSu.Text = rt.data.name;
                     avatar_BrightSu.Source = new BitmapImage(new Uri(rt.data.face, UriKind.Absolute));
                 }
 
-                IndexStr = HttpRequestHelper.GetWebRequest("https://api.bilibili.com/x/space/acc/info?mid=102421353", Encoding.UTF8);
-                Console.WriteLine(IndexStr);
-                rt = JsonConvert.DeserializeObject<BiliSpaceInfoRoot>(IndexStr);
-                if (rt.code == 200)
+                var (ok2, indexStr2) = await HttpRequestHelper.GetWebRequestAsync("https://api.bilibili.com/x/space/acc/info?mid=102421353", Encoding.UTF8);
+                Console.WriteLine(indexStr2);
+                rt = JsonConvert.DeserializeObject<BiliSpaceInfoRoot>(indexStr2);
+                if (ok2 && rt.code == 200)
                 {
                     name_Huix.Text = rt.data.name;
                     avatar_Huix.Source = new BitmapImage(new Uri(rt.data.face, UriKind.Absolute));

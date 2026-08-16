@@ -98,10 +98,17 @@ namespace HDTLPanel
             {
                 if (disposing)
                 {
-                    // TODO: 释放托管状态(托管对象)
+                    // 释放托管状态(托管对象)
+                    cancellationTokenSource.Cancel();
+                    try
+                    {
+                        updateTask?.Wait(1000);
+                    }
+                    catch
+                    {
+                    }
                     txIpc.Dispose();
                     rxIpc.Dispose();
-                    cancellationTokenSource.Cancel();
                 }
 
                 // TODO: 释放未托管的资源(未托管的对象)并重写终结器

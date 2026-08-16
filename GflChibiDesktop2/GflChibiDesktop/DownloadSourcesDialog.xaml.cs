@@ -30,10 +30,9 @@ namespace GflChibiDesktop
             btn_Cancel.Command.Execute(null);
         }
 
-        private void btn_UpdateSources_Click(object sender, System.Windows.RoutedEventArgs e)
+        private async void btn_UpdateSources_Click(object sender, System.Windows.RoutedEventArgs e)
         {
-            bool sourcesPost = false;
-            string sourcesStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/sources", string.Empty, Encoding.UTF8, ref sourcesPost);
+            var (sourcesPost, sourcesStr) = await HttpRequestHelper.PostWebRequestAsync("https://api.brightsu.cn/GflChibiDesktop2/sources", string.Empty, Encoding.UTF8);
             if (!sourcesPost)
             {
                 HandyControl.Controls.Growl.ErrorGlobal($"获取下载源列表失败。API 接口调用失败。\n错误：{sourcesStr}");

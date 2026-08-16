@@ -25,18 +25,29 @@ namespace HDTLPanel
     public partial class MainWindow : Window
     {
         const string settingsPath = "settings.json";
-        public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version) ?? Assembly.GetExecutingAssembly().GetName().Version;
-        public readonly string currentBuild = ((AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute))).InformationalVersion;
+        public readonly Version productVersion = GetProductVersion();
+        public readonly string currentBuild = ((AssemblyInformationalVersionAttribute?)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute)))?.InformationalVersion ?? "";
 
         readonly MainWindowDataContext context = new();
         readonly List<PetInstance> pets = new();
         int nextPetId = 1;
         bool isExiting = false;
         bool hasCentered = false;
+        bool skipConfirmOnClose = false;
         GflChibiDesktop.Windows.DataManagerWindow? dataManagerWindow;
         public string announcementMsg = "";
 
         string AppDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
+
+        private static Version GetProductVersion()
+        {
+            var attr = (AssemblyFileVersionAttribute?)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute));
+            if (attr != null && !string.IsNullOrEmpty(attr.Version) && Version.TryParse(attr.Version, out var v))
+            {
+                return v;
+            }
+            return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(2, 0, 0, 0);
+        }
 
         private PetInstance? SelectedPet => (PetTabs.SelectedItem as TabItem)?.Tag as PetInstance;
 
@@ -46,32 +57,62 @@ namespace HDTLPanel
             window.Title += $" {productVersion.Major}.{productVersion.Minor}";
             //lblVersion.Content = $"程序版本 {productVersion}";
 
-            try
+            // 启动统计请求放后台线程，避免阻塞窗口初始化
+            string fallbackTitle = window.Title; // 在 UI 线程缓存，供后台线程使用
+            _ = System.Threading.Tasks.Task.Run(() =>
             {
-                bool StartupPost = false;
-                string StartupStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/startup", $"version={productVersion}&build={currentBuild}", Encoding.UTF8, ref StartupPost);
-                if (StartupPost)
+                try
                 {
-                    StartupRoot rt = JsonConvert.DeserializeObject<StartupRoot>(StartupStr);
-                    if (rt != null && rt.ret == 200)
+                    bool StartupPost = false;
+                    string StartupStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/startup", $"version={productVersion}&build={currentBuild}", Encoding.UTF8, ref StartupPost);
+                    if (StartupPost)
                     {
-                        announcementMsg = rt.data?.msg ?? "";
+                        StartupRoot? rt = JsonConvert.DeserializeObject<StartupRoot>(StartupStr);
+                        if (rt != null && rt.ret == 200)
+                        {
+                            announcementMsg = rt.data?.msg;
+                            // 公告为空时回退为程序名+版本
+                            if (string.IsNullOrEmpty(announcementMsg))
+                            {
+                                announcementMsg = fallbackTitle;
+                            }
+                            Dispatcher.BeginInvoke(() =>
+                            {
+                                if (!isExiting && dataManagerWindow is not null)
+                                {
+                                    dataManagerWindow.AnnouncementMsg = announcementMsg;
+                                }
+                            });
+                        }
+                        else
+                        {
+                            Dispatcher.BeginInvoke(() =>
+                            {
+                                if (!isExiting)
+                                    HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt?.ret}");
+                            });
+                        }
                     }
                     else
                     {
-                        HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt?.ret}");
+                        Dispatcher.BeginInvoke(() =>
+                        {
+                            if (!isExiting)
+                                HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n{StartupStr}");
+                        });
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n{StartupStr}");
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        if (!isExiting)
+                            HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：{ex.Message}");
+                    });
                 }
-            }
-            catch (Exception ex)
-            {
-                HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：{ex.Message}");
-            }
+            });
 
+            // 后台任务未完成前的兜底
             if (announcementMsg == "")
             {
                 announcementMsg = window.Title;
@@ -342,6 +383,18 @@ namespace HDTLPanel
                 }
             }
 
+            // 通过托盘“退出”菜单退出：不弹确认框，直接关闭
+            if (skipConfirmOnClose)
+            {
+                return;
+            }
+
+            // 后台静默运行时窗口不可见：不弹模态确认框，直接关闭（避免窗口状态异常）
+            if (!IsVisible)
+            {
+                return;
+            }
+
             MessageBoxResult result = HandyControl.Controls.MessageBox.Show("确定要退出少女前线桌面Q宠吗？", "确认退出", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result != MessageBoxResult.Yes)
             {
@@ -351,7 +404,8 @@ namespace HDTLPanel
 
         private void ExitApplication(object sender, RoutedEventArgs e)
         {
-            // 触发主窗口关闭流程（Window_Closing 会弹确认框；确认后由 OnMainWindowClose 退出程序）
+            // 托盘“退出”：跳过确认框，直接关闭（确认后由 OnMainWindowClose 退出程序）
+            skipConfirmOnClose = true;
             Close();
         }
 
@@ -371,6 +425,7 @@ namespace HDTLPanel
                 {
                 }
             }
+            // 主窗口关闭后应用即退出（OnMainWindowClose），此处需同步等待子进程关闭，避免残留
             Thread.Sleep(2000);
             foreach (PetInstance pet in pets.ToList())
             {
@@ -518,6 +573,10 @@ namespace HDTLPanel
 
         private void notifyIcon_MouseDoubleClick(object sender, RoutedEventArgs e)
         {
+            if (isExiting)
+            {
+                return;
+            }
             Show();
             ShowInTaskbar = true;
             WindowState = WindowState.Normal;
@@ -544,6 +603,10 @@ namespace HDTLPanel
 
         private void GflChibiDesktop(object sender, RoutedEventArgs e)
         {
+            if (isExiting)
+            {
+                return;
+            }
             if (dataManagerWindow is null)
             {
                 dataManagerWindow = new GflChibiDesktop.Windows.DataManagerWindow();
@@ -653,13 +716,15 @@ namespace HDTLPanel
 
         public bool IsAutoRun
         {
-            get => AutoRun.IsAutoRun(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName, "少女前线桌面Q宠");
+            get => AutoRun.IsAutoRun(CurrentExePath, "少女前线桌面Q宠");
             set
             {
-                AutoRun.SetAutoRun(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName, "少女前线桌面Q宠", value);
+                AutoRun.SetAutoRun(CurrentExePath, "少女前线桌面Q宠", value);
                 OnPropertyChanged();
             }
         }
+
+        private static string CurrentExePath => System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {

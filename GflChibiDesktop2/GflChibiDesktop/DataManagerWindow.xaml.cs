@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace GflChibiDesktop.Windows
 {
@@ -47,6 +48,7 @@ namespace GflChibiDesktop.Windows
         public string chibiListLink = "https://projects.brightsu.cn/GFL/chibi-list";
         public string extraStr = string.Empty;
 
+        private string announcementMsg = string.Empty;
         /// <summary>
         /// 由主窗口传入的公告消息（主窗口启动时从 startup 接口获取）。
         /// </summary>
@@ -63,7 +65,6 @@ namespace GflChibiDesktop.Windows
                 }
             }
         }
-        private string announcementMsg = string.Empty;
 
         /// <summary>
         /// 数据加载完成后触发，把加载结果直接传递给主窗口。
@@ -81,6 +82,10 @@ namespace GflChibiDesktop.Windows
         /// 数据表是否已完成加载（防止排队的进度刷新覆盖完成提示）。
         /// </summary>
         volatile bool dummyListLoaded = false;
+        /// <summary>
+        /// 是否正在执行数据操作（下载/删除/更新列表等），期间禁止关闭窗口。
+        /// </summary>
+        volatile bool isBusy = false;
 
         public DataManagerWindow()
         {
@@ -97,10 +102,11 @@ namespace GflChibiDesktop.Windows
         {
             Cursor = System.Windows.Input.Cursors.Wait;
             IsEnabled = false;
+            isBusy = true;
             try
             {
-                // 网络请求与数据表构建并行在后台线程执行（数据表方法内部用 Dispatcher 回 UI）
-                await System.Threading.Tasks.Task.Run(() => UpdateLinks());
+                // 网络请求与数据表构建异步执行（数据表方法内部用 Dispatcher 回 UI）
+                await UpdateLinks();
                 await System.Threading.Tasks.Task.Run(() => LoadDummyList());
             }
             catch (Exception ex)
@@ -111,18 +117,18 @@ namespace GflChibiDesktop.Windows
             {
                 Cursor = System.Windows.Input.Cursors.Arrow;
                 IsEnabled = true;
+                isBusy = false;
             }
         }
 
-        private void UpdateLinks()
+        private async Task UpdateLinks()
         {
             try
             {
-                bool IndexPost = false;
-                string IndexStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2", string.Empty, Encoding.UTF8, ref IndexPost);
-                if (IndexPost)
+                var (postOk, indexStr) = await HttpRequestHelper.PostWebRequestAsync("https://api.brightsu.cn/GflChibiDesktop2", string.Empty, Encoding.UTF8);
+                if (postOk)
                 {
-                    IndexRoot rt = JsonConvert.DeserializeObject<IndexRoot>(IndexStr);
+                    IndexRoot rt = JsonConvert.DeserializeObject<IndexRoot>(indexStr);
                     if (rt.ret == 200)
                     {
                         if (CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
@@ -137,13 +143,12 @@ namespace GflChibiDesktop.Windows
                 }
                 else
                 {
-                    Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{IndexStr}"));
+                    Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{indexStr}"));
                 }
             }
             catch (Exception ex)
             {
                 Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{ex}"));
-                return;
             }
         }
 
@@ -788,14 +793,35 @@ namespace GflChibiDesktop.Windows
             }
         }
 
-        private void btn_LoadDummyList_Click(object sender, RoutedEventArgs e)
+        private async void btn_LoadDummyList_Click(object sender, RoutedEventArgs e)
         {
             btn_LoadDummyList.IsEnabled = false;
-            bool DummyListPost = false;
-            string DummyListStr = HttpRequestHelper.PostWebRequest(chibiListLink, string.Empty, Encoding.UTF8, ref DummyListPost);
-            if (DummyListPost)
+            isBusy = true;
+            try
             {
-                DummyListRoot rt = JsonConvert.DeserializeObject<DummyListRoot>(DummyListStr);
+                await LoadDummyListCore();
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.Growl.ErrorGlobal($"获取与更新数据表时出错。\n{ex.Message}");
+            }
+            finally
+            {
+                btn_LoadDummyList.IsEnabled = true;
+                isBusy = false;
+            }
+        }
+
+        /// <summary>
+        /// 刷新人形数据表：网络请求异步执行，避免阻塞 UI。
+        /// </summary>
+        private async Task LoadDummyListCore()
+        {
+            var (postOk, responseStr) = await HttpRequestHelper.PostWebRequestAsync(chibiListLink, string.Empty, Encoding.UTF8);
+
+            if (postOk)
+            {
+                DummyListRoot rt = JsonConvert.DeserializeObject<DummyListRoot>(responseStr);
 
                 if (rt.ret != 200) //API请求失败
                 {
@@ -808,7 +834,7 @@ namespace GflChibiDesktop.Windows
                         MessageBoxResult downloadListResult = MessageBox.Show("本地人形数据表不存在，且 API 接口调用失败。加载进程已中止。\n是否重试？", "数据表加载失败", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes);
                         if (downloadListResult == MessageBoxResult.Yes)
                         {
-                            btn_LoadDummyList_Click(this, null);
+                            await LoadDummyListCore();
                         }
                     }
                     return;
@@ -823,7 +849,7 @@ namespace GflChibiDesktop.Windows
                         lbl_loader.Content = "正在更新人形数据表";
                         HttpClass.DownloadFile(rt.data.url, $"{AppDir}chibi_list.json", pb_downloader, lbl_downloader);
                         sp_downloader.Visibility = Visibility.Collapsed;
-                        btn_LoadDummyList_Click(this, null);
+                        await LoadDummyListCore();
                         return;
                     }
                     else//相同则加载本地
@@ -833,21 +859,14 @@ namespace GflChibiDesktop.Windows
                 }
                 else//API成功，本地不存在
                 {
-                    try
+                    bool downloaded = HttpClass.DownloadFile(rt.data.url, $"{AppDir}chibi_list.json", pb_loader, lbl_loader);
+                    if (downloaded)
                     {
-                        bool downloaded = HttpClass.DownloadFile(rt.data.url, $"{AppDir}chibi_list.json", pb_loader, lbl_loader);
-                        if (downloaded)
-                        {
-                            btn_LoadDummyList_Click(this, null);
-                        }
-                        else
-                        {
-                            HandyControl.Controls.Growl.ErrorGlobal("数据表下载失败");
-                        }
+                        await LoadDummyListCore();
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        HandyControl.Controls.Growl.ErrorGlobal($"获取与更新数据表时出错。\n{ex.Message}");
+                        HandyControl.Controls.Growl.ErrorGlobal("数据表下载失败");
                     }
                 }
             }
@@ -862,15 +881,14 @@ namespace GflChibiDesktop.Windows
                     MessageBoxResult downloadListResult = MessageBox.Show("本地数据表不存在，且 API 接口调用失败。加载进程已中止。\n是否重试？", "数据表加载失败", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes);
                     if (downloadListResult == MessageBoxResult.Yes)
                     {
-                        btn_LoadDummyList_Click(this, null);
+                        await LoadDummyListCore();
                     }
                 }
             }
-            btn_LoadDummyList.IsEnabled = true;
         }
         
 
-        private void btn_loadCG_Click(object sender, RoutedEventArgs e)
+        private async void btn_loadCG_Click(object sender, RoutedEventArgs e)
         {
             ComponentModel item = SelectedItem;
             string[] tagString = new string[10];
@@ -913,7 +931,7 @@ namespace GflChibiDesktop.Windows
                     {
                         if ((bool)chb_save_cg.IsChecked)
                         {
-                            DownloadCG(tagString);
+                            await DownloadCG(tagString);
                         }
                         else
                         {
@@ -931,7 +949,7 @@ namespace GflChibiDesktop.Windows
                     {
                         if ((bool)chb_save_cg.IsChecked)
                         {
-                            DownloadCG(tagString);
+                            await DownloadCG(tagString);
                         }
                         else
                         {
@@ -946,8 +964,11 @@ namespace GflChibiDesktop.Windows
             }
         }
 
-        private void DownloadCG(string[] tagString)
+        private async Task DownloadCG(string[] tagString)
         {
+            isBusy = true;
+            try
+            {
             //tagString[0] = item.Tag[0];//displaySwitch
             //tagString[1] = item.Tag[1];//content.name;
             //tagString[2] = item.Tag[2];//content.parent;
@@ -978,11 +999,21 @@ namespace GflChibiDesktop.Windows
             {
                 lbl_loader.Content = $"正在下载 {tagString[5]} 的大破立绘数据";
                 pb_loader.Maximum = 2;
-                HttpClass.DownloadFile($"{cg_url}/{tagString[9]}", $@"{AppDir}assets/pic/{tagString[9]}", pb_downloader, lbl_downloader);
+                await HttpClass.DownloadFileAsync($"{cg_url}/{tagString[9]}", $@"{AppDir}assets/pic/{tagString[9]}", (current, total) =>
+                {
+                    pb_downloader.Maximum = (int)total;
+                    pb_downloader.Value = (int)current;
+                    lbl_downloader.Content = $"{current} / {total}";
+                });
                 pb_loader.Value++;
             }
             lbl_loader.Content = $"正在下载 {tagString[5]} 的立绘数据";
-            HttpClass.DownloadFile($"{cg_url}/{tagString[8]}", $@"{AppDir}assets/pic/{tagString[8]}", pb_downloader, lbl_downloader);
+            await HttpClass.DownloadFileAsync($"{cg_url}/{tagString[8]}", $@"{AppDir}assets/pic/{tagString[8]}", (current, total) =>
+            {
+                pb_downloader.Maximum = (int)total;
+                pb_downloader.Value = (int)current;
+                lbl_downloader.Content = $"{current} / {total}";
+            });
             pb_loader.Value++;
             sp_downloader.Visibility = Visibility.Collapsed;
             lbl_loader.Content = "准备就绪";
@@ -1001,6 +1032,11 @@ namespace GflChibiDesktop.Windows
             btn_loadCG.IsEnabled = true;
             chb_save_cg.IsEnabled = true;
             tvAfterSelect();
+            }
+            finally
+            {
+                isBusy = false;
+            }
         }
 
         /// <summary>
@@ -1121,17 +1157,20 @@ namespace GflChibiDesktop.Windows
         }
 
 
-        private void btn_downloadData_Click(object sender, RoutedEventArgs e)
+        private async void btn_downloadData_Click(object sender, RoutedEventArgs e)
         {
             ComponentModel item = SelectedItem;
-            DownloadData(item.Tag);
+            await DownloadData(item.Tag);
         }
 
 
-        private void DownloadData(string[] tagString)
+        private async Task DownloadData(string[] tagString)
         {
-            ComponentModel item = SelectedItem;
-            btn_downloadData.IsEnabled = false;
+            isBusy = true;
+            try
+            {
+                ComponentModel item = SelectedItem;
+                btn_downloadData.IsEnabled = false;
             btn_downloadData.Visibility = Visibility.Visible;
             btn_deleteData.IsEnabled = false;
             btn_deleteData.Visibility = Visibility.Collapsed;
@@ -1181,7 +1220,15 @@ namespace GflChibiDesktop.Windows
                             Directory.CreateDirectory($@"{AppDir}assets/spine/{tagString[6]}");
                         }
 
-                        HttpClass.DownloadFile($"{downloadSource}/{filename}", $@"{AppDir}assets/spine/{tagString[6]}/{filename}", pb_downloader, lbl_downloader);
+                        await HttpClass.DownloadFileAsync(
+                            $"{downloadSource}/{filename}",
+                            $@"{AppDir}assets/spine/{tagString[6]}/{filename}",
+                            (current, total) =>
+                            {
+                                pb_downloader.Maximum = (int)total;
+                                pb_downloader.Value = (int)current;
+                                lbl_downloader.Content = $"{current} / {total}";
+                            });
 
                         pb_loader.Value++;
                         tii.ProgressValue = pb_loader.Value / pb_loader.Maximum;
@@ -1206,6 +1253,11 @@ namespace GflChibiDesktop.Windows
             tv_InternalSelector.IsEnabled = true;
             
             tvAfterSelect();
+            }
+            finally
+            {
+                isBusy = false;
+            }
         }
 
         private void btn_deleteData_Click(object sender, RoutedEventArgs e)
@@ -1244,8 +1296,11 @@ namespace GflChibiDesktop.Windows
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            //e.Cancel = true;
-            //Hide();
+            if (isBusy)
+            {
+                e.Cancel = true;
+                HandyControl.Controls.Growl.InfoGlobal("正在进行数据操作，请稍候…");
+            }
         }
 
         private void tv_InternalSelector_Unselected(object sender, RoutedEventArgs e)

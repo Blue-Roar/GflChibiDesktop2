@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:HDTLPanel"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance local:MainWindowDataContext, IsDesignTimeCreatable=True}"
-        Title="少女前线桌面Q宠" Height="375" Width="520" MinHeight="375" MinWidth="480" WindowStartupLocation="CenterScreen"
+        Title="少女前线桌面Q宠" Height="375" Width="400" MinHeight="375" MinWidth="400" WindowStartupLocation="CenterScreen"
         Closing="Window_Closing" Closed="Window_Closed" StateChanged="Window_StateChanged"
         Background="#FF1B1B1C" Foreground="White" Icon="/hk416_happy.ico">
     <Window.Resources>

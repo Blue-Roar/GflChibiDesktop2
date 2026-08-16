@@ -38,7 +38,14 @@ namespace GflChibiDesktop
             _cg.Height = nud_height.Value / dpi;
             _cg.Left = nud_posx.Value;
             _cg.Top = nud_posy.Value;
-            _cg.menuItem_fixed.IsChecked = chb_fixPos.IsChecked.Value;
+            if (chb_fixPos.IsChecked == true)
+            {
+                _cg.menuItem_fixed.IsChecked = true;
+            }
+            else
+            {
+                _cg.menuItem_fixed.IsChecked = false;
+            }
         }
 
         private void UserControl_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
