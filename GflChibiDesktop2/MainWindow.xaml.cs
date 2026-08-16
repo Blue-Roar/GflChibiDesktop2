@@ -466,6 +466,8 @@ namespace HDTLPanel
         {
             isExiting = true;
             SaveInstances();
+            // 退出前保存所有实例的面板配置（FPS/透明度等），让 luajit 写盘到各自 settings.json
+            SaveAllConfigs();
             notifyIcon.Visibility = Visibility.Hidden;
             notifyIcon.Dispose();
             foreach (PetInstance pet in pets.ToList())
@@ -507,6 +509,19 @@ namespace HDTLPanel
             {
                 throw new NullReferenceException();
             }
+            SavePetConfig(pet);
+            SaveInstances();
+        }
+
+        /// <summary>
+        /// 保存单个实例的配置（通过 IPC 让 luajit 写盘 settings.json）。
+        /// </summary>
+        private void SavePetConfig(PetInstance pet)
+        {
+            if (pet?.Manager is null)
+            {
+                return;
+            }
             using var w = pet.Manager.txIpc.BeginWrite();
             w.Write(2);
             foreach (var i in pet.Panel.Children)
@@ -516,7 +531,23 @@ namespace HDTLPanel
             w.Write(0);
             pet.IsChanged = false;
             context.IsChanged = false;
-            SaveInstances();
+        }
+
+        /// <summary>
+        /// 退出时保存所有实例的配置，确保 luajit 把面板设置写盘到各自的 settings.json。
+        /// </summary>
+        private void SaveAllConfigs()
+        {
+            foreach (PetInstance pet in pets.ToList())
+            {
+                try
+                {
+                    SavePetConfig(pet);
+                }
+                catch
+                {
+                }
+            }
         }
 
         private void DiscardConfigChange(object sender, RoutedEventArgs e)

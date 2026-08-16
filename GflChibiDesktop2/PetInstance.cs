@@ -55,6 +55,21 @@ namespace HDTLPanel
         {
             string appDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app");
             string workDir = Path.Combine(appDir, "instances", id.ToString());
+
+            // 备份该实例已保存的 settings.json（重启/重建实例时保留用户配置）
+            string savedSettings = null;
+            string settingsFile = Path.Combine(workDir, "settings.json");
+            try
+            {
+                if (File.Exists(settingsFile))
+                {
+                    savedSettings = File.ReadAllText(settingsFile);
+                }
+            }
+            catch
+            {
+            }
+
             // 清理残留：普通目录直接删除，悬空 junction 也强制移除
             try
             {
@@ -115,9 +130,22 @@ namespace HDTLPanel
             // 共享素材（spine 骨骼数据；luajit 不使用 pic，立绘由主程序 CG 窗口负责）
             LinkDir(Path.Combine(assetsDir, "spine"), Path.Combine(appDir, "assets", "spine"));
 
-            // 窗口位置等设置，从默认拷贝一份
-            string srcSettings = Path.Combine(appDir, "settings.json");
-            if (File.Exists(srcSettings)) File.Copy(srcSettings, Path.Combine(workDir, "settings.json"), true);
+            // 窗口位置等设置：优先恢复该实例已保存的配置，否则从默认拷贝一份
+            if (!string.IsNullOrEmpty(savedSettings))
+            {
+                try
+                {
+                    File.WriteAllText(Path.Combine(workDir, "settings.json"), savedSettings);
+                }
+                catch
+                {
+                }
+            }
+            else
+            {
+                string srcSettings = Path.Combine(appDir, "settings.json");
+                if (File.Exists(srcSettings)) File.Copy(srcSettings, Path.Combine(workDir, "settings.json"), true);
+            }
 
             return new PetInstance(id, name, workDir) { Model = model };
         }
