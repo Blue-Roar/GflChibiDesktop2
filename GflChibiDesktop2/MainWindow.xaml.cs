@@ -117,6 +117,8 @@ namespace HDTLPanel
             {
                 announcementMsg = window.Title;
             }
+            // 清理上次崩溃残留的 luajit 进程（主程序已无法管理它们），再重新启动
+            KillStaleLuajitProcesses();
             DataContext = context;
             bool started = AutoStartInstance();
             notifyIcon.Init();
@@ -124,6 +126,46 @@ namespace HDTLPanel
             {
                 WindowState = WindowState.Minimized;
                 Window_StateChanged(null, new());
+            }
+        }
+
+        /// <summary>
+        /// 结束本程序目录下残留的 luajit 进程（程序崩溃后遗留的桌宠渲染进程）。
+        /// 仅清理可执行文件位于本程序 app\ 目录下的进程，避免误伤其他程序的 luajit。
+        /// </summary>
+        private static void KillStaleLuajitProcesses()
+        {
+            try
+            {
+                string expectedDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app");
+                foreach (var p in System.Diagnostics.Process.GetProcessesByName("luajit"))
+                {
+                    try
+                    {
+                        string file = p.MainModule?.FileName ?? "";
+                        if (string.IsNullOrEmpty(file))
+                        {
+                            continue;
+                        }
+                        // 校验进程可执行文件是否在本程序的 app 目录下
+                        if (!string.Equals(Path.GetDirectoryName(file), expectedDir, StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+                        p.Kill();
+                        p.WaitForExit(1000);
+                    }
+                    catch
+                    {
+                    }
+                    finally
+                    {
+                        p.Dispose();
+                    }
+                }
+            }
+            catch
+            {
             }
         }
 
