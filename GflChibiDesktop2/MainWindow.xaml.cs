@@ -238,6 +238,12 @@ namespace HDTLPanel
             {
                 return;
             }
+            // 限制多开数量为 8 个
+            if (pets.Count >= 8)
+            {
+                HandyControl.Controls.Growl.WarningGlobal("最多同时开启 8 个桌宠实例。");
+                return;
+            }
             try
             {
                 PetInstance pet = PetInstance.Create(nextPetId++, model);
