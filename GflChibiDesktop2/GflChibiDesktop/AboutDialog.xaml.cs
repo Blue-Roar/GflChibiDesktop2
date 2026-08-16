@@ -52,7 +52,7 @@ namespace GflChibiDesktop
             txt_description.Text = string.Empty;
             try
             {
-                var (defaultPost, defaultStr) = await HttpRequestHelper.PostWebRequestAsync("https://api.brightsu.cn/GflChibiDesktop2/update", string.Empty, Encoding.UTF8);
+                var (defaultPost, defaultStr) = await HttpRequestHelper.PostWebRequestAsync("https://api.brightsu.cn/GflChibiDesktop2/update", $"version={productVersion}", Encoding.UTF8);
                 if (!defaultPost)
                 {
                     HandyControl.Controls.Growl.WarningGlobal($"无法获取版本信息。API 接口调用失败。\n错误：{defaultStr}");

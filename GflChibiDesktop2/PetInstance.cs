@@ -82,8 +82,9 @@ namespace HDTLPanel
                 if (File.Exists(src)) File.Copy(src, Path.Combine(workDir, f), true);
             }
 
-            // 共享模块目录
-            LinkDir(Path.Combine(workDir, "lua"), Path.Combine(appDir, "lua"));
+            // 复制 lua 模块（含 raylib DLL）。不用 junction 共享，避免多实例进程加载同一 DLL 时
+            // 出现渲染上下文冲突导致骨骼抽风/约束失效。
+            CopyDirectory(Path.Combine(appDir, "lua"), Path.Combine(workDir, "lua"));
 
             // 实例配置
             string name;
@@ -111,9 +112,8 @@ namespace HDTLPanel
                 if (File.Exists(src)) File.Copy(src, Path.Combine(assetsDir, f), true);
             }
 
-            // 共享素材
+            // 共享素材（spine 骨骼数据；luajit 不使用 pic，立绘由主程序 CG 窗口负责）
             LinkDir(Path.Combine(assetsDir, "spine"), Path.Combine(appDir, "assets", "spine"));
-            LinkDir(Path.Combine(assetsDir, "pic"), Path.Combine(appDir, "assets", "pic"));
 
             // 窗口位置等设置，从默认拷贝一份
             string srcSettings = Path.Combine(appDir, "settings.json");
