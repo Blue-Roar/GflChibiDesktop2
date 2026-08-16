@@ -48,7 +48,6 @@ namespace GflChibiDesktop
         {
             public string version { get; set; }
             public string build { get; set; }
-            public string buildver { get; set; }
             public string content { get; set; }
             public int urgent { get; set; }
         }

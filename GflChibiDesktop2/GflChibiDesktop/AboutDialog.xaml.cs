@@ -25,8 +25,7 @@ namespace GflChibiDesktop
         public readonly string productDescription = ((AssemblyDescriptionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyDescriptionAttribute))).Description.ToString();
         public readonly string productCopyright = ((AssemblyCopyrightAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyCopyrightAttribute))).Copyright.ToString();
         public readonly string productCompany = ((AssemblyCompanyAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyCompanyAttribute))).Company.ToString();
-        public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version);
-        public readonly Version productBuild = Assembly.GetExecutingAssembly().GetName().Version;
+        public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version) ?? Assembly.GetExecutingAssembly().GetName().Version;
         public readonly string currentBuild = ((AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute))).InformationalVersion;
         public string homepageLink { get; set; }
         public string updateLink { get; set; }
@@ -38,7 +37,7 @@ namespace GflChibiDesktop
             //MainWindow.AboutWindowState(true);
 
             //lbl_product.Text = productName;
-            txt_version.Text = $"当前：{productVersion}/{productBuild}/{currentBuild}";
+            txt_version.Text = $"当前：{productVersion}/{currentBuild}";
 
             lbl_status.Content = string.Empty;
             txt_description.Text = string.Empty;
@@ -69,7 +68,7 @@ namespace GflChibiDesktop
                     return;
                 }
 
-                if ((rt.data.version == null) || (rt.data.buildver == null)) //检查请求
+                if (rt.data.version == null) //检查请求
                 {
                     lbl_status.Content = "获取版本信息出错，请手动前往更新";
                     btn_Actions.Content = "前往主页";
@@ -78,34 +77,37 @@ namespace GflChibiDesktop
                 {
                     version = new Version(rt.data.version);
                     build = rt.data.build;
-                    buildver = new Version(rt.data.buildver);
                     content = rt.data.content;
                     bool urgentUpdate = false;
                     if (rt.data.urgent == 1) { urgentUpdate = true; }
 
-                    txt_latest_version.Text = $"最新：{version}/{buildver}/{build}";
-                    if (version > productVersion) //大版本号不同
+                    txt_latest_version.Text = $"最新：{version}/{build}";
+
+                    if (version > productVersion) //版本号不同
                     {
-                        lbl_status.Content = "有大版本更新可用";
                         if (urgentUpdate) { lbl_status.Content = "有重要更新可用"; }
                         txt_description.Text = content;
                         btn_Actions.Content = "前往更新";
-                    }
-                    else //大版本号相同
-                    {
-                        if (buildver > productBuild)
+
+                        if (version.Revision > productVersion.Revision)
+                        {
+                            lbl_status.Content = "有修订版本更新可用";
+                        }
+                        if (version.Build > productVersion.Build)
                         {
                             lbl_status.Content = "有构建版本更新可用";
-                            if (urgentUpdate) { lbl_status.Content = "有重要更新可用"; }
-                            txt_description.Text = content;
-                            btn_Actions.Content = "前往更新";
                         }
-                        else
+                        if (version.Minor > productVersion.Minor)
                         {
-                            lbl_status.Content = "当前是最新版本！";
-                            btn_Close.Focus();
+                            lbl_status.Content = "有大版本更新可用";
                         }
                     }
+                    else
+                    {
+                        lbl_status.Content = "当前是最新版本！";
+                        btn_Close.Focus();
+                    }
+
                 }
             }
             catch (Exception ex)

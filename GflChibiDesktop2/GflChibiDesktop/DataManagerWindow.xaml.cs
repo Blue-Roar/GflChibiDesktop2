@@ -39,8 +39,7 @@ namespace GflChibiDesktop.Windows
         public readonly string productDescription = ((AssemblyDescriptionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyDescriptionAttribute))).Description.ToString();
         public readonly string productCopyright = ((AssemblyCopyrightAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyCopyrightAttribute))).Copyright.ToString();
         public readonly string productCompany = ((AssemblyCompanyAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyCompanyAttribute))).Company.ToString();
-        public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version);
-        public readonly Version productBuild = Assembly.GetExecutingAssembly().GetName().Version;
+        public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version) ?? Assembly.GetExecutingAssembly().GetName().Version;
         public readonly string currentBuild = ((AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute))).InformationalVersion;
         public string homepageLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/";
         public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/download";
@@ -59,7 +58,7 @@ namespace GflChibiDesktop.Windows
         {
             InitializeComponent();
 
-            btnVersion.Content = $"程序版本：{productBuild}";
+            btnVersion.Content = $"程序版本：{productVersion}";
 
             UpdateLinks();
             //CheckForUpdates();
@@ -779,8 +778,7 @@ namespace GflChibiDesktop.Windows
                 {
                     if (local_cg && local_cg_d) //本地同时存在两种立绘，直接加载
                     {
-                        Process.Start($@"{AppDir}GflChibiDesktop.CG.exe", $"\"{tagString[5]}\" \"{AppDir}assets/pic/\" \"{tagString[8]}\" \"{tagString[9]}\"");
-                        //new WindowCG().LoadCG(tagString[5], $@"{AppDir}assets/pic/", tagString[8], tagString[9]);
+                        new GflChibiDesktop.WindowCG().LoadCG(tagString[5], $@"{AppDir}assets/pic/", tagString[8], tagString[9]);
                     }
                     else
                     {
@@ -790,8 +788,7 @@ namespace GflChibiDesktop.Windows
                         }
                         else
                         {
-                            Process.Start($@"{AppDir}GflChibiDesktop.CG.exe", $"\"{tagString[5]}\" \"{Properties.Settings.Default.DownloadSource}/pic/\" \"{tagString[8]}\" \"{tagString[9]}\"");
-                            //new WindowCG().LoadCG(tagString[5], $@"{Properties.Settings.Default.DownloadSource}/pic/", tagString[8], tagString[9]);
+                            new GflChibiDesktop.WindowCG().LoadCG(tagString[5], $"{Properties.Settings.Default.DownloadSource}/pic/", tagString[8], tagString[9]);
                         }
                     }
                 }
@@ -799,8 +796,7 @@ namespace GflChibiDesktop.Windows
                 {
                     if (local_cg) //本地存在，直接加载
                     {
-                        Process.Start($@"{AppDir}GflChibiDesktop.CG.exe", $"\"{tagString[5]}\" \"{AppDir}assets/pic/\" \"{tagString[8]}\"");
-                        //new WindowCG().LoadCG(tagString[5], $@"{AppDir}assets/pic/", tagString[8]);
+                        new GflChibiDesktop.WindowCG().LoadCG(tagString[5], $@"{AppDir}assets/pic/", tagString[8]);
                     }
                     else
                     {
@@ -810,8 +806,7 @@ namespace GflChibiDesktop.Windows
                         }
                         else
                         {
-                            Process.Start($@"{AppDir}GflChibiDesktop.CG.exe", $"\"{tagString[5]}\" \"{Properties.Settings.Default.DownloadSource}/pic/\" \"{tagString[8]}\"");
-                            //new WindowCG().LoadCG(tagString[5], $@"{Properties.Settings.Default.DownloadSource}/pic/", tagString[8]);
+                            new GflChibiDesktop.WindowCG().LoadCG(tagString[5], $"{Properties.Settings.Default.DownloadSource}/pic/", tagString[8]);
                         }
                     }
                 }
@@ -866,13 +861,11 @@ namespace GflChibiDesktop.Windows
 
             if (tagString[9] != null)
             {
-                Process.Start($@"{AppDir}GflChibiDesktop.CG.exe", $"\"{tagString[5]}\" \"{AppDir}assets/pic/\" \"{tagString[8]}\" \"{tagString[9]}\"");
-                //new WindowCG().LoadCG(tagString[5], $@"{AppDir}assets/pic/", tagString[8], tagString[9]);
+                new GflChibiDesktop.WindowCG().LoadCG(tagString[5], $@"{AppDir}assets/pic/", tagString[8], tagString[9]);
             }
             else
             {
-                Process.Start($@"{AppDir}GflChibiDesktop.CG.exe", $"\"{tagString[5]}\" \"{AppDir}assets/pic/\" \"{tagString[8]}\"");
-                //new WindowCG().LoadCG(tagString[5], $@"{AppDir}assets/pic/", tagString[8]);
+                new GflChibiDesktop.WindowCG().LoadCG(tagString[5], $@"{AppDir}assets/pic/", tagString[8]);
             }
 
             tv_InternalSelector.IsEnabled = true;

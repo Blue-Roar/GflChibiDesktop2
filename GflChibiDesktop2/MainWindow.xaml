@@ -42,7 +42,7 @@
                 <Button Content="保存配置" HorizontalAlignment="Left" Margin="10,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="SaveConfig"/>
                 <Button Content="放弃更改" HorizontalAlignment="Left" Margin="110,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="DiscardConfigChange"/>
                 <Button Content="关闭当前" HorizontalAlignment="Left" Margin="210,0,0,0" Width="90" Click="StopSelectedInstance" IsEnabled="{Binding Path=IsBusyClosing, Converter={StaticResource reverseBooleanConverter}}" ToolTip="结束当前选中的桌宠实例"/>
-                <Button Content="获取数据与生成配置" HorizontalAlignment="Right" Margin="0,0,10,0" Width="132" Click="GflChibiDesktop"/>
+                <Button Content="人形数据配置" HorizontalAlignment="Right" Margin="0,0,10,0" Width="132" Click="GflChibiDesktop"/>
             </Grid>
             <TabControl x:Name="PetTabs" Grid.Row="1" Margin="0,1,0,0" SelectionChanged="PetTabs_SelectionChanged"/>
         </Grid>

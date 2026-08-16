@@ -25,9 +25,7 @@ namespace HDTLPanel
     public partial class MainWindow : Window
     {
         const string settingsPath = "settings.json";
-
-        public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version);
-        public readonly Version productBuild = Assembly.GetExecutingAssembly().GetName().Version;
+        public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version) ?? Assembly.GetExecutingAssembly().GetName().Version;
         public readonly string currentBuild = ((AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute))).InformationalVersion;
 
         readonly MainWindowDataContext context = new();
@@ -44,8 +42,8 @@ namespace HDTLPanel
         public MainWindow()
         {
             InitializeComponent();
-            window.Title += $" {productVersion}";
-            lblVersion.Content = $"程序版本 {productBuild}";
+            window.Title += $" {productVersion.Major}.{productVersion.Minor}";
+            lblVersion.Content = $"程序版本 {productVersion}";
 
             bool StartupPost = false;
             string StartupStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/startup", $"version={productVersion}&build={currentBuild}", Encoding.UTF8, ref StartupPost);
