@@ -42,8 +42,18 @@ namespace GflChibiDesktop
         public class StartupRoot
         {
             public int ret { get; set; }
+            public StartupData data { get; set; }
+            public string msg { get; set; }
         }
-        
+
+        public class StartupData
+        {
+            public int time { get; set; }
+            public string count { get; set; }
+            public string latest { get; set; }
+            public string msg { get; set; }
+        }
+
         public class UpdateData
         {
             public string version { get; set; }

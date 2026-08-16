@@ -34,6 +34,7 @@ namespace HDTLPanel
         bool isExiting = false;
         bool hasCentered = false;
         GflChibiDesktop.Windows.DataManagerWindow? dataManagerWindow;
+        public string announcementMsg = "";
 
         string AppDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
 
@@ -45,21 +46,36 @@ namespace HDTLPanel
             window.Title += $" {productVersion.Major}.{productVersion.Minor}";
             lblVersion.Content = $"程序版本 {productVersion}";
 
-            bool StartupPost = false;
-            string StartupStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/startup", $"version={productVersion}&build={currentBuild}", Encoding.UTF8, ref StartupPost);
-            if (StartupPost)
+            try
             {
-                StartupRoot rt = JsonConvert.DeserializeObject<StartupRoot>(StartupStr);
-                if (rt.ret != 200)
+                bool StartupPost = false;
+                string StartupStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/startup", $"version={productVersion}&build={currentBuild}", Encoding.UTF8, ref StartupPost);
+                if (StartupPost)
                 {
-                    HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt.ret}");
+                    StartupRoot rt = JsonConvert.DeserializeObject<StartupRoot>(StartupStr);
+                    if (rt != null && rt.ret == 200)
+                    {
+                        announcementMsg = rt.data?.msg ?? "";
+                    }
+                    else
+                    {
+                        HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt?.ret}");
+                    }
+                }
+                else
+                {
+                    HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n{StartupStr}");
                 }
             }
-            else
+            catch (Exception ex)
             {
-                HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n{StartupStr}");
+                HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：{ex.Message}");
             }
 
+            if (announcementMsg == "")
+            {
+                announcementMsg = window.Title;
+            }
             DataContext = context;
             bool started = AutoStartInstance();
             notifyIcon.Init();
@@ -361,8 +377,8 @@ namespace HDTLPanel
 
         private void ExitApplication(object sender, RoutedEventArgs e)
         {
-            isExiting = true;
-            Application.Current.Shutdown();
+            // 触发主窗口关闭流程（Window_Closing 会弹确认框；确认后由 OnMainWindowClose 退出程序）
+            Close();
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -563,6 +579,7 @@ namespace HDTLPanel
                 dataManagerWindow.ModelLoadRequested += DataManagerWindow_ModelLoadRequested;
                 dataManagerWindow.Closed += (_, _) => dataManagerWindow = null;
             }
+            dataManagerWindow.AnnouncementMsg = announcementMsg;
             dataManagerWindow.Show();
             dataManagerWindow.Activate();
         }

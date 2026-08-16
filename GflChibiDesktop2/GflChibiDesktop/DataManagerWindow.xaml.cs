@@ -48,11 +48,33 @@ namespace GflChibiDesktop.Windows
         public string extraStr = string.Empty;
 
         /// <summary>
+        /// 由主窗口传入的公告消息（主窗口启动时从 startup 接口获取）。
+        /// </summary>
+        public string AnnouncementMsg
+        {
+            get => announcementMsg;
+            set
+            {
+                announcementMsg = value;
+                if (!string.IsNullOrEmpty(value))
+                {
+                    extraStr = value;
+                    Dispatcher.Invoke(() => lblExtraStr.Content = extraStr);
+                }
+            }
+        }
+        private string announcementMsg = string.Empty;
+
+        /// <summary>
         /// 数据加载完成后触发，把加载结果直接传递给主窗口。
         /// </summary>
         public event Action<ChibiModelData> ModelLoadRequested;
 
         List<ComponentModel> initializeDataSet = new List<ComponentModel>();
+        /// <summary>
+        /// 数据表是否已完成加载（防止排队的进度刷新覆盖完成提示）。
+        /// </summary>
+        volatile bool dummyListLoaded = false;
 
         public DataManagerWindow()
         {
@@ -60,10 +82,10 @@ namespace GflChibiDesktop.Windows
 
             btnVersion.Content = $"程序版本：{productVersion}";
 
-            UpdateLinks();
-            //CheckForUpdates();
+            // 网络请求与数据表构建放后台线程，避免阻塞 UI（主窗口由同线程创建，会因此卡住）
+            System.Threading.Tasks.Task.Run(() => UpdateLinks());
+            System.Threading.Tasks.Task.Run(() => LoadDummyList());
 
-            LoadDummyList();
             lblExtraStr.Content = extraStr;
         }
 
@@ -82,21 +104,20 @@ namespace GflChibiDesktop.Windows
                         if (CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
                         if (CheckIsUrlFormat(rt.data.donate_link)) { donateLink = rt.data.donate_link; }
                         if (CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
-                        extraStr = "通知："+rt.data.msg.announcement;
                     }
                     else
                     {
-                        HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt.ret}");
+                        Dispatcher.Invoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt.ret}"));
                     }
                 }
                 else
                 {
-                    HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{IndexStr}");
+                    Dispatcher.Invoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{IndexStr}"));
                 }
             }
             catch (Exception ex)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{ex}");
+                Dispatcher.Invoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{ex}"));
                 return;
             }
         }
@@ -148,8 +169,9 @@ namespace GflChibiDesktop.Windows
 
         public void LoadDummyList()
         {
+            dummyListLoaded = false;
             KillEmptyDirectory($@"{AppDir}assets/spine");
-            sbQuery.Clear();
+            Dispatcher.Invoke(() => sbQuery.Clear());
 
             initializeDataSet.Clear();
 
@@ -226,14 +248,17 @@ namespace GflChibiDesktop.Windows
             {
                 string str = File.ReadAllText($"{AppDir}chibi_list.json");
                 RootObject rb = JsonConvert.DeserializeObject<RootObject>(str);
-                btn_LoadDummyList.ToolTip = $"当前人形数据列表版本 {rb.meta.version}";
-                lblListVersion.Text = rb.meta.version;
                 int total = rb.content.Count;
-                pb_loader.IsIndeterminate = false;
-                pb_loader.Maximum = total;
-                pb_loader.Value = 0;
-                tii.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Normal;
-                tii.ProgressValue = 0;
+                Dispatcher.Invoke(() =>
+                {
+                    btn_LoadDummyList.ToolTip = $"当前人形数据列表版本 {rb.meta.version}";
+                    lblListVersion.Text = rb.meta.version;
+                    pb_loader.IsIndeterminate = false;
+                    pb_loader.Maximum = total;
+                    pb_loader.Value = 0;
+                    tii.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Normal;
+                    tii.ProgressValue = 0;
+                });
 
                 int counter = 0;
 
@@ -244,9 +269,18 @@ namespace GflChibiDesktop.Windows
                     content.display = content.display ?? content.name;
                     content.display_full = content.display_full ?? content.display;
 
-                    lbl_loader.Content = $"正在处理：{counter} / {total}";
-                    pb_loader.Value ++;
-                    tii.ProgressValue = pb_loader.Value / pb_loader.Maximum;
+                    // 逐条刷新 UI 会阻塞线程，改为按批次刷新
+                    if (counter % 200 == 0)
+                    {
+                        int c = counter;
+                        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+                        {
+                            if (dummyListLoaded) return;
+                            lbl_loader.Content = $"正在处理：{c} / {total}";
+                            pb_loader.Value = c;
+                            tii.ProgressValue = (double)c / total;
+                        }));
+                    }
                     try
                     {
                         bool displaySwitch = true;
@@ -486,45 +520,66 @@ namespace GflChibiDesktop.Windows
                     }
                     catch (Exception ex)
                     {
-                        HandyControl.Controls.Growl.ErrorGlobal($"构建战术人形数据列表时出错。\n{ex}");
+                        Dispatcher.Invoke(() => HandyControl.Controls.Growl.ErrorGlobal($"构建战术人形数据列表时出错。\n{ex}"));
                     }
                 }
 
 
                 // 移除没有子节点的一级分类（Level<3 并且没有其他项的 ParentID 指向它）
-                var emptyParents = initializeDataSet.Where(n => n.Level < 3 && !initializeDataSet.Any(m => m.ParentID == n.ComponentID)).ToList();
+                // 预构建 ParentID 索引，避免 O(n²) 扫描
+                var childrenIndex = new Dictionary<int, List<ComponentModel>>();
+                foreach (var item in initializeDataSet)
+                {
+                    if (!childrenIndex.TryGetValue(item.ParentID, out var list))
+                    {
+                        list = new List<ComponentModel>();
+                        childrenIndex[item.ParentID] = list;
+                    }
+                    list.Add(item);
+                }
+                var emptyParents = initializeDataSet.Where(n => n.Level < 3 && !childrenIndex.ContainsKey(n.ComponentID)).ToList();
                 foreach (var ep in emptyParents)
                 {
                     initializeDataSet.Remove(ep);
+                    if (childrenIndex.TryGetValue(ep.ParentID, out var pl))
+                    {
+                        pl.Remove(ep);
+                    }
                 }
 
-                //加载数据
-                tv_InternalSelector.ItemsSource = LoadTreeView(0);
+                //加载数据（LoadTreeView 为纯数据处理，用索引避免 O(n²)）
+                List<ComponentModel> tree = LoadTreeView(0, childrenIndex);
 
-                List<ComponentModel> LoadTreeView(int id)
+                List<ComponentModel> LoadTreeView(int id, Dictionary<int, List<ComponentModel>> index)
                 {
-                    List<ComponentModel> node = initializeDataSet.FindAll(s => s.ParentID.Equals(id));
+                    if (!index.TryGetValue(id, out var node)) return new List<ComponentModel>();
                     foreach (var item in node)
                     {
-                        item.Children = LoadTreeView(item.ComponentID);
+                        item.Children = LoadTreeView(item.ComponentID, index);
                     }
                     return node;
                 }
 
                 //});
-                lbl_loader.Content = $"已加载 {counter} 条数据，等待下一步操作";
-                pb_loader.IsIndeterminate = true;
-                tii.ProgressValue = 100;
-                tii.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
+                int loaded = counter;
+                dummyListLoaded = true;
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    tv_InternalSelector.ItemsSource = tree;
+                    lbl_loader.Content = $"已加载 {loaded} 条数据，等待下一步操作";
+                    pb_loader.IsIndeterminate = true;
+                    tii.ProgressValue = 100;
+                    tii.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
+                }));
                 //tv_InternalSelector.Items.Add(treeViewItemTemp);
 
 
             }
             catch (Exception ex)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"加载战术人形数据列表时出错。\n{ex}");
+                Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"加载战术人形数据列表时出错。\n{ex}"));
             }
-            tvAfterSelect();
+            Dispatcher.BeginInvoke(() => tvAfterSelect());
         }
         private ComponentModel SelectedItem;
         private void tv_InternalSelector_Selected(object sender, RoutedEventArgs e)

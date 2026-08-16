@@ -25,7 +25,7 @@
             <RowDefinition />
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Label x:Name="lblExtraStr" Content="ExtraStr" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Background="{x:Null}" BorderBrush="{x:Null}" Padding="4,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        <Label x:Name="lblExtraStr" Content="ExtraStr" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Background="{x:Null}" BorderBrush="{x:Null}" Padding="4,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Foreground="{DynamicResource PrimaryBrush}"/>
         <CheckBox Grid.Row="0" Grid.Column="1" x:Name="chb_thinList" VerticalAlignment="Stretch" HorizontalAlignment="Right" Content="紧凑列表" Margin="0,0,104,0" Width="80" Click="chb_thinList_Click" IsChecked="True" />
         <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Right" Content="将此窗口置顶" Margin="0" Width="100" IsChecked="{Binding Topmost, ElementName=window}"/>
 
