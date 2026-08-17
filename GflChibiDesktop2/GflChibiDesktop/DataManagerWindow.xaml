@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GflChibiDesktop.Windows"
         mc:Ignorable="d"
-        Title="人形数据配置" WindowStartupLocation="CenterScreen" Icon="/hk416_happy.ico" Background="#FF1B1B1C" Foreground="White" ResizeMode="CanResizeWithGrip" MinHeight="600" MinWidth="600" Width="600" Height="600" Visibility="Visible" SnapsToDevicePixels="True" Loaded="Window_Loaded" Closing="Window_Closing" >
+        Title="人形数据配置" WindowStartupLocation="CenterScreen" Icon="/hk416_happy.ico" Background="#FF1B1B1C" Foreground="White" ResizeMode="CanResizeWithGrip" MinHeight="600" MinWidth="600" Width="600" Height="600" Visibility="Visible" SnapsToDevicePixels="True" Loaded="Window_Loaded" Closing="Window_Closing" x:Name="window" >
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>

@@ -17,16 +17,6 @@
             <ColumnDefinition Width="8*"/>
             <ColumnDefinition Width="5*"/>
         </Grid.ColumnDefinitions>
-        <hc:NotifyIcon x:Name="notifyIcon" Text="{Binding Title, ElementName=window}" Visibility="Visible" Icon="/hk416_happy.ico" MouseDoubleClick="notifyIcon_MouseDoubleClick" Grid.ColumnSpan="2">
-            <hc:NotifyIcon.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Command="hc:ControlCommands.PushMainWindow2Top" Header="显示主窗口(_S)" Click="notifyIcon_MouseDoubleClick"/>
-                    <MenuItem Click="GflChibiDesktop" Header="人形数据配置(_D)"/>
-                    <Separator/>
-                    <MenuItem Click="ExitApplication" Header="退出(_E)"/>
-                </ContextMenu>
-            </hc:NotifyIcon.ContextMenu>
-        </hc:NotifyIcon>
         <Label Content="当前主实例状态：" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20"/>
         <Label Content="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=未运行/正在运行}" Foreground="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=Red/Green}" HorizontalAlignment="Left" Margin="110,10,0,0" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20"/>
         <CheckBox VerticalAlignment="Top" HorizontalAlignment="Right" Content="窗口置顶(_T)" Margin="0,10,10,0" Width="90" Height="20" IsChecked="{Binding Topmost, ElementName=window}" Grid.Column="1" />
@@ -48,5 +38,17 @@
                 <Button Content="人形数据配置(_D)" HorizontalAlignment="Right" Margin="0,0,10,0" Width="132" Click="GflChibiDesktop"/>
             </Grid>
         </Grid>
+        <hc:NotifyIcon x:Name="notifyIcon" Text="{Binding Title, ElementName=window}" Visibility="Visible" Icon="/hk416_happy.ico" MouseDoubleClick="notifyIcon_MouseDoubleClick">
+            <hc:NotifyIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Command="hc:ControlCommands.PushMainWindow2Top" Header="显示主窗口(_S)" Click="notifyIcon_MouseDoubleClick"/>
+                    <MenuItem Click="GflChibiDesktop" Header="人形数据配置(_D)"/>
+                    <Separator/>
+                    <MenuItem Click="menuItemAbout_Click" Header="关于(_A)"/>
+                    <Separator/>
+                    <MenuItem Click="ExitApplication" Header="退出(_E)"/>
+                </ContextMenu>
+            </hc:NotifyIcon.ContextMenu>
+        </hc:NotifyIcon>
     </Grid>
 </Window>

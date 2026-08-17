@@ -8,12 +8,12 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using static GflChibiDesktop.WebAPI;
 
-namespace GflChibiDesktop
+namespace GflChibiDesktop.Windows
 {
     /// <summary>
     /// AboutWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class AboutDialog
+    public partial class AboutDialog : Window
     {
         Version version;
         string build;
@@ -33,9 +33,8 @@ namespace GflChibiDesktop
         public AboutDialog()
         {
             InitializeComponent();
-            //MainWindow.AboutWindowState(true);
 
-            //lbl_product.Text = productName;
+            lbl_product.Content = productTitle;
             lbl_version.Content = productVersion;
             lbl_version.ToolTip = currentBuild;
 
@@ -48,7 +47,7 @@ namespace GflChibiDesktop
 
         private async void Check4Update()
         {
-            lbl_status.Content = string.Empty;
+            lbl_status.Content = "正在获取版本信息……";
             lbl_latest_version.Content = string.Empty;
             lbl_latest_version.ToolTip = string.Empty;
             txt_description.Text = string.Empty;
@@ -260,6 +259,11 @@ namespace GflChibiDesktop
 
                 HandyControl.Controls.Growl.InfoGlobal($"“{voices[i]}”");
             }
+        }
+
+        private void btn_Close_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }

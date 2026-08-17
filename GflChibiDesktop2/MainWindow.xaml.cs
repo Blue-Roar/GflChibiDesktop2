@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -25,6 +26,7 @@ namespace HDTLPanel
     public partial class MainWindow : Window
     {
         const string settingsPath = "settings.json";
+        public readonly string productTitle = ((AssemblyTitleAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyTitleAttribute))).Title.ToString();
         public readonly Version productVersion = GetProductVersion();
         public readonly string currentBuild = ((AssemblyInformationalVersionAttribute?)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute)))?.InformationalVersion ?? "";
 
@@ -35,7 +37,12 @@ namespace HDTLPanel
         bool hasCentered = false;
         bool skipConfirmOnClose = false;
         GflChibiDesktop.Windows.DataManagerWindow? dataManagerWindow;
+        GflChibiDesktop.Windows.AboutDialog? aboutDialog;
         public string announcementMsg = "";
+        public string homepageLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/";
+        public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/download";
+        public string donateLink = "https://projects.brightsu.cn/GflChibiDesktop/donate";
+        public string chibiListLink = "https://projects.brightsu.cn/GFL/chibi-list";
 
         string AppDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
 
@@ -54,11 +61,12 @@ namespace HDTLPanel
         public MainWindow()
         {
             InitializeComponent();
-            window.Title += $" {productVersion.Major}.{productVersion.Minor}";
             //lblVersion.Content = $"程序版本 {productVersion}";
-
             // 启动统计请求放后台线程，避免阻塞窗口初始化
-            string fallbackTitle = window.Title; // 在 UI 线程缓存，供后台线程使用
+            string fallbackTitle = $"{productTitle} {productVersion.Major}.{productVersion.Minor}"; // 在 UI 线程缓存，供后台线程使用
+            window.Title = fallbackTitle;
+            announcementMsg = fallbackTitle;
+
             _ = System.Threading.Tasks.Task.Run(() =>
             {
                 try
@@ -70,17 +78,42 @@ namespace HDTLPanel
                         StartupRoot? rt = JsonConvert.DeserializeObject<StartupRoot>(StartupStr);
                         if (rt != null && rt.ret == 200)
                         {
+                            if (CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
+                            if (CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
+                            if (CheckIsUrlFormat(rt.data.donate_link)) { donateLink = rt.data.donate_link; }
+                            if (CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
+
                             announcementMsg = rt.data?.msg;
-                            // 公告为空时回退为程序名+版本
-                            if (string.IsNullOrEmpty(announcementMsg))
+                            Version latestVersion = new Version(rt.data?.latest);
+                            if (latestVersion != null)
                             {
-                                announcementMsg = fallbackTitle;
+                                if (latestVersion > productVersion)
+                                {
+                                    HandyControl.Controls.Growl.AskGlobal(new HandyControl.Data.GrowlInfo()
+                                    {
+                                        //IsCustom = true,
+                                        Type = HandyControl.Data.InfoType.Info,
+                                        //IconKey = "info",
+                                        Message = $"{productTitle}有版本更新可用。\n当前版本: {productVersion}\n最新版本: {latestVersion}\n\n是否前往更新页面？",
+                                        ShowCloseButton = false,
+                                        ShowDateTime = false,
+                                        ConfirmStr = "立刻查看",
+                                        CancelStr = "以后再说",
+                                        ActionBeforeClose = (b) =>
+                                        {
+                                            if (b) ShowAbout();
+                                            return true;
+                                        }
+                                    });
+                                }
                             }
+                            // 公告为空时回退为程序名+版本
+                            if (string.IsNullOrEmpty(announcementMsg)) announcementMsg = fallbackTitle;
                             Dispatcher.BeginInvoke(() =>
                             {
                                 if (!isExiting && dataManagerWindow is not null)
                                 {
-                                    dataManagerWindow.AnnouncementMsg = announcementMsg;
+                                    UpdateSharedVariables();
                                 }
                             });
                         }
@@ -113,20 +146,13 @@ namespace HDTLPanel
             });
 
             // 后台任务未完成前的兜底
-            if (announcementMsg == "")
-            {
-                announcementMsg = window.Title;
-            }
+            if (string.IsNullOrEmpty(announcementMsg)) announcementMsg = fallbackTitle;
             // 清理上次崩溃残留的 luajit 进程（主程序已无法管理它们），再重新启动
             KillStaleLuajitProcesses();
             DataContext = context;
             bool started = AutoStartInstance();
             notifyIcon.Init();
-            if (started)
-            {
-                WindowState = WindowState.Minimized;
-                Window_StateChanged(null, new());
-            }
+            MinimizeWindow(started);
         }
 
         /// <summary>
@@ -436,6 +462,7 @@ namespace HDTLPanel
                     e.Cancel = true;
                     dm.Activate();
                     HandyControl.Controls.Growl.InfoGlobal("请先关闭数据管理窗口，再关闭本程序。");
+                    skipConfirmOnClose = false;
                     return;
                 }
             }
@@ -452,7 +479,7 @@ namespace HDTLPanel
                 return;
             }
 
-            MessageBoxResult result = HandyControl.Controls.MessageBox.Show("确定要退出少女前线桌面Q宠吗？", "确认退出", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            MessageBoxResult result = HandyControl.Controls.MessageBox.Show($"确定要退出{productTitle}吗？", "确认退出", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result != MessageBoxResult.Yes)
             {
                 e.Cancel = true;
@@ -650,17 +677,40 @@ namespace HDTLPanel
             context.HasActiveTab = pet != null;
         }
 
+
         private void Window_StateChanged(object? sender, EventArgs e)
         {
+            MinimizeWindow();
+        }
+
+        private void MinimizeWindow(bool isSilentRun = false)
+        {
+            if (isSilentRun) WindowState = WindowState.Minimized;
             if (WindowState == WindowState.Minimized)
             {
                 ShowInTaskbar = false;
                 Hide();
-                HandyControl.Controls.Growl.InfoGlobal("少女前线桌面Q宠已在后台静默启动。\n双击托盘图标显示主窗口。");
+                HandyControl.Controls.Growl.InfoGlobal(new HandyControl.Data.GrowlInfo()
+                {
+                    Message = $"{productTitle}{(isSilentRun ? "已在后台静默启动" : "已最小化到托盘")}。\n双击托盘图标显示主窗口。",
+                    WaitTime = isSilentRun ? 3 : 1
+                    //ShowCloseButton = true,
+                    //ShowDateTime = isSilentRun
+                    //ActionBeforeClose = (b) =>
+                    //{
+                    //    if (b) ShowWindow();
+                    //    return true;
+                    //}
+                });
             }
         }
 
         private void notifyIcon_MouseDoubleClick(object sender, RoutedEventArgs e)
+        {
+            ShowWindow();
+        }
+
+        private void ShowWindow()
         {
             if (isExiting)
             {
@@ -702,10 +752,23 @@ namespace HDTLPanel
                 dataManagerWindow.ModelLoadRequested += DataManagerWindow_ModelLoadRequested;
                 dataManagerWindow.Closed += (_, _) => dataManagerWindow = null;
             }
-            dataManagerWindow.AnnouncementMsg = announcementMsg;
+            UpdateSharedVariables();
             dataManagerWindow.LoadedPaths = GetLoadedPaths();
             dataManagerWindow.Show();
             dataManagerWindow.Activate();
+        }
+
+        private void UpdateSharedVariables()
+        {
+            if (dataManagerWindow is not null)
+            {
+                dataManagerWindow.homepageLink = homepageLink;
+                dataManagerWindow.updateLink = updateLink;
+                dataManagerWindow.donateLink = donateLink;
+                dataManagerWindow.chibiListLink = chibiListLink;
+                dataManagerWindow.announcementMsg = announcementMsg;
+                dataManagerWindow.UpdateSharedVariables();
+            }
         }
 
         /// <summary>
@@ -736,13 +799,12 @@ namespace HDTLPanel
                 if (data.NewInstance)
                 {
                     StartInstance(data);
-                    HandyControl.Controls.Growl.InfoGlobal($"已多开 {data.DisplayName}。");
                 }
                 else
                 {
                     await RestartSelected(data);
-                    HandyControl.Controls.Growl.InfoGlobal($"已加载 {data.DisplayName}，人形已应用。");
                 }
+                HandyControl.Controls.Growl.InfoGlobal($"已加载 {data.DisplayName}。");
                 SaveInstances();
             }
             catch (OperationCanceledException)
@@ -752,10 +814,65 @@ namespace HDTLPanel
             {
             }
         }
+
+
+        /// <summary>
+        /// 检测串值是否为合法的网址格式
+        /// </summary>
+        /// <param name="strValue">要检测的String值</param>
+        /// <returns>成功返回true 失败返回false</returns>
+        public static bool CheckIsUrlFormat(string strValue)
+        {
+            return CheckIsFormat(@"(http://)?([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?", strValue);
+        }
+
+        /// <summary>
+        /// 检测串值是否为合法的格式
+        /// </summary>
+        /// <param name="strRegex">正则表达式</param>
+        /// <param name="strValue">要检测的String值</param>
+        /// <returns>成功返回true 失败返回false</returns>
+        public static bool CheckIsFormat(string strRegex, string strValue)
+        {
+            if (strValue != null && strValue.Trim() != string.Empty)
+            {
+                Regex re = new Regex(strRegex);
+                if (re.IsMatch(strValue))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        private void ShowAbout()
+        {
+            if (dataManagerWindow is not null && dataManagerWindow.aboutDialog is not null) aboutDialog = dataManagerWindow.aboutDialog;
+            if (aboutDialog is null)
+            {
+                aboutDialog = new GflChibiDesktop.Windows.AboutDialog();
+                if (dataManagerWindow is not null) dataManagerWindow.aboutDialog = aboutDialog;
+            }
+            aboutDialog.homepageLink = homepageLink;
+            aboutDialog.updateLink = updateLink;
+            aboutDialog.donateLink = donateLink;
+            aboutDialog.Closed += (s, e) => aboutDialog = null;
+            aboutDialog.Show();
+        }
+
+        private void menuItemAbout_Click(object sender, RoutedEventArgs e)
+        {
+            ShowAbout();
+        }
     }
 
     class MainWindowDataContext : INotifyPropertyChanged
     {
+        public readonly string productTitle = ((AssemblyTitleAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyTitleAttribute))).Title.ToString();
         private bool isRunning = false;
         private bool isBusyClosing = false;
         private bool isChanged = false;
@@ -805,10 +922,10 @@ namespace HDTLPanel
 
         public bool IsAutoRun
         {
-            get => AutoRun.IsAutoRun(CurrentExePath, "少女前线桌面Q宠");
+            get => AutoRun.IsAutoRun(CurrentExePath, productTitle);
             set
             {
-                AutoRun.SetAutoRun(CurrentExePath, "少女前线桌面Q宠", value);
+                AutoRun.SetAutoRun(CurrentExePath, productTitle, value);
                 OnPropertyChanged();
             }
         }

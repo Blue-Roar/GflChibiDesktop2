@@ -19,6 +19,7 @@ namespace GflChibiDesktop
             public string update_link { get; set; }
             public string donate_link { get; set; }
             public string chibi_list_link { get; set; }
+            public string latest { get; set;  }
             public IndexMsgData msg { get; set; }
         }
 
@@ -48,6 +49,10 @@ namespace GflChibiDesktop
 
         public class StartupData
         {
+            public string homepage_link { get; set; }
+            public string update_link { get; set; }
+            public string donate_link { get; set; }
+            public string chibi_list_link { get; set; }
             public int time { get; set; }
             public string count { get; set; }
             public string latest { get; set; }

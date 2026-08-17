@@ -35,36 +35,14 @@ namespace GflChibiDesktop.Windows
     public partial class DataManagerWindow : Window
     {
         public static string AppDir => Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
-        public readonly string productName = ((AssemblyProductAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyProductAttribute))).Product.ToString();
         public readonly string productTitle = ((AssemblyTitleAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyTitleAttribute))).Title.ToString();
-        public readonly string productDescription = ((AssemblyDescriptionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyDescriptionAttribute))).Description.ToString();
-        public readonly string productCopyright = ((AssemblyCopyrightAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyCopyrightAttribute))).Copyright.ToString();
-        public readonly string productCompany = ((AssemblyCompanyAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyCompanyAttribute))).Company.ToString();
         public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version) ?? Assembly.GetExecutingAssembly().GetName().Version;
-        public readonly string currentBuild = ((AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute))).InformationalVersion;
-        public string homepageLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/";
-        public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/download";
-        public string donateLink = "https://projects.brightsu.cn/GflChibiDesktop/donate";
-        public string chibiListLink = "https://projects.brightsu.cn/GFL/chibi-list";
-        public string extraStr = string.Empty;
-
-        private string announcementMsg = string.Empty;
-        /// <summary>
-        /// 由主窗口传入的公告消息（主窗口启动时从 startup 接口获取）。
-        /// </summary>
-        public string AnnouncementMsg
-        {
-            get => announcementMsg;
-            set
-            {
-                announcementMsg = value;
-                if (!string.IsNullOrEmpty(value))
-                {
-                    extraStr = value;
-                    Dispatcher.Invoke(() => lblExtraStr.Content = extraStr);
-                }
-            }
-        }
+        public GflChibiDesktop.Windows.AboutDialog? aboutDialog;
+        public string homepageLink { get; set; }
+        public string updateLink { get; set; }
+        public string donateLink { get; set; }
+        public string chibiListLink { get; set; }
+        public string announcementMsg { get; set; }
 
         /// <summary>
         /// 数据加载完成后触发，把加载结果直接传递给主窗口。
@@ -92,7 +70,17 @@ namespace GflChibiDesktop.Windows
             InitializeComponent();
 
             btnVersion.Content = $"程序版本：{productVersion}";
-            lblExtraStr.Content = extraStr;
+        }
+
+        public async Task UpdateSharedVariables()
+        {
+            lblExtraStr.Content = announcementMsg;
+
+            if (string.IsNullOrEmpty(homepageLink) || string.IsNullOrEmpty(updateLink) || string.IsNullOrEmpty(donateLink) || string.IsNullOrEmpty(chibiListLink))
+            {
+                //HandyControl.Controls.Growl.WarningGlobal("部分链接未正确设置。重新获取链接……");
+                UpdateLinks();
+            }
         }
 
         /// <summary>
@@ -106,7 +94,7 @@ namespace GflChibiDesktop.Windows
             try
             {
                 // 网络请求与数据表构建异步执行（数据表方法内部用 Dispatcher 回 UI）
-                await UpdateLinks();
+                //await UpdateLinks();
                 await System.Threading.Tasks.Task.Run(() => LoadDummyList());
             }
             catch (Exception ex)
@@ -135,6 +123,30 @@ namespace GflChibiDesktop.Windows
                         if (CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
                         if (CheckIsUrlFormat(rt.data.donate_link)) { donateLink = rt.data.donate_link; }
                         if (CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
+
+                        Version latestVersion = new Version(rt.data?.latest);
+                        if (latestVersion != null)
+                        {
+                            if (latestVersion != productVersion)
+                            {
+                                HandyControl.Controls.Growl.AskGlobal(new HandyControl.Data.GrowlInfo()
+                                {
+                                    //IsCustom = true,
+                                    Type = HandyControl.Data.InfoType.Info,
+                                    //IconKey = "info",
+                                    Message = $"{productTitle}有版本更新可用。\n当前版本: {productVersion}\n最新版本: {latestVersion}\n\n是否前往更新页面？",
+                                    ShowCloseButton = false,
+                                    ShowDateTime = false,
+                                    ConfirmStr = "立刻查看",
+                                    CancelStr = "以后再说",
+                                    ActionBeforeClose = (b) =>
+                                    {
+                                        if (b) btnVersion_Click(btnVersion, new());
+                                        return true;
+                                    }
+                                });
+                            }
+                        }
                     }
                     else
                     {
@@ -151,42 +163,6 @@ namespace GflChibiDesktop.Windows
                 Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{ex}"));
             }
         }
-
-        //private void CheckForUpdates()
-        //{
-        //    try
-        //    {
-        //        bool UpdatePost = false;
-        //        string UpdateStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/update", string.Empty, Encoding.UTF8, ref UpdatePost);
-        //        if (!UpdatePost)
-        //        {
-        //            return;
-        //        }
-        //        UpdateRoot rt = JsonConvert.DeserializeObject<UpdateRoot>(UpdateStr);
-
-        //        if (rt.ret != 200)
-        //        {
-        //            return;
-        //        }
-        //        if (rt.data.version != null)
-        //        {
-        //            Version latestBuild = new Version(rt.data.buildver);
-        //            bool urgentUpdate = false;
-        //            if (rt.data.urgent == 1) { urgentUpdate = true; }
-        //            if (latestBuild > productBuild)
-        //            {
-        //                if (urgentUpdate)
-        //                {
-        //                    HandyControl.Controls.Dialog.Show(_about);
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch (Exception)
-        //    {
-        //        return;
-        //    }
-        //}
 
         SolidColorBrush defaultColor = new SolidColorBrush(Color.FromRgb(255, 255, 255));
         SolidColorBrush type0color = new SolidColorBrush(Color.FromRgb(255, 111, 181));
@@ -1428,8 +1404,6 @@ namespace GflChibiDesktop.Windows
             }
         }
 
-        AboutDialog _about = new AboutDialog();
-
         private void chb_preview_d_Click(object sender, RoutedEventArgs e)
         {
             tvAfterSelect();
@@ -1437,10 +1411,20 @@ namespace GflChibiDesktop.Windows
 
         private void btnVersion_Click(object sender, RoutedEventArgs e)
         {
-            _about.homepageLink = homepageLink;
-            _about.updateLink = updateLink;
-            _about.donateLink = donateLink;
-            HandyControl.Controls.Dialog.Show(_about);
+            ShowAbout();
+        }
+
+        public void ShowAbout()
+        {
+            if (aboutDialog is null)
+            {
+                aboutDialog = new GflChibiDesktop.Windows.AboutDialog();
+            }
+            aboutDialog.homepageLink = homepageLink;
+            aboutDialog.updateLink = updateLink;
+            aboutDialog.donateLink = donateLink;
+            aboutDialog.Closed += (s, e) => aboutDialog = null;
+            aboutDialog.Show();
         }
     }
 }

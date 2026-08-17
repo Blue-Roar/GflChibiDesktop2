@@ -1,56 +1,47 @@
-﻿<UserControl x:Class="GflChibiDesktop.AboutDialog"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:hc="https://handyorg.github.io/handycontrol"
-             mc:Ignorable="d" 
-             Width="500" Height="280" Foreground="White" >
-    <hc:SimplePanel>
-        <Border CornerRadius="10,10,0,0" Background="{DynamicResource PrimaryBrush}" Height="30" VerticalAlignment="Top">
-            <hc:SimplePanel>
-                <hc:SimpleText VerticalAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Stretch" TextAlignment="Center" Text="关于" Foreground="{StaticResource PrimaryTextBrush}"/>
-                <Image RenderTransformOrigin="0,0" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Height="24" Width="24" HorizontalAlignment="Left" Source="/hk416_happy.ico" VerticalAlignment="Top" Margin="3"/>
-                <Button Width="24" Height="24" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource ErrorGeometry}" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Top" Command="hc:ControlCommands.Close" Margin="3" />
-            </hc:SimplePanel>
+﻿<Window xmlns:hc="https://handyorg.github.io/handycontrol" x:Class="GflChibiDesktop.Windows.AboutDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GflChibiDesktop.Windows"
+        mc:Ignorable="d"
+        Width="530" Height="330" Background="#FF1B1B1C" Foreground="White" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" Icon="/hk416_happy.ico" WindowStartupLocation="CenterScreen" Title="关于" >
+    <Grid Width="510" Height="280">
+        <Label x:Name="lbl_product" Content="少女前线桌面Q宠" FontSize="20" VerticalContentAlignment="Center" Background="{x:Null}" HorizontalContentAlignment="Center" BorderBrush="{x:Null}" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,5,0,0" />
+        <Border x:Name="border_update" CornerRadius="5" VerticalAlignment="Top" HorizontalAlignment="Left" Height="168" Width="300" Background="{DynamicResource DarkPrimaryBrush}" Margin="10,40,0,0">
+            <Canvas>
+                <Label Content="当前：" Canvas.Left="10" Canvas.Top="10" Width="36" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" VerticalAlignment="Top" />
+                <Label x:Name="lbl_version" Content="Version"  Canvas.Left="46" Canvas.Top="10" Width="100" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" VerticalAlignment="Top" Cursor="Help" />
+                <Label Content="最新：" Canvas.Left="154" Canvas.Top="10" Width="36" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" VerticalAlignment="Top" />
+                <Label x:Name="lbl_latest_version" Content="Version" Canvas.Left="190" Canvas.Top="10" Width="100" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" VerticalAlignment="Top" Cursor="Help" />
+                <Label x:Name="lbl_status" Content="版本状态" Canvas.Left="10" Canvas.Top="29" Width="280" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" FontWeight="Bold" VerticalAlignment="Top" />
+                <hc:TextBox x:Name="txt_description" Canvas.Left="10" Canvas.Top="50" Width="280" Height="106" Padding="0" Background="{x:Null}" IsReadOnly="True" Text="版本更新内容信息&#xA;1&#xA;2&#xA;3&#xA;4&#xD;&#xA;5&#xA;1&#xA;2&#xA;3&#xA;4&#xD;&#xA;5" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextWrapping="Wrap" BorderBrush="{x:Null}" HorizontalAlignment="Center" VerticalAlignment="Top" />
+            </Canvas>
         </Border>
-        <Canvas Width="500" Height="250" VerticalAlignment="Bottom" Background="#FF1B1B1C">
-            <Border x:Name="border_update" CornerRadius="5" VerticalAlignment="Center" HorizontalAlignment="Right" Height="167" Width="300" Canvas.Left="10" Canvas.Top="10" Background="{DynamicResource DarkPrimaryBrush}">
-                <Canvas>
-                    <Label Content="少女前线桌面Q宠" Canvas.Left="10" Width="280" Height="27" FontSize="16" VerticalContentAlignment="Center" Background="{x:Null}" HorizontalContentAlignment="Center" BorderBrush="{x:Null}" Padding="0" VerticalAlignment="Top" Canvas.Top="3" />
-                    <Label Content="当前：" Canvas.Left="10" Canvas.Top="30" Width="36" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" VerticalAlignment="Top" />
-                    <Label x:Name="lbl_version" Content="Version"  Canvas.Left="46" Canvas.Top="30" Width="100" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" VerticalAlignment="Top" Cursor="Help" />
-                    <Label Content="最新：" Canvas.Left="154" Canvas.Top="30" Width="36" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" VerticalAlignment="Top" />
-                    <Label x:Name="lbl_latest_version" Content="Version" Canvas.Left="190" Canvas.Top="30" Width="100" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" VerticalAlignment="Top" Cursor="Help" />
-                    <Label x:Name="lbl_status" Content="版本状态" Canvas.Left="10" Canvas.Top="49" Width="280" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" FontWeight="Bold" VerticalAlignment="Top" />
-                    <hc:TextBox x:Name="txt_description" Canvas.Left="10" Canvas.Top="70" Width="280" Height="93" Padding="0" Background="{x:Null}" IsReadOnly="True" Text="版本更新内容信息&#xA;1&#xA;2&#xA;3&#xA;4&#xD;&#xA;5&#xA;1&#xA;2&#xA;3&#xA;4&#xD;&#xA;5" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextWrapping="Wrap" BorderBrush="{x:Null}" HorizontalAlignment="Center" VerticalAlignment="Top" />
-                </Canvas>
-            </Border>
-            <Label Content="此程序仅供个人学习研究与交流用，严禁用于商业用途。&#xD;&#xA;作者不对因使用此程序而产生的各种后果承担任何责任。" Canvas.Left="10" Canvas.Top="183" Width="300" Height="33" VerticalContentAlignment="Top" Background="{x:Null}" HorizontalContentAlignment="Center" BorderBrush="{x:Null}" Padding="0" VerticalAlignment="Top" />
-            <Label x:Name="lblCopyright" Content="© 2020~2026 BrightSu  / 由 HuiDesktop 驱动" Canvas.Left="10" Canvas.Top="221" Width="300" Height="19" VerticalContentAlignment="Bottom" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" VerticalAlignment="Top" />
-            <hc:SimpleText Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" Width="175" Text="开发者信息" Canvas.Left="315" Canvas.Top="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            <Button x:Name="btn_BrightSu" Height="56" Width="175" Canvas.Left="315" Canvas.Top="30" Padding="0" Click="btn_BrightSu_Click" HorizontalAlignment="Left" Cursor="Hand">
-                <StackPanel Orientation="Horizontal"  Width="167" Height="48">
-                    <Image x:Name="avatar_BrightSu" RenderTransformOrigin="0,0" Height="48" Width="48" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Source="/hk416_happy.ico" StretchDirection="Both" Stretch="UniformToFill" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,3,0"/>
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                        <hc:SimpleText x:Name="name_BrightSu" Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="BrightSu02" HorizontalAlignment="Center" Margin="0" FontSize="13"/>
-                        <hc:SimpleText Foreground="{StaticResource SecondaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="数据配置程序&#xD;&#xA;HDTLPanel适配" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0" FontSize="11"/>
-                    </StackPanel>
+        <Label Content="此程序仅供个人学习研究与交流用，严禁用于商业用途。&#xD;&#xA;作者不对因使用此程序而产生的各种后果承担任何责任。" Width="300" Height="33" VerticalContentAlignment="Top" Background="{x:Null}" HorizontalContentAlignment="Center" BorderBrush="{x:Null}" Padding="0" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,0,0,30" />
+        <Label x:Name="lblCopyright" Content="© 2020~2026 BrightSu  / 由 HuiDesktop 驱动" Width="300" Height="19" VerticalContentAlignment="Bottom" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" VerticalAlignment="Bottom" Margin="10,0,0,10" HorizontalAlignment="Left" />
+
+        <hc:SimpleText Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" Width="175" Text="开发者信息" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,40,10,0"/>
+        <Button x:Name="btn_BrightSu" Height="56" Width="175" Padding="0" Click="btn_BrightSu_Click" HorizontalAlignment="Right" Cursor="Hand" VerticalAlignment="Top" Margin="0,60,10,0">
+            <StackPanel Orientation="Horizontal"  Width="167" Height="48">
+                <Image x:Name="avatar_BrightSu" RenderTransformOrigin="0,0" Height="48" Width="48" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Source="/hk416_happy.ico" StretchDirection="Both" Stretch="UniformToFill" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,3,0"/>
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                    <hc:SimpleText x:Name="name_BrightSu" Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="BrightSu02" HorizontalAlignment="Center" Margin="0" FontSize="13"/>
+                    <hc:SimpleText Foreground="{StaticResource SecondaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="数据配置程序&#xD;&#xA;HDTLPanel适配" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0" FontSize="11"/>
                 </StackPanel>
-            </Button>
-            <Button x:Name="btn_Huix" Height="56" Width="175" Canvas.Left="315" Canvas.Top="91" Padding="0" HorizontalContentAlignment="Center" Click="btn_Huix_Click" HorizontalAlignment="Left" Cursor="Hand">
-                <StackPanel Orientation="Horizontal" Width="167" Height="48">
-                    <Image x:Name="avatar_Huix" RenderTransformOrigin="0,0" Height="48" Width="48" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Source="/hk416_angry.ico" StretchDirection="Both" Stretch="UniformToFill" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,3,0"/>
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                        <hc:SimpleText x:Name="name_Huix" Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="老猫不发威&#xD;&#xA;你当我病危" HorizontalAlignment="Center" Margin="0" FontSize="13"/>
-                        <hc:SimpleText Foreground="{StaticResource SecondaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="HuiDesktop 主程序" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0" FontSize="11"/>
-                    </StackPanel>
+            </StackPanel>
+        </Button>
+        <Button x:Name="btn_Huix" Height="56" Width="175" Padding="0" HorizontalContentAlignment="Center" Click="btn_Huix_Click" HorizontalAlignment="Right" Cursor="Hand" VerticalAlignment="Top" Margin="0,120,10,0">
+            <StackPanel Orientation="Horizontal" Width="167" Height="48">
+                <Image x:Name="avatar_Huix" RenderTransformOrigin="0,0" Height="48" Width="48" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Source="/hk416_angry.ico" StretchDirection="Both" Stretch="UniformToFill" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,3,0"/>
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                    <hc:SimpleText x:Name="name_Huix" Foreground="{StaticResource PrimaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="老猫不发威&#xD;&#xA;你当我病危" HorizontalAlignment="Center" Margin="0" FontSize="13"/>
+                    <hc:SimpleText Foreground="{StaticResource SecondaryTextBrush}" TextAlignment="Center" TextWrapping="WrapWithOverflow" Width="116" Text="HuiDesktop 主程序" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0" FontSize="11"/>
                 </StackPanel>
-            </Button>
-            <hc:Rate Canvas.Left="317" Canvas.Top="151" ValueChanged="EasterEgg" VerticalAlignment="Center" Width="171" Count="6" HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-            <Button x:Name="btn_Actions" Content="前往主页" Height="30" Width="175" Canvas.Left="315" Canvas.Top="175" Click="btn_Actions_Click" BorderThickness="2" Padding="0" VerticalAlignment="Top" />
-            <Button x:Name="btn_Close" Content="确定" Height="30" Width="175" Canvas.Left="315" Canvas.Top="210" Command="hc:ControlCommands.Close" BorderThickness="2" IsCancel="True" IsDefault="True" Padding="0" HorizontalAlignment="Left" />
-            <hc:LoadingLine Canvas.Left="428" Canvas.Top="167"/>
-        </Canvas>
-    </hc:SimplePanel>
-</UserControl>
+            </StackPanel>
+        </Button>
+        <hc:Rate ValueChanged="EasterEgg" VerticalAlignment="Bottom" Width="175" Count="6" HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,0,10,80"/>
+        <Button x:Name="btn_Actions" Content="前往主页" Height="30" Width="175" Click="btn_Actions_Click" BorderThickness="2" Padding="0" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,10,45" />
+        <Button x:Name="btn_Close" Content="确定" Height="30" Width="175" Click="btn_Close_Click" BorderThickness="2" IsCancel="True" IsDefault="True" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,10" />
+    </Grid>
+</Window>
