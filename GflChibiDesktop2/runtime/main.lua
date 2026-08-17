@@ -38,6 +38,8 @@ settings:save()
 -- 新建窗口
 window.create { vsync = true, topmost = true, transparent = true, autoHide = true, settings = settings:access("window") }
 win32.setTransparency(settings.transparency)
+-- 窗口关闭前保存设置（含人形坐标），避免退出后位置丢失
+ev.on(window.window_closing, function() settings:save() end)
 ipc.addPanelItem(
     { type = "single", valueType = "number", prompt = "帧率", hint = "0为不限制（匹配屏幕刷新率）", min = 0, max = 114514 },
     function(v) settings.window.fps = v window.setFPS(v) settings:save() end,
@@ -154,8 +156,9 @@ local dragger = nil;
     ev.on(dragger.dragged, function()
         dragger.drop = settings.drop and not updating
         enterState((settings.drop and not updating) and "drop" or "idle")
+        if not dragger.drop then settings:save() end
     end)
-    ev.on(dragger.dropped, function() enterState("idle") end)
+    ev.on(dragger.dropped, function() enterState("idle") settings:save() end)
 
     ipc.addPanelItem(
         { type = "bool", prompt = "拖动后落地", hint = "地面默认是任务栏" },
