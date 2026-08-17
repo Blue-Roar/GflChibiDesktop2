@@ -4,8 +4,15 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using static GflChibiDesktop.WebAPI;
 
 namespace GflChibiDesktop.Windows
@@ -15,6 +22,8 @@ namespace GflChibiDesktop.Windows
     /// </summary>
     public partial class AboutDialog : Window
     {
+        // 用于记录秘技输入序列
+        private string _secretSequence = "";
         Version version;
         string build;
         string content;
@@ -43,6 +52,184 @@ namespace GflChibiDesktop.Windows
             Check4Update();
             btn_Close.Focus();
             FetchBiliInfo();
+
+            this.PreviewKeyDown += window_PreviewKeyDown;
+            UpdateSecretSequence("");
+        }
+
+        /// <summary>
+        /// 让窗口在指定方向抖动
+        /// </summary>
+        /// <param name="offsetX">X轴偏移量（正数向右，负数向左）</param>
+        /// <param name="offsetY">Y轴偏移量（正数向下，负数向上）</param>
+        private void ShakeWindow(int offsetX, int offsetY)
+        {
+            // 保存原始位置
+            Point oldLocation = new Point(this.Left, this.Top);
+
+            // 抖动轨迹数组 (模仿原VB的Sc数组)
+            int[] shakePattern = { 0, -1, -2, -3, -4, -5, -6, -7, -8, -7, -6, -4, -3, -2, -1, 0 };
+
+            for (int i = 0; i < shakePattern.Length; i++)
+            {
+                this.Left = oldLocation.X + shakePattern[i] * offsetX;
+                this.Top = oldLocation.Y + shakePattern[i] * offsetY;
+
+                // 短暂延时 (5ms)
+                Thread.Sleep(5);
+            }
+        }
+
+        /// <summary>
+        /// 窗口快速缩放动画
+        /// </summary>
+        private void PulseWindow(bool reverse = false)
+        {
+            var scaleTransform = new ScaleTransform(1, 1);
+            window.RenderTransformOrigin = new Point(0.5, 0.5);
+            window.RenderTransform = scaleTransform;
+
+            var pulseX = new DoubleAnimationUsingKeyFrames
+            {
+                Duration = TimeSpan.FromMilliseconds(100),
+                FillBehavior = FillBehavior.Stop,
+                KeyFrames =
+                {
+                    new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.Zero)),
+                    new EasingDoubleKeyFrame(reverse ? 0.85 : 1.15, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(120)), new CubicEase { EasingMode = EasingMode.EaseOut }),
+                    new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(300)), new CubicEase { EasingMode = EasingMode.EaseIn })
+                }
+            };
+            var pulseY = new DoubleAnimationUsingKeyFrames
+            {
+                Duration = TimeSpan.FromMilliseconds(100),
+                FillBehavior = FillBehavior.Stop,
+                KeyFrames =
+                {
+                    new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.Zero)),
+                    new EasingDoubleKeyFrame(reverse ? 0.85 : 1.15, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(120)), new CubicEase { EasingMode = EasingMode.EaseOut }),
+                    new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(300)), new CubicEase { EasingMode = EasingMode.EaseIn })
+                }
+            };
+
+            Storyboard.SetTarget(pulseX, window);
+            Storyboard.SetTargetProperty(pulseX, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleX)"));
+            Storyboard.SetTarget(pulseY, window);
+            Storyboard.SetTargetProperty(pulseY, new PropertyPath("(UIElement.RenderTransform).(ScaleTransform.ScaleY)"));
+
+            var storyboard = new Storyboard();
+            storyboard.Children.Add(pulseX);
+            storyboard.Children.Add(pulseY);
+            storyboard.Completed += (s, e) => window.RenderTransform = null;
+            storyboard.Begin(window);
+        }
+
+        /// <summary>
+        /// 窗口快速旋转动画
+        /// </summary>
+        private void RotateWindow()
+        {
+            var rotateTransform = new RotateTransform();
+            window.RenderTransformOrigin = new Point(0.5, 0.5);
+            window.RenderTransform = rotateTransform;
+
+            var storyboard = new Storyboard();
+            var animation = new DoubleAnimation
+            {
+                From = 0,
+                To = 360,
+                Duration = TimeSpan.FromMilliseconds(500),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop
+            };
+
+            Storyboard.SetTarget(animation, window);
+            Storyboard.SetTargetProperty(animation, new PropertyPath("(UIElement.RenderTransform).(RotateTransform.Angle)"));
+            storyboard.Children.Add(animation);
+            storyboard.Completed += (s, e) => window.RenderTransform = null;
+            storyboard.Begin(window);
+        }
+        
+        private void window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            string keyString = e.Key.ToString();
+
+            // 特殊处理：Return -> Enter
+            if (e.Key == Key.Enter)
+                keyString = "Return";
+            else if (e.Key == Key.Escape)
+                keyString = "Escape";
+
+            UpdateSecretSequence(_secretSequence + keyString);
+
+            if (e.Key == Key.Escape)
+            {
+                this.Close();
+                return;
+            }
+
+            e.Handled = true;
+        }
+
+        private void UpdateSecretSequence(string newSecret)
+        {
+            _secretSequence = newSecret;
+
+            switch (newSecret)
+            {
+                case "":
+                    break;
+
+                case "Up":
+                    ShakeWindow(0, 2);
+                    break;
+
+                case "UpUp":
+                    ShakeWindow(0, 2);
+                    break;
+
+                case "UpUpDown":
+                    ShakeWindow(0, -2);
+                    break;
+
+                case "UpUpDownDown":
+                    ShakeWindow(0, -2);
+                    break;
+
+                case "UpUpDownDownLeft":
+                    ShakeWindow(2, 0);
+                    break;
+
+                case "UpUpDownDownLeftRight":
+                    ShakeWindow(-2, 0);
+                    break;
+
+                case "UpUpDownDownLeftRightLeft":
+                    ShakeWindow(2, 0);
+                    break;
+
+                case "UpUpDownDownLeftRightLeftRight":
+                    ShakeWindow(-2, 0);
+                    break;
+
+                case "UpUpDownDownLeftRightLeftRightB":
+                    PulseWindow();
+                    break;
+
+                case "UpUpDownDownLeftRightLeftRightBA":
+                    PulseWindow(true);
+                    break;
+
+                case "UpUpDownDownLeftRightLeftRightBAReturn":
+                    // 触发最终彩蛋：旋转动画 + 解锁
+                    RotateWindow();
+                    EasterEgg();
+                    break;
+                default:
+                    // 输入错误序列，清空重置
+                    _secretSequence = "";
+                    break;
+            }
         }
 
         private async void Check4Update()
@@ -207,59 +394,73 @@ namespace GflChibiDesktop.Windows
         readonly string[] ro635voices = { "早上好，长官，这个是今天的报表，请过目。", "初次见面，长官。RO635正在待命，等候你的差遣。", "要出任务吗，长官？", "快把这张可笑的照片拿掉吧！不就是游戏赢了我一次吗，下次我可不会放水了！", "为什么会选择我，您一定有自己的理由。\n而我的信念也终于获得了您的认可，不过……\n能不能别靠得这么近，大家……大家都在看着呢……", "细数你的罪孽吧！", "备用零件多了一点，M16，你要吗？", "在前面等着你们的只有地狱。" };
 
 
-        private void EasterEgg(object sender, HandyControl.Data.FunctionEventArgs<double> e)
+        private void EasterEgg()
         {
-
-            if (easterCount < 5)
+            if (GflChibiDesktop.Properties.Settings.Default.EasterEgg)
             {
-                easterCount++;
-                System.Media.SystemSounds.Beep.Play();
+                if (easterCount < 3)
+                {
+                    easterCount++;
+                    HandyControl.Controls.Growl.InfoGlobal("你已经解锁过高级模式了");
+                    System.Media.SystemSounds.Beep.Play();
+                }
+                else
+                {
+                    Random rand = new Random();
+                    int n = rand.Next(1, 10);
+                    string[] voices;
+                    switch (n)
+                    {
+                        case 1:
+                            voices = hk416voices;
+                            break;
+                        case 2:
+                            voices = ump45voices;
+                            break;
+                        case 3:
+                            voices = ump9voices;
+                            break;
+                        case 4:
+                            voices = g11voices;
+                            break;
+                        case 5:
+                            voices = m4a1voices;
+                            break;
+                        case 6:
+                            voices = m16a1voices;
+                            break;
+                        case 7:
+                            voices = ar15voices;
+                            break;
+                        case 8:
+                            voices = sopmodvoices;
+                            break;
+                        case 9:
+                            voices = ro635voices;
+                            break;
+                        default:
+                            voices = hk416voices;
+                            break;
+                    }
+                    int i = rand.Next(1, voices.Count() - 1);
+                    //tbtn_easter.IsEnabled = false;
+                    //tbtn_easter.Description = "你已经戳过了";
+
+                    HandyControl.Controls.Growl.InfoGlobal(new HandyControl.Data.GrowlInfo()
+                    {
+                        Message = $"“{voices[i]}”",
+                        ShowDateTime = false
+                    });
+                }
             }
             else
             {
-                Random rand = new Random();
-                int n = rand.Next(1, 10);
-                string[] voices;
-                switch (n)
-                {
-                    case 1:
-                        voices = hk416voices;
-                        break;
-                    case 2:
-                        voices = ump45voices;
-                        break;
-                    case 3:
-                        voices = ump9voices;
-                        break;
-                    case 4:
-                        voices = g11voices;
-                        break;
-                    case 5:
-                        voices = m4a1voices;
-                        break;
-                    case 6:
-                        voices = m16a1voices;
-                        break;
-                    case 7:
-                        voices = ar15voices;
-                        break;
-                    case 8:
-                        voices = sopmodvoices;
-                        break;
-                    case 9:
-                        voices = ro635voices;
-                        break;
-                    default:
-                        voices = hk416voices;
-                        break;
-                }
-                int i = rand.Next(1, voices.Count() - 1);
-                //tbtn_easter.IsEnabled = false;
-                //tbtn_easter.Description = "你已经戳过了";
-
-                HandyControl.Controls.Growl.InfoGlobal($"“{voices[i]}”");
+                HandyControl.Controls.Growl.InfoGlobal("Cheat Activated!\n已解锁高级模式");
+                GflChibiDesktop.Properties.Settings.Default.EasterEgg = true;
+                GflChibiDesktop.Properties.Settings.Default.Save();
             }
         }
+
 
         private void btn_Close_Click(object sender, RoutedEventArgs e)
         {

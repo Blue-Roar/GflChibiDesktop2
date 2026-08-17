@@ -1,4 +1,5 @@
 ﻿using GflChibiDesktop;
+using HandyControl.Tools;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -265,10 +266,31 @@ namespace HDTLPanel
                 return;
             }
             // 限制多开数量为 8 个
-            if (pets.Count >= 8)
+            if (pets.Count >= 1)
             {
-                HandyControl.Controls.Growl.WarningGlobal("最多同时开启 8 个桌宠实例。");
-                return;
+                if (GflChibiDesktop.Properties.Settings.Default.EasterEgg)
+                {
+                    if (!GflChibiDesktop.Properties.Settings.Default.SuppressMultiInstanceWarning)
+                    {
+                        MessageBoxResult result = HandyControl.Controls.MessageBox.Show($"你已解锁桌宠多开数量限制，本程序将不再限制创建8个以上的桌宠实例。\n然而，更多数量的多开实例并未被测试过，请自行承担使用的风险。\n\n是否隐藏此警告？\n「是」：继续多开，以后不再提醒\n「否」：继续多开，下次继续询问\n「取消」：放弃多开", "桌宠无限多开警告", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+                        switch (result)
+                        {
+                            case MessageBoxResult.Yes:
+                                GflChibiDesktop.Properties.Settings.Default.SuppressMultiInstanceWarning = true;
+                                GflChibiDesktop.Properties.Settings.Default.Save();
+                                break;
+                            case MessageBoxResult.No:
+                                break;
+                            case MessageBoxResult.Cancel:
+                                return;
+                        }
+                    }
+                }
+                else
+                {
+                    HandyControl.Controls.Growl.WarningGlobal("最多同时开启 8 个桌宠实例。");
+                    return;
+                }
             }
             try
             {
@@ -690,18 +712,7 @@ namespace HDTLPanel
             {
                 ShowInTaskbar = false;
                 Hide();
-                HandyControl.Controls.Growl.InfoGlobal(new HandyControl.Data.GrowlInfo()
-                {
-                    Message = $"{productTitle}{(isSilentRun ? "已在后台静默启动" : "已最小化到托盘")}。\n双击托盘图标显示主窗口。",
-                    WaitTime = isSilentRun ? 3 : 1
-                    //ShowCloseButton = true,
-                    //ShowDateTime = isSilentRun
-                    //ActionBeforeClose = (b) =>
-                    //{
-                    //    if (b) ShowWindow();
-                    //    return true;
-                    //}
-                });
+                HandyControl.Controls.Growl.InfoGlobal($"{productTitle}{(isSilentRun ? "已在后台静默启动" : "已最小化到托盘")}。\n双击托盘图标显示主窗口。");
             }
         }
 
@@ -740,7 +751,7 @@ namespace HDTLPanel
             Top = waY + (waH - ActualHeight) / 2;
         }
 
-        private void GflChibiDesktop(object sender, RoutedEventArgs e)
+        private void DataManager(object sender, RoutedEventArgs e)
         {
             if (isExiting)
             {
