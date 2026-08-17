@@ -31,6 +31,7 @@ namespace HDTLPanel
         readonly IntPtr ptr;
         private bool disposedValue;
         public EventWaitHandle waitHandle;
+        public bool IsDisposed => disposedValue;
 
         public class IpcReader
         {
@@ -62,6 +63,7 @@ namespace HDTLPanel
 
             public bool Next()
             {
+                if (m.IsDisposed) return false;
                 m.waitHandle.Reset();
                 size = size == 0 ? Ipc.hiMQ_get(m.ptr) : Ipc.hiMQ_next(m.ptr);
                 read = 0;
@@ -70,6 +72,7 @@ namespace HDTLPanel
 
             public bool Wait(int timeout)
             {
+                if (m.IsDisposed) return false;
                 return m.waitHandle.WaitOne(timeout);
             }
         }
@@ -102,6 +105,7 @@ namespace HDTLPanel
 
             public void Dispose()
             {
+                if (m.IsDisposed) return;
                 Ipc.hiMQ_end(m.ptr, 0, 0);
             }
         }
@@ -143,7 +147,8 @@ namespace HDTLPanel
             {
                 if (disposing)
                 {
-                    // TODO: 释放托管状态(托管对象)
+                    // 释放托管状态(托管对象)
+                    waitHandle?.Dispose();
                 }
 
                 // TODO: 释放未托管的资源(未托管的对象)并重写终结器

@@ -247,12 +247,14 @@ namespace HDTLPanel
             try
             {
                 PetInstance pet = PetInstance.Create(nextPetId++, model);
-                pet.Manager = new ProcessManager(
+                ProcessManager? pm = null;
+                pm = new ProcessManager(
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
                     pet.WorkDir,
                     "main.lua",
-                    () => Dispatcher.Invoke(() => ReadIpc(pet)));
-                pet.Manager.Exited += (s, _) => Dispatcher.Invoke(() => OnPetExited(pet, s as ProcessManager));
+                    () => Dispatcher.BeginInvoke(() => { if (pm is not null) ReadIpc(pm, pet); }));
+                pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
+                pet.Manager = pm;
                 pets.Add(pet);
                 AddTab(pet);
                 PetTabs.SelectedItem = pet.Tab;
@@ -284,12 +286,14 @@ namespace HDTLPanel
             await StopManager(pet);
             pet.Panel.Children.Clear();
             pet.IsChanged = false;
-            pet.Manager = new ProcessManager(
+            ProcessManager? pm = null;
+            pm = new ProcessManager(
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
                 pet.WorkDir,
                 "main.lua",
-                () => Dispatcher.Invoke(() => ReadIpc(pet)));
-            pet.Manager.Exited += (s, _) => Dispatcher.Invoke(() => OnPetExited(pet, s as ProcessManager));
+                () => Dispatcher.BeginInvoke(() => { if (pm is not null) ReadIpc(pm, pet); }));
+            pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
+            pet.Manager = pm;
             pet.IsRestarting = false;
             UpdateStatus();
         }
@@ -561,9 +565,10 @@ namespace HDTLPanel
             w.Write(3);
         }
 
-        private void ReadIpc(PetInstance pet)
+        private void ReadIpc(ProcessManager pm, PetInstance pet)
         {
-            var reader = pet.Manager?.rxIpc.GetReader();
+            if (pet.Manager != pm) return;
+            var reader = pm.rxIpc.GetReader();
             if (reader is not null)
             {
                 while (reader.Next())
