@@ -120,10 +120,10 @@ namespace GflChibiDesktop.Windows
                     IndexRoot rt = JsonConvert.DeserializeObject<IndexRoot>(indexStr);
                     if (rt.ret == 200)
                     {
-                        if (CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
-                        if (CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
-                        if (CheckIsUrlFormat(rt.data.donate_link)) { donateLink = rt.data.donate_link; }
-                        if (CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
+                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
+                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
+                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.donate_link)) { donateLink = rt.data.donate_link; }
+                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
 
                         Version latestVersion = new Version(rt.data?.latest);
                         if (latestVersion != null)
@@ -1016,39 +1016,6 @@ namespace GflChibiDesktop.Windows
             }
         }
 
-        /// <summary>
-        /// 检测串值是否为合法的网址格式
-        /// </summary>
-        /// <param name="strValue">要检测的String值</param>
-        /// <returns>成功返回true 失败返回false</returns>
-        public static bool CheckIsUrlFormat(string strValue)
-        {
-            return CheckIsFormat(@"(http://)?([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?", strValue);
-        }
-
-        /// <summary>
-        /// 检测串值是否为合法的格式
-        /// </summary>
-        /// <param name="strRegex">正则表达式</param>
-        /// <param name="strValue">要检测的String值</param>
-        /// <returns>成功返回true 失败返回false</returns>
-        public static bool CheckIsFormat(string strRegex, string strValue)
-        {
-            if (strValue != null && strValue.Trim() != string.Empty)
-            {
-                Regex re = new Regex(strRegex);
-                if (re.IsMatch(strValue))
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            return false;
-        }
-
 
 
         /// <summary>
@@ -1175,7 +1142,7 @@ namespace GflChibiDesktop.Windows
 
             if (tagString[11].Split('|').Count() > 0)
             {
-                if (CheckIsUrlFormat(downloadSource))
+                if (HttpRequestHelper.CheckIsUrlFormat(downloadSource))
                 {
                     int total_files = tagString[11].Split('|').Count();
                     pb_loader.Value = 0;

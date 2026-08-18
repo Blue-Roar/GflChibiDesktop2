@@ -398,7 +398,7 @@ namespace GflChibiDesktop.Windows
         {
             if (GflChibiDesktop.Properties.Settings.Default.EasterEgg)
             {
-                if (easterCount < 3)
+                if (easterCount < 2)
                 {
                     easterCount++;
                     HandyControl.Controls.Growl.InfoGlobal("你已经解锁过高级模式了");

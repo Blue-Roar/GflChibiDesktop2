@@ -26,7 +26,6 @@ namespace HDTLPanel
     /// </summary>
     public partial class MainWindow : Window
     {
-        const string settingsPath = "settings.json";
         public readonly string productTitle = ((AssemblyTitleAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyTitleAttribute))).Title.ToString();
         public readonly Version productVersion = GetProductVersion();
         public readonly string currentBuild = ((AssemblyInformationalVersionAttribute?)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute)))?.InformationalVersion ?? "";
@@ -79,10 +78,10 @@ namespace HDTLPanel
                         StartupRoot? rt = JsonConvert.DeserializeObject<StartupRoot>(StartupStr);
                         if (rt != null && rt.ret == 200)
                         {
-                            if (CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
-                            if (CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
-                            if (CheckIsUrlFormat(rt.data.donate_link)) { donateLink = rt.data.donate_link; }
-                            if (CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
+                            if (HttpRequestHelper.CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
+                            if (HttpRequestHelper.CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
+                            if (HttpRequestHelper.CheckIsUrlFormat(rt.data.donate_link)) { donateLink = rt.data.donate_link; }
+                            if (HttpRequestHelper.CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
 
                             announcementMsg = rt.data?.msg;
                             Version latestVersion = new Version(rt.data?.latest);
@@ -824,40 +823,6 @@ namespace HDTLPanel
             catch (ObjectDisposedException)
             {
             }
-        }
-
-
-        /// <summary>
-        /// 检测串值是否为合法的网址格式
-        /// </summary>
-        /// <param name="strValue">要检测的String值</param>
-        /// <returns>成功返回true 失败返回false</returns>
-        public static bool CheckIsUrlFormat(string strValue)
-        {
-            return CheckIsFormat(@"(http://)?([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?", strValue);
-        }
-
-        /// <summary>
-        /// 检测串值是否为合法的格式
-        /// </summary>
-        /// <param name="strRegex">正则表达式</param>
-        /// <param name="strValue">要检测的String值</param>
-        /// <returns>成功返回true 失败返回false</returns>
-        public static bool CheckIsFormat(string strRegex, string strValue)
-        {
-            if (strValue != null && strValue.Trim() != string.Empty)
-            {
-                Regex re = new Regex(strRegex);
-                if (re.IsMatch(strValue))
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            return false;
         }
 
         private void ShowAbout()
