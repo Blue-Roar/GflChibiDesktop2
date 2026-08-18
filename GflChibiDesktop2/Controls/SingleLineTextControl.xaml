@@ -11,10 +11,10 @@
             <ColumnDefinition Width="7*"/>
             <ColumnDefinition Width="13*"/>
         </Grid.ColumnDefinitions>
-        <Label x:Name="PromptTextBox" Content="{Binding Path=PromptText}" Margin="10,0,4,17" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Right"/>
+        <Label x:Name="PromptTextBox" Content="{Binding Path=PromptText}" Margin="10,0,4,17" VerticalAlignment="Stretch" Background="{x:Null}" BorderThickness="0" Padding="0,0,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Right"/>
         <TextBox Margin="0,2,10,0" TextWrapping="Wrap" Text="{Binding Path=InputContent, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top"  InputMethod.IsInputMethodEnabled="{Binding Path=EnableIME, Mode=OneWay}" PreviewTextInput="TextBox_PreviewTextInput" PreviewKeyDown="TextBox_PreviewKeyDown" Grid.Column="1"/>
         <!--<TextBox HorizontalAlignment="Left" Margin="85,4,0,0" TextWrapping="Wrap" Text="{Binding Fps, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Width="120" InputMethod.IsInputMethodEnabled="False"/>-->
-        <Label x:Name="HintTextBox" Content="{Binding Path=HintText}" Margin="10,25,10,0" VerticalAlignment="Bottom"  Foreground="{StaticResource SecondaryTextBrush}" Grid.ColumnSpan="2" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Stretch"/>
+        <Label x:Name="HintTextBox" Content="{Binding Path=HintText}" Margin="10,25,10,0" VerticalAlignment="Bottom"  Foreground="{StaticResource SecondaryTextBrush}" Grid.ColumnSpan="2" Background="{x:Null}" BorderThickness="0" Padding="0,0,0,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Stretch"/>
         <Border BorderBrush="DimGray" BorderThickness="0, 1, 0, 0" Grid.ColumnSpan="2"/>
     </Grid>
 </UserControl>

@@ -85,7 +85,8 @@ namespace GflChibiDesktop2
                 ListBoxItem item = (ListBoxItem)lb_sources.SelectedItem;
                 string[] tagString = (string[])item.Tag;
                 tb_downloadSource.Text = tagString[3];
-                tb_sourceInfo.Text = $"{tagString[1]}\n{tagString[2]}";
+                lbl_source.Content = tagString[1];
+                tb_sourceInfo.Text = tagString[2];
             }
         }
     }

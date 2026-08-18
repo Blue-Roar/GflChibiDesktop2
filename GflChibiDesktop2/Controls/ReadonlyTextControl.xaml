@@ -7,6 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="25" d:DesignWidth="400" Height="25">
     <Grid Height="25" VerticalAlignment="Top" d:DataContext="{d:DesignInstance {x:Type local:ReadonlyTextControl}, IsDesignTimeCreatable=True}" Margin="0">
-        <Label x:Name="PromptTextBox" Content="{Binding Path=Text}" Margin="10,0,0,0" VerticalAlignment="Center" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0"/>
+        <Label x:Name="PromptTextBox" Content="{Binding Path=Text}" Margin="10,0,0,0" VerticalAlignment="Center" Background="{x:Null}" BorderThickness="0" Padding="0,0,0,0"/>
     </Grid>
 </UserControl>

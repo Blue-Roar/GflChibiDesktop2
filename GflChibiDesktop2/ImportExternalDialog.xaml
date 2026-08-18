@@ -9,17 +9,17 @@
     <hc:SimplePanel>
         <Border Background="{DynamicResource PrimaryBrush}" Height="30" VerticalAlignment="Top">
             <hc:SimplePanel>
-                <hc:SimpleText VerticalAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Stretch" TextAlignment="Center" Text="导入外部骨骼数据" Foreground="{StaticResource PrimaryTextBrush}"/>
+                <hc:SimpleText FontSize="{StaticResource SubHeadFontSize}" VerticalAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Stretch" TextAlignment="Center" Text="导入外部骨骼数据" Foreground="{StaticResource PrimaryTextBrush}" Margin="30,0,30,0"/>
                 <Image RenderTransformOrigin="0,0" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Height="24" Width="24" HorizontalAlignment="Left" Source="/hk416_angry.ico" VerticalAlignment="Top" Margin="3"/>
                 <Button Width="24" Height="24" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource ErrorGeometry}" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Top" Command="hc:ControlCommands.Close" Margin="3" />
             </hc:SimplePanel>
         </Border>
         <Grid Margin="0,30,0,0">
-            <Label Content="皮肤名称：" HorizontalAlignment="Left" VerticalAlignment="Top" Width="70" Margin="10,10,0,0" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}"/>
+            <Label Content="皮肤名称：" HorizontalAlignment="Left" VerticalAlignment="Top" Width="70" Margin="10,10,0,0" Padding="0" Background="{x:Null}" BorderThickness="0"/>
             <hc:TextBox x:Name="tb_skinName" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="80,10,10,0" Height="28" MaxLines="1"/>
-            <Label Content="数据文件：" HorizontalAlignment="Left" VerticalAlignment="Top" Width="70" Margin="10,43,0,0" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}"/>
+            <Label Content="数据文件：" HorizontalAlignment="Left" VerticalAlignment="Top" Width="70" Margin="10,43,0,0" Padding="0" Background="{x:Null}" BorderThickness="0"/>
+            <hc:TextBox x:Name="tb_files" VerticalAlignment="Top" Margin="80,43,115,0" IsReadOnly="True" Text="未选择文件" MouseDoubleClick="btn_browse_Click" />
             <Button x:Name="btn_browse" Content="选择文件(_B)..." HorizontalAlignment="Right" VerticalAlignment="Top" Width="100" Height="28" Margin="0,43,10,0" Click="btn_browse_Click"/>
-            <hc:TextBox x:Name="tb_files" VerticalAlignment="Top" Margin="80,43,115,0" IsReadOnly="True" Text="未选择文件" />
             <TextBlock Text="选择 3-6 个文件：基础 .atlas/.skel/.png 及可选的 r{基名} 文件（宿舍人形），将复制到 app\assets\spine_external 目录下" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="10,0,10,50" Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap"/>
             <Button x:Name="btn_OK" Content="导入" HorizontalAlignment="Right" Width="100" Height="30" Margin="0,0,120,10" Click="btn_ok_Click" VerticalAlignment="Bottom"/>
             <Button x:Name="btn_Cancel" Content="取消" HorizontalAlignment="Right" Width="100" Height="30" Margin="0,0,10,10" Command="hc:ControlCommands.Close" VerticalAlignment="Bottom"/>

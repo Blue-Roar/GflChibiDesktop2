@@ -17,19 +17,20 @@
         <TaskbarItemInfo x:Name="tii"/>
     </hc:Window.TaskbarItemInfo>
     <Grid x:Name="grid" MinHeight="256" MaxHeight="{DynamicResource {x:Static SystemParameters.PrimaryScreenHeightKey}}">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"></ColumnDefinition>
-            <ColumnDefinition Width="210"></ColumnDefinition>
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="28"/>
             <RowDefinition />
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Label x:Name="lblAnnouncement" Content="announcement" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Background="{x:Null}" BorderBrush="{x:Null}" Padding="4,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryBrush}" Height="24"/>
-        <CheckBox Grid.Row="0" Grid.Column="1" x:Name="chb_thinList" VerticalAlignment="Center" HorizontalAlignment="Right" Content="紧凑列表(_C)" Margin="0,0,105,0" Width="100" Click="chb_thinList_Click" IsChecked="True" Height="24" />
-        <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Content="窗口置顶(_T)" Margin="0" Width="100" IsChecked="{Binding Topmost, ElementName=window}" Height="24"/>
-
+        <Grid Background="{DynamicResource SecondaryRegionBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="210"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Label x:Name="lblAnnouncement" Content="announcement" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Background="{x:Null}" BorderThickness="0" Padding="4,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryBrush}" Height="24"/>
+            <CheckBox Grid.Row="0" Grid.Column="1" x:Name="chb_thinList" VerticalAlignment="Center" HorizontalAlignment="Right" Content="紧凑列表(_C)" Margin="0,0,105,0" Width="100" Click="chb_thinList_Click" IsChecked="True" Height="24" />
+            <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Content="窗口置顶(_T)" Margin="0" Width="100" IsChecked="{Binding Topmost, ElementName=window}" Height="24"/>
+        </Grid>
         <Grid Grid.Row="1" Grid.ColumnSpan="2" Background="{DynamicResource RegionBrush}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="24"/>
@@ -41,19 +42,19 @@
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <TextBlock x:Name="lbl_InternalSelected" Text="请选择要加载的人形" TextAlignment="Center" Padding="0" Grid.ColumnSpan="2" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            <Image x:Name="img_Preview" Grid.Row="1" RenderTransformOrigin="0,0" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality"></Image>
-            <StackPanel Grid.Row="1" FlowDirection="LeftToRight" HorizontalAlignment="Right" VerticalAlignment="Top" >
+            <TextBlock Margin="5" x:Name="lbl_InternalSelected" Text="请选择要加载的人形" TextAlignment="Center" Padding="0" Grid.ColumnSpan="2" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Image Margin="5,0,0,0" x:Name="img_Preview" Grid.Row="1" RenderTransformOrigin="0,0" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality"></Image>
+            <StackPanel Margin="0,5,5,0" Grid.Row="1" FlowDirection="LeftToRight" HorizontalAlignment="Right" VerticalAlignment="Top" >
                 <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="2" >
-                    <Label Content="在线预览" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_preview}" />
+                    <Label Content="在线预览" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_preview}" />
                     <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_preview" VerticalAlignment="Stretch" HorizontalAlignment="Left" IsChecked="True" />
                 </StackPanel>
                 <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="2" >
-                    <Label Content="大破立绘" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_preview_d}" />
+                    <Label Content="大破立绘" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_preview_d}" />
                     <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_preview_d" VerticalAlignment="Stretch" HorizontalAlignment="Left" Click="chb_preview_d_Click" />
                 </StackPanel>
             </StackPanel>
-            <TreeView x:Name="tv_InternalSelector" Grid.Row="1" IsTextSearchEnabled="True" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" TreeViewItem.Selected="tv_InternalSelector_Selected" TreeViewItem.Unselected="tv_InternalSelector_Unselected" Grid.Column="1" Style="{StaticResource TreeView.Small}">
+            <TreeView Margin="0,0,5,0" x:Name="tv_InternalSelector" Grid.Row="1" IsTextSearchEnabled="True" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" TreeViewItem.Selected="tv_InternalSelector_Selected" TreeViewItem.Unselected="tv_InternalSelector_Unselected" Grid.Column="1" Style="{StaticResource TreeView.Small}">
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type vm:ComponentModel}" ItemsSource="{Binding Path=Children}">
                         <StackPanel Orientation="Horizontal">
@@ -66,16 +67,16 @@
                 </TreeView.ItemTemplate>
             </TreeView>
             <StackPanel Grid.Row="2" MinHeight="34" Grid.ColumnSpan="2">
-                <StackPanel x:Name="sp_loader">
-                    <Label x:Name="lbl_loader" Content="请先加载数据列表" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" ScrollViewer.VerticalScrollBarVisibility="Disabled" BorderBrush="{x:Null}" HorizontalAlignment="Stretch" Padding="0"/>
-                    <ProgressBar x:Name="pb_loader" Style="{DynamicResource ProgressBarFlat}" Grid.Row="2" Grid.ColumnSpan="2" Height="16" Background="{x:Null}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" VerticalAlignment="Bottom" />
+                <StackPanel x:Name="sp_loader" Margin="5">
+                    <TextBlock x:Name="txt_loader" Text="请先加载数据列表" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" TextAlignment="Center" VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
+                    <ProgressBar x:Name="pb_loader" Style="{DynamicResource ProgressBarFlat}" Grid.Row="2" Grid.ColumnSpan="2" Height="16" Background="{x:Null}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" VerticalAlignment="Bottom" Margin="0,2,0,0" />
                 </StackPanel>
-                <StackPanel x:Name="sp_downloader" Visibility="Collapsed">
-                    <Label x:Name="lbl_downloader" Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" ScrollViewer.VerticalScrollBarVisibility="Disabled" BorderBrush="{x:Null}" HorizontalAlignment="Stretch" Padding="0"/>
-                    <ProgressBar x:Name="pb_downloader" Style="{DynamicResource ProgressBarFlat}" Grid.Row="3" Grid.ColumnSpan="2" Height="16" Background="{x:Null}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" VerticalAlignment="Bottom" />
+                <StackPanel x:Name="sp_downloader" Margin="5" Visibility="Collapsed">
+                    <TextBlock x:Name="txt_downloader" Text="正在下载文件" Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2" TextAlignment="Center" VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
+                    <ProgressBar x:Name="pb_downloader" Style="{DynamicResource ProgressBarFlat}" Grid.Row="3" Grid.ColumnSpan="2" Height="16" Background="{x:Null}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" VerticalAlignment="Bottom" Margin="0,2,0,0" />
                 </StackPanel>
             </StackPanel>
-            <Grid Grid.Row="4" Grid.ColumnSpan="2" Margin="3,3,3,2">
+            <Grid Grid.Row="4" Grid.ColumnSpan="2" Margin="3,0,3,2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="4*" />
                     <ColumnDefinition Width="4*" />
@@ -101,19 +102,19 @@
                 <Button x:Name="btn_LoadDummyList" Content="重载数据列表" Click="btn_LoadDummyList_Click" Margin="2,0,2,0" Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ToolTip="从服务器重新加载数据列表"/>
                 <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" Margin="2" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center">
                     <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_save_cg" IsChecked="True" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" HorizontalAlignment="Center" />
-                    <Label Content="保存到本地" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_save_cg}" />
+                    <Label Content="保存到本地" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_save_cg}" />
                 </StackPanel>
-                <Label x:Name="lblSelectedItem" Content="未选择" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" />
-                <!--<Label Content="供数据崩溃时使用" Foreground="{DynamicResource SecondaryTextBrush}" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" Visibility="{Binding Visibility, ElementName=btn_deleteData}" />
-                <Label Content="选择要加载的数据" Foreground="{DynamicResource SecondaryTextBrush}" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" Visibility="{Binding Visibility, ElementName=btng_loadData}" />-->
+                <Label x:Name="lblSelectedItem" Content="未选择" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" />
+                <!--<Label Content="供数据崩溃时使用" Foreground="{DynamicResource SecondaryTextBrush}" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" Visibility="{Binding Visibility, ElementName=btn_deleteData}" />
+                <Label Content="选择要加载的数据" Foreground="{DynamicResource SecondaryTextBrush}" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" Visibility="{Binding Visibility, ElementName=btng_loadData}" />-->
                 <Button x:Name="btn_ImportExternalSpine" Content="导入外部数据(_I)" Margin="2,0,2,0" Grid.Row="1" Grid.Column="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ToolTip="导入外部骨骼数据" Click="btn_ImportExternalSpine_Click"/>
                 <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" Margin="2" Grid.Row="1" Grid.Column="4" HorizontalAlignment="Center">
                     <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_force_load" IsChecked="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" HorizontalAlignment="Center" />
-                    <Label Content="多开" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_force_load}" ToolTip="勾选后加载为多开一个新桌宠实例，而不是应用到当前选中的实例" />
+                    <Label Content="多开" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_force_load}" ToolTip="勾选后加载为多开一个新桌宠实例，而不是应用到当前选中的实例" />
                 </StackPanel>
             </Grid>
         </Grid>
-        <Label Content="人形骨骼数据、立绘图片等少女前线游戏素材版权均归散爆、云母组所有。&#xD;&#xA;仅供个人学习研究与交流用，严禁用于商业用途。使用此程序一切风险自负。" Grid.Row="3" Grid.ColumnSpan="2" VerticalContentAlignment="Center" Margin="2,0,0,0" Padding="10,5,5,5" Background="{x:Null}" BorderBrush="{x:Null}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="42"/>
+        <Label Content="人形骨骼数据、立绘图片等少女前线游戏素材版权均归散爆、云母组所有。&#xD;&#xA;仅供个人学习研究与交流用，严禁用于商业用途。使用此程序一切风险自负。" Grid.Row="3" Grid.ColumnSpan="2" VerticalContentAlignment="Center" Margin="2,0,0,0" Padding="10,5,5,5" Background="{x:Null}" BorderThickness="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="42"/>
         <Button x:Name="btnVersion" Content="程序版本：Version" Click="btnVersion_Click"  ToolTip="查看程序信息"  Grid.Column="0" Grid.Row="3" Width="130" HorizontalAlignment="Right" Margin="0,10,10,10" VerticalAlignment="Top" Grid.ColumnSpan="3" Height="30" Padding="0"/>
     </Grid>
 </hc:Window>

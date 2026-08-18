@@ -438,7 +438,7 @@ namespace GflChibiDesktop2
                         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
                         {
                             if (dummyListLoaded) return;
-                            lbl_loader.Content = $"正在处理：{c} / {total}";
+                            txt_loader.Text = $"正在处理：{c} / {total}";
                             pb_loader.Value = c;
                             tii.ProgressValue = (double)c / total;
                         }));
@@ -675,7 +675,7 @@ namespace GflChibiDesktop2
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     tv_InternalSelector.ItemsSource = tree;
-                    lbl_loader.Content = $"已加载 {loaded} 条数据，等待下一步操作";
+                    txt_loader.Text = $"已加载 {loaded} 条数据，等待下一步操作";
                     pb_loader.IsIndeterminate = true;
                     tii.ProgressValue = 100;
                     tii.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
@@ -891,8 +891,8 @@ namespace GflChibiDesktop2
                     if (rt.data.uuid != rb.meta.uuid)//有新版本
                     {
                         sp_downloader.Visibility = Visibility.Visible;
-                        lbl_loader.Content = "正在更新人形数据表";
-                        HttpClass.DownloadFile(rt.data.url, $"{AppDir}chibi_list.json", pb_downloader, lbl_downloader);
+                        txt_loader.Text = "正在更新人形数据表";
+                        HttpClass.DownloadFile(rt.data.url, $"{AppDir}chibi_list.json", pb_downloader, txt_downloader);
                         sp_downloader.Visibility = Visibility.Collapsed;
                         await LoadDummyListCore();
                         return;
@@ -904,7 +904,7 @@ namespace GflChibiDesktop2
                 }
                 else//API成功，本地不存在
                 {
-                    bool downloaded = HttpClass.DownloadFile(rt.data.url, $"{AppDir}chibi_list.json", pb_loader, lbl_loader);
+                    bool downloaded = HttpClass.DownloadFile(rt.data.url, $"{AppDir}chibi_list.json", pb_loader, txt_loader);
                     if (downloaded)
                     {
                         await LoadDummyListCore();
@@ -1042,26 +1042,26 @@ namespace GflChibiDesktop2
                 pb_loader.Maximum = 1;
                 if (tagString[9] != null)
                 {
-                    lbl_loader.Content = $"正在下载 {tagString[5]} 的大破立绘数据";
+                    txt_loader.Text = $"正在下载 {tagString[5]} 的大破立绘数据";
                     pb_loader.Maximum = 2;
                     await HttpClass.DownloadFileAsync($"{cg_url}/{tagString[9]}", $@"{AppDir}assets/pic/{tagString[9]}", (current, total) =>
                     {
                         pb_downloader.Maximum = (int)total;
                         pb_downloader.Value = (int)current;
-                        lbl_downloader.Content = $"{current} / {total}";
+                        txt_downloader.Text = $"{current} / {total}";
                     });
                     pb_loader.Value++;
                 }
-                lbl_loader.Content = $"正在下载 {tagString[5]} 的立绘数据";
+                txt_loader.Text = $"正在下载 {tagString[5]} 的立绘数据";
                 await HttpClass.DownloadFileAsync($"{cg_url}/{tagString[8]}", $@"{AppDir}assets/pic/{tagString[8]}", (current, total) =>
                 {
                     pb_downloader.Maximum = (int)total;
                     pb_downloader.Value = (int)current;
-                    lbl_downloader.Content = $"{current} / {total}";
+                    txt_downloader.Text = $"{current} / {total}";
                 });
                 pb_loader.Value++;
                 sp_downloader.Visibility = Visibility.Collapsed;
-                lbl_loader.Content = "准备就绪";
+                txt_loader.Text = "准备就绪";
                 pb_loader.IsIndeterminate = true;
 
                 if (tagString[9] != null)
@@ -1234,13 +1234,13 @@ namespace GflChibiDesktop2
 
                         sp_downloader.Visibility = Visibility.Visible;
                         pb_loader.IsIndeterminate = false;
-                        lbl_loader.Content = $"正在下载 {tagString[5]}";
+                        txt_loader.Text = $"正在下载 {tagString[5]}";
 
                         KillEmptyDirectory($@"{AppDir}assets/spine");
 
                         foreach (string filename in tagString[11].Split('|'))
                         {
-                            lbl_loader.Content = $"正在下载 {tagString[5]}：{filename} ({pb_loader.Value}/{total_files})";
+                            txt_loader.Text = $"正在下载 {tagString[5]}：{filename} ({pb_loader.Value}/{total_files})";
 
                             if (!Directory.Exists($@"{AppDir}assets/spine/{tagString[6]}"))
                             {
@@ -1254,14 +1254,14 @@ namespace GflChibiDesktop2
                                 {
                                     pb_downloader.Maximum = (int)total;
                                     pb_downloader.Value = (int)current;
-                                    lbl_downloader.Content = $"{current} / {total}";
+                                    txt_downloader.Text = $"{current} / {total}";
                                 });
 
                             pb_loader.Value++;
                             tii.ProgressValue = pb_loader.Value / pb_loader.Maximum;
                         }
 
-                        lbl_loader.Content = $"已完成下载 {tagString[5]}，等待下一步操作...";
+                        txt_loader.Text = $"已完成下载 {tagString[5]}，等待下一步操作...";
                         pb_loader.IsIndeterminate = true;
                         sp_downloader.Visibility = Visibility.Collapsed;
                         tii.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Indeterminate;

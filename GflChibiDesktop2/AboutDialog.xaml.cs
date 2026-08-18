@@ -177,35 +177,35 @@ namespace GflChibiDesktop2
                     break;
 
                 case "Up":
-                    ShakeWindow(0, 2);
+                    ShakeWindow(0, 5);
                     break;
 
                 case "UpUp":
-                    ShakeWindow(0, 2);
+                    ShakeWindow(0, 5);
                     break;
 
                 case "UpUpDown":
-                    ShakeWindow(0, -2);
+                    ShakeWindow(0, -5);
                     break;
 
                 case "UpUpDownDown":
-                    ShakeWindow(0, -2);
+                    ShakeWindow(0, -5);
                     break;
 
                 case "UpUpDownDownLeft":
-                    ShakeWindow(2, 0);
+                    ShakeWindow(5, 0);
                     break;
 
                 case "UpUpDownDownLeftRight":
-                    ShakeWindow(-2, 0);
+                    ShakeWindow(-5, 0);
                     break;
 
                 case "UpUpDownDownLeftRightLeft":
-                    ShakeWindow(2, 0);
+                    ShakeWindow(5, 0);
                     break;
 
                 case "UpUpDownDownLeftRightLeftRight":
-                    ShakeWindow(-2, 0);
+                    ShakeWindow(-5, 0);
                     break;
 
                 case "UpUpDownDownLeftRightLeftRightB":
@@ -223,7 +223,15 @@ namespace GflChibiDesktop2
                     break;
                 default:
                     // 输入错误序列，清空重置
-                    _secretSequence = "";
+                    if (_secretSequence.EndsWith("Up"))
+                    {
+                        _secretSequence = "Up";
+                        ShakeWindow(0, 5);
+                    }
+                    else
+                    {
+                        _secretSequence = string.Empty;
+                    }
                     break;
             }
         }
@@ -404,7 +412,7 @@ namespace GflChibiDesktop2
                 {
                     easterCount++;
                     HandyControl.Controls.Growl.InfoGlobal("你已经解锁过高级模式了");
-                    System.Media.SystemSounds.Beep.Play();
+                    // System.Media.SystemSounds.Beep.Play();
                 }
                 else
                 {

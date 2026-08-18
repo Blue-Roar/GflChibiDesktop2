@@ -81,7 +81,7 @@ namespace GflChibiDesktop2
         /// <param name="progressBar1"></param>
         /// <param name="label1"></param>
         /// <returns></returns>
-        public static bool DownloadFile(string URL, string fileName, System.Windows.Controls.ProgressBar progressBar, System.Windows.Controls.Label label)
+        public static bool DownloadFile(string URL, string fileName, System.Windows.Controls.ProgressBar progressBar, System.Windows.Controls.TextBlock label)
         {
             try
             {
@@ -107,7 +107,7 @@ namespace GflChibiDesktop2
 
 
                     progressBar.Value = (int)currentLength;
-                    label.Content = String.Format("{0} / {1}", BytesToString(currentLength), BytesToString(totalLength));
+                    label.Text = String.Format("{0} / {1}", BytesToString(currentLength), BytesToString(totalLength));
 
                     osize = stream1.Read(by, 0, (int)by.Length);
                 }

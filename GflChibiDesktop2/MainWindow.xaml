@@ -13,36 +13,13 @@
         <local:BoolToStringValueConverter x:Key="runningStatusConverter"/>
     </hc:Window.Resources>
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="8*"/>
-            <ColumnDefinition Width="5*"/>
-        </Grid.ColumnDefinitions>
-        <Label Content="当前主实例状态：" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20"/>
-        <Label Content="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=未运行/正在运行}" Foreground="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=Red/Green}" HorizontalAlignment="Left" Margin="110,10,0,0" VerticalAlignment="Top" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0,0,0,0" Height="20"/>
-        <CheckBox VerticalAlignment="Top" HorizontalAlignment="Right" Content="窗口置顶(_T)" Margin="0,10,10,0" Width="90" Height="20" IsChecked="{Binding Topmost, ElementName=window}" Grid.Column="1" />
-        <Grid x:Name="ConfigZoneGrid" Margin="0,40,0,0" Grid.ColumnSpan="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="40"/>
-                <RowDefinition/>
-                <RowDefinition Height="40"/>
-            </Grid.RowDefinitions>
-            <Grid Height="40" VerticalAlignment="Center" Background="{StaticResource DefaultBrush}" Grid.Row="0">
-                <Button Content="人形扩编(_E)" HorizontalAlignment="Left" Margin="10,0,0,0" Width="90" Click="StartNewInstance" IsEnabled="{Binding HasActiveTab}" ToolTip="基于当前选中的桌宠配置，新开一个桌宠实例"/>
-                <Button Content="关闭当前(_W)" HorizontalAlignment="Left" Margin="110,0,0,0" Width="90" Click="StopSelectedInstance" IsEnabled="{Binding HasActiveTab}" ToolTip="结束当前选中的桌宠实例"/>
-                <ToggleButton Style="{StaticResource ToggleButtonSwitch}" Content="开机自启(_B)" HorizontalAlignment="Right" Margin="0,0,10,0" Width="125" IsChecked="{Binding IsAutoRun}" ToolTip="登录 Windows 时自动启动本程序" Height="28" HorizontalContentAlignment="Left" Grid.ColumnSpan="2"/>
-            </Grid>
-            <TabControl x:Name="PetTabs" Grid.Row="1" Margin="0,1,0,0" SelectionChanged="PetTabs_SelectionChanged"/>
-            <Grid Height="40" VerticalAlignment="Center" Background="{StaticResource DefaultBrush}" Grid.Row="2">
-                <Button Content="保存配置(_S)" HorizontalAlignment="Left" Margin="10,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="SaveConfig"/>
-                <Button Content="放弃更改(_Q)" HorizontalAlignment="Left" Margin="110,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="DiscardConfigChange"/>
-                <Button Content="人形数据配置(_D)" HorizontalAlignment="Right" Margin="0,0,10,0" Width="132" Click="DataManager"/>
-            </Grid>
-        </Grid>
         <hc:NotifyIcon x:Name="notifyIcon" Text="{Binding Title, ElementName=window}" Visibility="Visible" Icon="/hk416_happy.ico" MouseDoubleClick="notifyIcon_MouseDoubleClick">
             <hc:NotifyIcon.ContextMenu>
                 <ContextMenu x:Name="trayMenu">
                     <MenuItem Command="hc:ControlCommands.PushMainWindow2Top" Header="显示主窗口(_S)" Click="notifyIcon_MouseDoubleClick"/>
                     <MenuItem Click="DataManager" Header="人形数据配置(_D)"/>
+                    <Separator/>
+                    <MenuItem Header="开机自启(_B)" IsCheckable="True" IsChecked="{Binding IsAutoRun}"/>
                     <Separator/>
                     <MenuItem Click="menuItemAbout_Click" Header="关于(_A)"/>
                     <Separator/>
@@ -50,5 +27,29 @@
                 </ContextMenu>
             </hc:NotifyIcon.ContextMenu>
         </hc:NotifyIcon>
+        <Grid Grid.ColumnSpan="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="48"/>
+                <RowDefinition/>
+                <RowDefinition Height="48"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0" Background="{StaticResource ThirdlyRegionBrush}">
+                <Label Content="当前主实例状态：" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Background="{x:Null}" BorderThickness="0" Padding="0,0,0,0" Height="20"/>
+                <Label Content="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=未运行/正在运行}" Foreground="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=Red/Green}" HorizontalAlignment="Left" Margin="110,0,0,0" VerticalAlignment="Center" Background="{x:Null}" BorderThickness="0" Padding="0,0,0,0" Height="20" FontWeight="SemiBold"/>
+                <CheckBox VerticalAlignment="Center" HorizontalAlignment="Right" Content="窗口置顶(_T)" Margin="0,0,10,0" Width="90" Height="20" IsChecked="{Binding Topmost, ElementName=window}" Grid.Column="1" />
+            </Grid>
+            <Grid Grid.Row="1">
+                <Button Content="人形扩编(_E)" HorizontalAlignment="Left" Margin="10,0,0,0" Width="90" Click="StartNewInstance" IsEnabled="{Binding HasActiveTab}" ToolTip="基于当前选中的桌宠配置，新开一个桌宠实例"/>
+                <Button Content="关闭当前(_W)" HorizontalAlignment="Left" Margin="110,0,0,0" Width="90" Click="StopSelectedInstance" IsEnabled="{Binding HasActiveTab}" ToolTip="结束当前选中的桌宠实例"/>
+                <ToggleButton Background="{DynamicResource RegionBrush}" Style="{StaticResource ToggleButtonSwitch}" Content="开机自启(_B)" HorizontalAlignment="Right" Margin="0,0,10,0" Width="125" IsChecked="{Binding IsAutoRun}" ToolTip="登录 Windows 时自动启动本程序" Height="28" HorizontalContentAlignment="Left" Grid.ColumnSpan="2"/>
+            </Grid>
+            <TabControl x:Name="PetTabs" Grid.Row="2" Margin="0,1,0,0" SelectionChanged="PetTabs_SelectionChanged" BorderThickness="0"/>
+            <Grid Grid.Row="3">
+                <Button Content="保存配置(_S)" HorizontalAlignment="Left" Margin="10,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="SaveConfig"/>
+                <Button Content="放弃更改(_Q)" HorizontalAlignment="Left" Margin="110,0,0,0" Width="90" IsEnabled="{Binding IsChanged}" Click="DiscardConfigChange"/>
+                <Button Content="人形数据配置(_D)" HorizontalAlignment="Right" Width="132" Click="DataManager" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            </Grid>
+        </Grid>
     </Grid>
 </hc:Window>
