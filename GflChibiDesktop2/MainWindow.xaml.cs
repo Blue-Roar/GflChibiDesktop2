@@ -1,7 +1,4 @@
-﻿using GflChibiDesktop;
-using HandyControl.Tools;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -10,16 +7,16 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Input;
-using static GflChibiDesktop.WebAPI;
+using Newtonsoft.Json;
+using GflChibiDesktop2.Properties;
+using static GflChibiDesktop2.WebAPI;
 
-namespace HDTLPanel
+namespace GflChibiDesktop2
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -36,8 +33,8 @@ namespace HDTLPanel
         bool isExiting = false;
         bool hasCentered = false;
         bool skipConfirmOnClose = false;
-        GflChibiDesktop.Windows.DataManagerWindow? dataManagerWindow;
-        GflChibiDesktop.Windows.AboutDialog? aboutDialog;
+        DataManagerWindow? dataManagerWindow;
+        AboutDialog? aboutDialog;
         public string announcementMsg = "";
         public string homepageLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/";
         public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/download";
@@ -201,7 +198,7 @@ namespace HDTLPanel
         /// <returns>是否成功启动了至少一个桌宠实例（false 表示无任何配置，此时主窗口保持可见）。</returns>
         private bool AutoStartInstance()
         {
-            List<GflChibiDesktop.Windows.ChibiModelData>? saved = LoadSavedInstances();
+            List<ChibiModelData>? saved = LoadSavedInstances();
             if (saved != null && saved.Count > 0)
             {
                 foreach (var m in saved)
@@ -223,26 +220,26 @@ namespace HDTLPanel
 
         private static string InstancesFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "instances.json");
 
-        private List<GflChibiDesktop.Windows.ChibiModelData> LoadSavedInstances()
+        private List<ChibiModelData> LoadSavedInstances()
         {
             try
             {
                 if (File.Exists(InstancesFilePath))
                 {
-                    return JsonConvert.DeserializeObject<List<GflChibiDesktop.Windows.ChibiModelData>>(File.ReadAllText(InstancesFilePath)) ?? new List<GflChibiDesktop.Windows.ChibiModelData>();
+                    return JsonConvert.DeserializeObject<List<ChibiModelData>>(File.ReadAllText(InstancesFilePath)) ?? new List<ChibiModelData>();
                 }
             }
             catch
             {
             }
-            return new List<GflChibiDesktop.Windows.ChibiModelData>();
+            return new List<ChibiModelData>();
         }
 
         private void SaveInstances()
         {
             try
             {
-                var list = pets.Select(p => p.Model).Where(m => m != null).Cast<GflChibiDesktop.Windows.ChibiModelData>().ToList();
+                var list = pets.Select(p => p.Model).Where(m => m != null).Cast<ChibiModelData>().ToList();
                 File.WriteAllText(InstancesFilePath, JsonConvert.SerializeObject(list, Newtonsoft.Json.Formatting.Indented));
             }
             catch
@@ -258,7 +255,7 @@ namespace HDTLPanel
             StartInstance(SelectedPet?.Model);
         }
 
-        private void StartInstance(GflChibiDesktop.Windows.ChibiModelData? model)
+        private void StartInstance(ChibiModelData? model)
         {
             if (isExiting)
             {
@@ -267,16 +264,16 @@ namespace HDTLPanel
             // 限制多开数量为 8 个
             if (pets.Count >= 1)
             {
-                if (GflChibiDesktop.Properties.Settings.Default.EasterEgg)
+                if (Settings.Default.EasterEgg)
                 {
-                    if (!GflChibiDesktop.Properties.Settings.Default.SuppressMultiInstanceWarning)
+                    if (!Settings.Default.SuppressMultiInstanceWarning)
                     {
                         MessageBoxResult result = HandyControl.Controls.MessageBox.Show($"你已解锁桌宠多开数量限制，本程序将不再限制创建8个以上的桌宠实例。\n然而，更多数量的多开实例并未被测试过，请自行承担使用的风险。\n\n是否隐藏此警告？\n「是」：继续多开，以后不再提醒\n「否」：继续多开，下次继续询问\n「取消」：放弃多开", "桌宠无限多开警告", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
                         switch (result)
                         {
                             case MessageBoxResult.Yes:
-                                GflChibiDesktop.Properties.Settings.Default.SuppressMultiInstanceWarning = true;
-                                GflChibiDesktop.Properties.Settings.Default.Save();
+                                Settings.Default.SuppressMultiInstanceWarning = true;
+                                Settings.Default.Save();
                                 break;
                             case MessageBoxResult.No:
                                 break;
@@ -316,7 +313,7 @@ namespace HDTLPanel
         /// <summary>
         /// 用新模型重启当前选中的桌宠。
         /// </summary>
-        private async Task RestartSelected(GflChibiDesktop.Windows.ChibiModelData data)
+        private async Task RestartSelected(ChibiModelData data)
         {
             PetInstance? pet = SelectedPet;
             if (pet is null)
@@ -478,7 +475,7 @@ namespace HDTLPanel
 
             foreach (Window window in Application.Current.Windows)
             {
-                if (window is GflChibiDesktop.Windows.DataManagerWindow dm && dm.IsVisible)
+                if (window is DataManagerWindow dm && dm.IsVisible)
                 {
                     e.Cancel = true;
                     dm.Activate();
@@ -758,7 +755,8 @@ namespace HDTLPanel
             }
             if (dataManagerWindow is null)
             {
-                dataManagerWindow = new GflChibiDesktop.Windows.DataManagerWindow();
+                dataManagerWindow = new DataManagerWindow();
+                dataManagerWindow.OwnerMainWindow = this;
                 dataManagerWindow.ModelLoadRequested += DataManagerWindow_ModelLoadRequested;
                 dataManagerWindow.Closed += (_, _) => dataManagerWindow = null;
             }
@@ -802,7 +800,7 @@ namespace HDTLPanel
             return paths;
         }
 
-        private async void DataManagerWindow_ModelLoadRequested(GflChibiDesktop.Windows.ChibiModelData data)
+        private async void DataManagerWindow_ModelLoadRequested(ChibiModelData data)
         {
             try
             {
@@ -825,13 +823,11 @@ namespace HDTLPanel
             }
         }
 
-        private void ShowAbout()
+        public void ShowAbout()
         {
-            if (dataManagerWindow is not null && dataManagerWindow.aboutDialog is not null) aboutDialog = dataManagerWindow.aboutDialog;
             if (aboutDialog is null)
             {
-                aboutDialog = new GflChibiDesktop.Windows.AboutDialog();
-                if (dataManagerWindow is not null) dataManagerWindow.aboutDialog = aboutDialog;
+                aboutDialog = new AboutDialog();
             }
             aboutDialog.homepageLink = homepageLink;
             aboutDialog.updateLink = updateLink;

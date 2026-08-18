@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 
-namespace HDTLPanel
+namespace GflChibiDesktop2
 {
     /// <summary>
     /// Interaction logic for App.xaml
@@ -16,7 +10,7 @@ namespace HDTLPanel
         private static System.Threading.Mutex? mutex;
         protected override void OnStartup(StartupEventArgs e)
         {
-            mutex = new System.Threading.Mutex(true, "OnlyRun_GflChibiDesktop_Merged");
+            mutex = new System.Threading.Mutex(true, "OnlyRun_GflChibiDesktop2_Merged");
             if (mutex.WaitOne(0, false))
             {
                 base.OnStartup(e);

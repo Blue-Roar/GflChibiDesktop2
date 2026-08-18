@@ -8,12 +8,12 @@
     <PlatformTarget>x64</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
     <Company>BrightSu</Company>
-    <Product>GflChibiDesktop</Product>
+    <Product>GflChibiDesktop2</Product>
     <AssemblyTitle>少女前线桌面Q宠</AssemblyTitle>
     <Description>少女前线桌面Q宠</Description>
     <Copyright>© 2020~2026 BrightSu</Copyright>
-    <AssemblyVersion>2.1.1.9</AssemblyVersion>
-    <FileVersion>2.1.1.9</FileVersion>
+    <AssemblyVersion>2.1.1.10</AssemblyVersion>
+    <FileVersion>2.1.1.10</FileVersion>
     <InformationalVersion>20260818</InformationalVersion>
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <PackageProjectUrl>https://projects.brightsu.cn/GflChibiDesktop/V2/</PackageProjectUrl>
@@ -39,7 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="GflChibiDesktop\chibi_list.json">
+    <None Include="chibi_list.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>app\chibi_list.json</Link>
     </None>
