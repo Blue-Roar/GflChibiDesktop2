@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:hc="https://handyorg.github.io/handycontrol"
-             mc:Ignorable="d" 
+             mc:Ignorable="d" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
              Background="{DynamicResource RegionBrush}" MouseMove="UserControl_MouseMove" Cursor="Arrow">
     <Canvas Width="200" Height="187">
         <TextBlock Background="{DynamicResource TitleBrush}" Height="44" Style="{StaticResource TextBlockDefault}" TextWrapping="Wrap" HorizontalAlignment="Stretch" TextAlignment="Center" Padding="0,4,0,0" Width="200" ><Run FontSize="14" Text="立绘窗口设置"/><LineBreak/><Run FontSize="11" Text="（仅对当前立绘窗口生效）"/></TextBlock>

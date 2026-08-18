@@ -18,7 +18,7 @@ namespace GflChibiDesktop2
     /// <summary>
     /// AboutWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class AboutDialog : Window
+    public partial class AboutDialog : HandyControl.Controls.Window
     {
         private string _secretSequence = "";
         Version version;
@@ -34,7 +34,6 @@ namespace GflChibiDesktop2
         public readonly string currentBuild = ((AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute))).InformationalVersion;
         public string homepageLink { get; set; }
         public string updateLink { get; set; }
-        public string donateLink { get; set; }
 
         public AboutDialog()
         {

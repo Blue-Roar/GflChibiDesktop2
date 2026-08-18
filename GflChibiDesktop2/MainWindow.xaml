@@ -1,4 +1,4 @@
-﻿<Window x:Name="window" xmlns:hc="https://handyorg.github.io/handycontrol" x:Class="GflChibiDesktop2.MainWindow"
+﻿<hc:Window x:Name="window" xmlns:hc="https://handyorg.github.io/handycontrol" x:Class="GflChibiDesktop2.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -8,10 +8,10 @@
         d:DataContext="{d:DesignInstance local:MainWindowDataContext, IsDesignTimeCreatable=True}"
         Title="少女前线桌面Q宠" Height="375" Width="400" MinHeight="375" MinWidth="400" WindowStartupLocation="CenterScreen"
         Closing="Window_Closing" Closed="Window_Closed" StateChanged="Window_StateChanged"
-        Background="#FF1B1B1C" Foreground="White" Icon="/hk416_happy.ico">
-    <Window.Resources>
+        Background="{DynamicResource SecondaryRegionBrush}" Foreground="{DynamicResource PrimaryTextBrush}" Icon="/hk416_happy.ico">
+    <hc:Window.Resources>
         <local:BoolToStringValueConverter x:Key="runningStatusConverter"/>
-    </Window.Resources>
+    </hc:Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="8*"/>
@@ -51,4 +51,4 @@
             </hc:NotifyIcon.ContextMenu>
         </hc:NotifyIcon>
     </Grid>
-</Window>
+</hc:Window>

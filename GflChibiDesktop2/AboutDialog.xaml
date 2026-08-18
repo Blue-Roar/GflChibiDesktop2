@@ -1,13 +1,13 @@
-﻿<Window xmlns:hc="https://handyorg.github.io/handycontrol" x:Class="GflChibiDesktop2.AboutDialog"
+﻿<hc:Window xmlns:hc="https://handyorg.github.io/handycontrol" x:Class="GflChibiDesktop2.AboutDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GflChibiDesktop2"
         mc:Ignorable="d" PreviewKeyDown="window_PreviewKeyDown"
-        Width="530" Height="330" Background="#FF1B1B1C" Foreground="White" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" Icon="/hk416_happy.ico" WindowStartupLocation="CenterScreen" Title="关于" x:Name="window" >
+        Width="530" Height="330" Background="{DynamicResource SecondaryRegionBrush}" Foreground="{DynamicResource PrimaryTextBrush}" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" Icon="/hk416_happy.ico" WindowStartupLocation="CenterScreen" Title="关于" x:Name="window" >
     <Grid Width="510" Height="280">
-        <Label x:Name="lbl_product" Content="少女前线桌面Q宠" FontSize="20" VerticalContentAlignment="Center" Background="{x:Null}" HorizontalContentAlignment="Center" BorderBrush="{x:Null}" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,5,0,0" />
+        <Label x:Name="lbl_product" Content="少女前线桌面Q宠" FontSize="{StaticResource HeadFontSize}" VerticalContentAlignment="Center" Background="{x:Null}" HorizontalContentAlignment="Center" BorderBrush="{x:Null}" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,5,0,0" />
         <Border x:Name="border_update" CornerRadius="5" VerticalAlignment="Top" HorizontalAlignment="Left" Height="168" Width="300" Background="{DynamicResource DarkPrimaryBrush}" Margin="10,40,0,0">
             <Canvas>
                 <Label Content="当前：" Canvas.Left="10" Canvas.Top="10" Width="36" Height="16" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="{x:Null}" Padding="0" BorderBrush="{x:Null}" VerticalAlignment="Top" />
@@ -21,7 +21,7 @@
         <Label Content="此程序仅供个人学习研究与交流用，严禁用于商业用途。&#xD;&#xA;作者不对因使用此程序而产生的各种后果承担任何责任。" Width="300" Height="33" VerticalContentAlignment="Top" Background="{x:Null}" HorizontalContentAlignment="Center" BorderBrush="{x:Null}" Padding="0" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,0,0,30" />
         <Label x:Name="lblCopyright" Content="© 2020~2026 BrightSu  / 由 HuiDesktop 驱动" Width="300" Height="19" VerticalContentAlignment="Bottom" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0" VerticalAlignment="Bottom" Margin="10,0,0,10" HorizontalAlignment="Left" />
 
-        <Label Foreground="{StaticResource PrimaryTextBrush}" BorderBrush="{x:Null}" Padding="0" Width="175" Content="开发者信息" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,40,10,0" FontSize="14" Height="24"/>
+        <Label Foreground="{StaticResource PrimaryTextBrush}" Background="Transparent" BorderBrush="{x:Null}" Padding="0" Width="175" Content="开发者信息" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,40,10,0" FontSize="{StaticResource SubHeadFontSize}" Height="24"/>
         <Button x:Name="btn_BrightSu" Height="56" Width="175" Padding="0" Click="btn_BrightSu_Click" HorizontalAlignment="Right" Cursor="Hand" VerticalAlignment="Top" Margin="0,70,10,0">
             <StackPanel Orientation="Horizontal"  Width="167" Height="48">
                 <Image x:Name="avatar_BrightSu" RenderTransformOrigin="0,0" Height="48" Width="48" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Source="/hk416_happy.ico" StretchDirection="Both" Stretch="UniformToFill" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,3,0"/>
@@ -43,4 +43,4 @@
         <Button x:Name="btn_Actions" Content="前往主页" Height="30" Width="175" Click="btn_Actions_Click" BorderThickness="2" Padding="0" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,10,45" />
         <Button x:Name="btn_Close" Content="确定" Height="30" Width="175" Click="btn_Close_Click" BorderThickness="2" IsCancel="True" IsDefault="True" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,10" />
     </Grid>
-</Window>
+</hc:Window>

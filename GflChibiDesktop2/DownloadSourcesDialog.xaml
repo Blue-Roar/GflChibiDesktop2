@@ -4,10 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:hc="https://handyorg.github.io/handycontrol"
-             mc:Ignorable="d" 
-             Width="500" Height="236" Background="#FF1B1B1C" Foreground="White" >
+             mc:Ignorable="d" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+             Width="500" Height="236" Background="{DynamicResource SecondaryRegionBrush}" Foreground="{DynamicResource PrimaryTextBrush}" >
     <hc:SimplePanel>
-        <Border CornerRadius="10,10,0,0" Background="{DynamicResource PrimaryBrush}" Height="30" VerticalAlignment="Top">
+        <Border Background="{DynamicResource PrimaryBrush}" Height="30" VerticalAlignment="Top">
             <hc:SimplePanel>
                 <hc:SimpleText VerticalAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Stretch" TextAlignment="Center" Text="下载源设置" Foreground="{StaticResource PrimaryTextBrush}"/>
                 <Image RenderTransformOrigin="0,0" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" Height="24" Width="24" HorizontalAlignment="Left" Source="/hk416_angry.ico" VerticalAlignment="Top" Margin="3"/>
@@ -15,8 +15,8 @@
             </hc:SimplePanel>
         </Border>
         <Grid Margin="0,30,0,0">
-            <Label Content="下载源：" HorizontalAlignment="Left" Height="28" VerticalAlignment="Top" Width="50" Margin="10,3,0,0" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}"/>
-            <hc:TextBox x:Name="tb_downloadSource" VerticalAlignment="Top" Margin="65,3,10,0"  VerticalScrollBarVisibility="Disabled" MaxLines="1" IsReadOnly="True" BorderThickness="0" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0"/>
+            <Label Content="下载源：" HorizontalAlignment="Left" Height="28" VerticalAlignment="Top" Width="48" Margin="10,3,0,0" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}"/>
+            <hc:TextBox x:Name="tb_downloadSource" VerticalAlignment="Top" Margin="58,3,10,0"  VerticalScrollBarVisibility="Disabled" MaxLines="1" IsReadOnly="True" BorderThickness="0" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0"/>
             <ListBox x:Name="lb_sources" HorizontalAlignment="Left" Width="175" Margin="10,35,0,50" SelectionChanged="lb_sources_SelectionChanged" />
             <hc:TextBox x:Name="tb_sourceInfo" Margin="195,35,10,50" Padding="0" Background="{x:Null}" IsReadOnly="True" Text="未选择下载源" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextWrapping="WrapWithOverflow"/>
             <Button x:Name="btn_UpdateSources" Content="刷新下载源" HorizontalAlignment="Left" Height="30" VerticalAlignment="Bottom" Width="175" Margin="10,0,0,10" Click="btn_UpdateSources_Click"/>

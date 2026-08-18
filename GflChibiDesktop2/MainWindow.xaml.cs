@@ -21,7 +21,7 @@ namespace GflChibiDesktop2
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : HandyControl.Controls.Window
     {
         public readonly string productTitle = ((AssemblyTitleAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyTitleAttribute))).Title.ToString();
         public readonly Version productVersion = GetProductVersion();
@@ -38,7 +38,6 @@ namespace GflChibiDesktop2
         public string announcementMsg = "";
         public string homepageLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/";
         public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/download";
-        public string donateLink = "https://projects.brightsu.cn/GflChibiDesktop/donate";
         public string chibiListLink = "https://projects.brightsu.cn/GFL/chibi-list";
 
         string AppDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
@@ -77,7 +76,6 @@ namespace GflChibiDesktop2
                         {
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
-                            if (HttpRequestHelper.CheckIsUrlFormat(rt.data.donate_link)) { donateLink = rt.data.donate_link; }
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
 
                             announcementMsg = rt.data?.msg;
@@ -770,7 +768,6 @@ namespace GflChibiDesktop2
             {
                 dataManagerWindow.homepageLink = homepageLink;
                 dataManagerWindow.updateLink = updateLink;
-                dataManagerWindow.donateLink = donateLink;
                 dataManagerWindow.chibiListLink = chibiListLink;
                 dataManagerWindow.announcementMsg = announcementMsg;
                 dataManagerWindow.UpdateSharedVariables();
@@ -829,7 +826,6 @@ namespace GflChibiDesktop2
             }
             aboutDialog.homepageLink = homepageLink;
             aboutDialog.updateLink = updateLink;
-            aboutDialog.donateLink = donateLink;
             aboutDialog.Closed += (s, e) => aboutDialog = null;
             aboutDialog.Show();
         }

@@ -32,7 +32,7 @@ namespace GflChibiDesktop2
         public bool NewInstance { get; set; }
     }
 
-    public partial class DataManagerWindow : Window
+    public partial class DataManagerWindow : HandyControl.Controls.Window
     {
         public static string AppDir => Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
         public readonly string productTitle = ((AssemblyTitleAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyTitleAttribute))).Title.ToString();
@@ -40,7 +40,6 @@ namespace GflChibiDesktop2
         public MainWindow? OwnerMainWindow { get; set; }
         public string homepageLink { get; set; }
         public string updateLink { get; set; }
-        public string donateLink { get; set; }
         public string chibiListLink { get; set; }
         public string announcementMsg { get; set; }
 
@@ -76,7 +75,7 @@ namespace GflChibiDesktop2
         {
             lblAnnouncement.Content = announcementMsg;
 
-            if (string.IsNullOrEmpty(homepageLink) || string.IsNullOrEmpty(updateLink) || string.IsNullOrEmpty(donateLink) || string.IsNullOrEmpty(chibiListLink))
+            if (string.IsNullOrEmpty(homepageLink) || string.IsNullOrEmpty(updateLink) || string.IsNullOrEmpty(chibiListLink))
             {
                 //HandyControl.Controls.Growl.WarningGlobal("部分链接未正确设置。重新获取链接……");
                 UpdateLinks();
@@ -121,7 +120,6 @@ namespace GflChibiDesktop2
                     {
                         if (HttpRequestHelper.CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
                         if (HttpRequestHelper.CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
-                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.donate_link)) { donateLink = rt.data.donate_link; }
                         if (HttpRequestHelper.CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
 
                         Version latestVersion = new Version(rt.data?.latest);
