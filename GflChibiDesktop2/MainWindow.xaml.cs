@@ -475,7 +475,7 @@ namespace GflChibiDesktop2
                 {
                     e.Cancel = true;
                     dm.Activate();
-                    HandyControl.Controls.Growl.InfoGlobal("请先关闭数据管理窗口，再关闭本程序。");
+                    HandyControl.Controls.Growl.InfoGlobal("在退出程序前，请先关闭数据管理窗口。");
                     skipConfirmOnClose = false;
                     return;
                 }
@@ -493,11 +493,39 @@ namespace GflChibiDesktop2
                 return;
             }
 
-            MessageBoxResult result = HandyControl.Controls.MessageBox.Show($"确定要退出{productTitle}吗？", "确认退出", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (result != MessageBoxResult.Yes)
+            // 确认框弹出期间禁用托盘菜单全部菜单项，避免在窗口关闭流程中触发嵌套关闭
+            SetTrayMenuEnabled(false);
+            try
             {
-                e.Cancel = true;
+                MessageBoxResult result = HandyControl.Controls.MessageBox.Show($"确定要退出{productTitle}吗？", "确认退出", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result != MessageBoxResult.Yes)
+                {
+                    e.Cancel = true;
+                }
             }
+            finally
+            {
+                SetTrayMenuEnabled(true);
+            }
+        }
+
+        /// <summary>
+        /// 启用/禁用托盘菜单的全部菜单项。
+        /// </summary>
+        private void SetTrayMenuEnabled(bool enabled)
+        {
+            if (trayMenu is null)
+            {
+                return;
+            }
+            foreach (object item in trayMenu.Items)
+            {
+                if (item is MenuItem menuItem)
+                {
+                    menuItem.IsEnabled = enabled;
+                }
+            }
+            trayMenu.IsEnabled = enabled;
         }
 
         private void ExitApplication(object sender, RoutedEventArgs e)
@@ -715,19 +743,22 @@ namespace GflChibiDesktop2
 
         private void ShowWindow()
         {
-            if (isExiting)
+            if (trayMenu is not null && trayMenu.IsEnabled)
             {
-                return;
+                if (isExiting)
+                {
+                    return;
+                }
+                Show();
+                ShowInTaskbar = true;
+                WindowState = WindowState.Normal;
+                if (!hasCentered)
+                {
+                    CenterWindow();
+                    hasCentered = true;
+                }
+                Activate();
             }
-            Show();
-            ShowInTaskbar = true;
-            WindowState = WindowState.Normal;
-            if (!hasCentered)
-            {
-                CenterWindow();
-                hasCentered = true;
-            }
-            Activate();
         }
 
         /// <summary>

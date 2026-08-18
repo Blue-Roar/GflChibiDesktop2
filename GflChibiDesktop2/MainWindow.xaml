@@ -40,7 +40,7 @@
         </Grid>
         <hc:NotifyIcon x:Name="notifyIcon" Text="{Binding Title, ElementName=window}" Visibility="Visible" Icon="/hk416_happy.ico" MouseDoubleClick="notifyIcon_MouseDoubleClick">
             <hc:NotifyIcon.ContextMenu>
-                <ContextMenu>
+                <ContextMenu x:Name="trayMenu">
                     <MenuItem Command="hc:ControlCommands.PushMainWindow2Top" Header="显示主窗口(_S)" Click="notifyIcon_MouseDoubleClick"/>
                     <MenuItem Click="DataManager" Header="人形数据配置(_D)"/>
                     <Separator/>
