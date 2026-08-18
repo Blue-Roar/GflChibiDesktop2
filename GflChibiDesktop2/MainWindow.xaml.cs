@@ -202,11 +202,42 @@ namespace GflChibiDesktop2
                 // 从未保存过实例列表：不自动打开任何桌宠，主窗口保持可见
                 return false;
             }
+            int started = 0;
             foreach (var m in saved)
             {
+                if (m is null)
+                {
+                    continue;
+                }
+                if (!ValidateModelFiles(m))
+                {
+                    continue;
+                }
                 StartInstance(m);
+                started++;
             }
-            return saved.Count > 0;
+            return started > 0;
+        }
+
+        /// <summary>
+        /// 校验模型数据文件（skeleton/atlas）是否存在，缺失则跳过并提示。
+        /// </summary>
+        private bool ValidateModelFiles(ChibiModelData model)
+        {
+            string appDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app");
+            foreach (string f in new[] { model.SkeletonFile, model.AtlasFile })
+            {
+                if (string.IsNullOrEmpty(f))
+                {
+                    continue;
+                }
+                if (!File.Exists(Path.Combine(appDir, f)))
+                {
+                    HandyControl.Controls.Growl.WarningGlobal($"“{model.DisplayName}”的桌宠数据文件缺失，已跳过自动加载：\n{f}");
+                    return false;
+                }
+            }
+            return true;
         }
 
         private static string InstancesFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "instances.json");
@@ -321,6 +352,8 @@ namespace GflChibiDesktop2
             {
                 pet.TabTitle.Text = GetTabTitle(pet);
             }
+            pet.StopRequested = false;
+            pet.RestartAttempts = 0;
             pet.IsRestarting = true;
             await StopManager(pet);
             pet.Panel.Children.Clear();
@@ -377,6 +410,9 @@ namespace GflChibiDesktop2
             {
                 return;
             }
+            // 用户主动停止：标记后不自动重启
+            pet.StopRequested = true;
+            pet.RestartAttempts = 0;
             await StopManager(pet);
             RemovePet(pet);
         }
@@ -405,7 +441,73 @@ namespace GflChibiDesktop2
             {
             }
             pet.Manager = null;
+
+            // 用户主动停止或程序退出：不自动重启
+            if (pet.StopRequested || isExiting)
+            {
+                RemovePet(pet);
+                return;
+            }
+
+            // 异常退出：3 秒后自动重启，最多重试 3 次
+            if (pet.RestartAttempts < 3)
+            {
+                pet.RestartAttempts++;
+                int attempts = pet.RestartAttempts;
+                HandyControl.Controls.Growl.WarningGlobal($"桌宠“{pet.Name}”异常退出，3 秒后自动重启（第 {attempts}/3 次）。");
+                _ = System.Threading.Tasks.Task.Run(async () =>
+                {
+                    await System.Threading.Tasks.Task.Delay(3000);
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        // 期间被主动停止/关闭或计数已变化则放弃
+                        if (isExiting || !pets.Contains(pet) || pet.StopRequested || attempts != pet.RestartAttempts)
+                        {
+                            return;
+                        }
+                        _ = AutoRestartPet(pet);
+                    });
+                });
+                return;
+            }
+
+            HandyControl.Controls.Growl.WarningGlobal($"桌宠“{pet.Name}”异常退出次数过多，已停止自动重启。");
             RemovePet(pet);
+        }
+
+        /// <summary>
+        /// 自动重启桌宠实例（复用原标签页）。
+        /// </summary>
+        private async Task AutoRestartPet(PetInstance pet)
+        {
+            if (isExiting)
+            {
+                return;
+            }
+            pet.IsRestarting = true;
+            try
+            {
+                pet.Panel.Children.Clear();
+                pet.IsChanged = false;
+                ProcessManager? pm = null;
+                pm = new ProcessManager(
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
+                    pet.WorkDir,
+                    "main.lua",
+                    () => Dispatcher.BeginInvoke(() => { if (pm is not null) ReadIpc(pm, pet); }));
+                pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
+                pet.Manager = pm;
+                HandyControl.Controls.Growl.InfoGlobal($"桌宠“{pet.Name}”已自动重启。");
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.Growl.ErrorGlobal($"自动重启桌宠“{pet.Name}”失败。\n{ex.Message}");
+            }
+            finally
+            {
+                pet.IsRestarting = false;
+                UpdateStatus();
+            }
         }
 
         private void RemovePet(PetInstance pet)
@@ -808,16 +910,16 @@ namespace GflChibiDesktop2
         /// <summary>
         /// 收集所有运行中桌宠实例正在使用的模型数据目录（相对 assets/spine/ 的 path）。
         /// </summary>
-        private System.Collections.Generic.HashSet<string> GetLoadedPaths()
+        public System.Collections.Generic.HashSet<string> GetLoadedPaths()
         {
             var paths = new System.Collections.Generic.HashSet<string>();
             foreach (var pet in pets)
             {
                 if (pet.Model?.SkeletonFile is string s)
                 {
-                    // 形如 assets/spine/{path}/{file}.skel
+                    // 形如 assets/spine/{path}/{file}.skel 或 assets/spine_external/{path}/{file}.skel
                     string[] parts = s.Split('/');
-                    if (parts.Length >= 3 && parts[0] == "assets" && parts[1] == "spine")
+                    if (parts.Length >= 3 && parts[0] == "assets" && (parts[1] == "spine" || parts[1] == "spine_external"))
                     {
                         paths.Add(parts[2]);
                     }

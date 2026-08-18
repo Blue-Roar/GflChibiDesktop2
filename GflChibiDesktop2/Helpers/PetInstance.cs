@@ -26,6 +26,14 @@ namespace GflChibiDesktop2
         /// 是否正在重启中（进程退出事件在重启期间被忽略，避免被当作正常结束而移除）。
         /// </summary>
         public bool IsRestarting { get; set; }
+        /// <summary>
+        /// 是否由用户主动停止（主动停止后不自动重启）。
+        /// </summary>
+        public bool StopRequested { get; set; }
+        /// <summary>
+        /// 异常退出后的自动重启尝试次数。
+        /// </summary>
+        public int RestartAttempts { get; set; }
 
         public PetInstance(int id, string name, string workDir)
         {
@@ -114,6 +122,8 @@ namespace GflChibiDesktop2
 
             // 共享素材（spine 骨骼数据；luajit 不使用 pic，立绘由主程序 CG 窗口负责）
             LinkDir(Path.Combine(assetsDir, "spine"), Path.Combine(appDir, "assets", "spine"));
+            // 外部导入的骨骼数据
+            LinkDir(Path.Combine(assetsDir, "spine_external"), Path.Combine(appDir, "assets", "spine_external"));
 
             // 窗口位置等设置：优先恢复该实例已保存的配置，否则从默认拷贝一份
             if (!string.IsNullOrEmpty(savedSettings))

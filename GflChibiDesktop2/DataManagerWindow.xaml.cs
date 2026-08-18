@@ -202,6 +202,62 @@ namespace GflChibiDesktop2
         }
 
         /// <summary>
+        /// 将外部导入数据表（app\spine_external.json）的条目添加到 initializeDataSet 的"自定义"节点下。
+        /// </summary>
+        private void AddExternalNodes()
+        {
+            try
+            {
+                if (File.Exists($"{AppDir}spine_external.json"))
+                {
+                    ExternalRoot er = JsonConvert.DeserializeObject<ExternalRoot>(File.ReadAllText($"{AppDir}spine_external.json"));
+                    if (er?.content != null)
+                    {
+                        int extCounter = 0;
+                        foreach (ExternalContent ec in er.content)
+                        {
+                            extCounter++;
+                            ComponentModel node = new ComponentModel();
+                            node.ComponentName = $"ext_{ec.name}";
+                            node.Header = ec.display ?? ec.name;
+                            node.ComponentID = 100000 + extCounter;
+                            node.Tag = CreateExternalTag(ec);
+                            node.Foreground = type0color;
+                            node.ToolTip = ec.display ?? ec.name;
+                            node.ParentID = 151;
+                            node.Level = 2;
+                            initializeDataSet.Add(node);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        /// <summary>
+        /// 从外部导入条目构建节点 Tag（复用 12 字段结构，tag[0] 标记为 External）。
+        /// </summary>
+        private string[] CreateExternalTag(ExternalContent content)
+        {
+            string[] tag = new string[12];
+            tag[0] = "External"; // 标记为外部数据
+            tag[1] = content.name;
+            tag[2] = content.name; // parent
+            tag[3] = "";          // type
+            tag[4] = content.display;
+            tag[5] = content.display;
+            tag[6] = content.path;
+            tag[7] = content.filename;
+            tag[8] = null;        // cg（外部数据无立绘）
+            tag[9] = null;        // cg_d
+            tag[10] = content.filename_r; // r{基名}（宿舍）
+            tag[11] = content.files;
+            return tag;
+        }
+
+        /// <summary>
         /// 按 type 设置节点前景色。
         /// </summary>
         private void SetNodeColor(ComponentModel node, Content content)
@@ -255,10 +311,11 @@ namespace GflChibiDesktop2
 
         /// <summary>
         /// 移除没有子节点的一级分类（Level&lt;3 且没有子项指向它）。
+        /// 外部导入节点（ext_ 前缀）是叶子数据节点，不应被当作空分类移除。
         /// </summary>
         private void RemoveEmptyParents(Dictionary<int, List<ComponentModel>> index)
         {
-            var emptyParents = initializeDataSet.Where(n => n.Level < 3 && !index.ContainsKey(n.ComponentID)).ToList();
+            var emptyParents = initializeDataSet.Where(n => n.Level < 3 && !n.ComponentName.StartsWith("ext_") && !index.ContainsKey(n.ComponentID)).ToList();
             foreach (var ep in emptyParents)
             {
                 initializeDataSet.Remove(ep);
@@ -346,14 +403,18 @@ namespace GflChibiDesktop2
             initializeDataSet.Add(new ComponentModel() { ComponentID = 102, ComponentName = "TDOLLunclass", Level = 2, ParentID = 101, ToolTip = "未分类的战术人形", Header = "战术人形", Foreground = defaultColor });
             initializeDataSet.Add(new ComponentModel() { ComponentID = 109, ComponentName = "UNKNOWNclass", Level = 2, ParentID = 101, ToolTip = "未分类的数据", Header = "未分类", Foreground = defaultColor });
 
+            initializeDataSet.Add(new ComponentModel() { ComponentID = 151, ComponentName = "CUSTOMclass", Level = 1, ParentID = 0, ToolTip = "导入的外部数据", Header = "自定义", Foreground = type0color });
+
+            AddExternalNodes();
+
             try
             {
                 RootObject rb = ReadChibiList();
                 int total = rb.content.Count;
                 Dispatcher.Invoke(() =>
                 {
-                    btn_LoadDummyList.ToolTip = $"当前人形数据列表版本 {rb.meta.version}";
-                    lblListVersion.Text = rb.meta.version;
+                    //btn_LoadDummyList.Content = $"数据列表版本\n{rb.meta.version}";
+                    btn_LoadDummyList.ToolTip = $"从服务器重新加载数据列表\n当前人形数据列表版本 {rb.meta.version}";
                     pb_loader.IsIndeterminate = false;
                     pb_loader.Maximum = total;
                     pb_loader.Value = 0;
@@ -724,13 +785,23 @@ namespace GflChibiDesktop2
                     {
                         btn_downloadData.IsEnabled = true;
                         btn_downloadData.Visibility = Visibility.Visible;
+                        bool isExternal = tagString[0] == "External";
+                        string spineRoot = isExternal ? "spine_external" : "spine";
+                        if (isExternal)
+                        {
+                            // 外部数据没有服务器下载源：禁用下载按钮
+                            btn_downloadData.IsEnabled = false;
+                            btn_downloadData.Visibility = Visibility.Collapsed;
+                            btn_deleteData.IsEnabled = true;
+                            btn_deleteData.Visibility = Visibility.Visible;
+                        }
 
-                        if (Directory.Exists($@"{AppDir}assets/spine/{tagString[6]}"))
+                        if (Directory.Exists($@"{AppDir}assets/{spineRoot}/{tagString[6]}"))
                         {
                             bool checkResult = true;
                             foreach (string filename in tagString[11].Split('|'))
                             {
-                                if (!File.Exists($@"{AppDir}assets/spine/{tagString[6]}/{filename}"))
+                                if (!File.Exists($@"{AppDir}assets/{spineRoot}/{tagString[6]}/{filename}"))
                                 {
                                     checkResult = false;
                                 }
@@ -1064,16 +1135,22 @@ namespace GflChibiDesktop2
             //tagString[10] = content.filename_r;
             //tagString[11] = content.files;
 
-            string AtlasFile = $@"assets/spine/{tagString[6]}/{tagString[7]}.atlas";
-            string SpineFile = $@"assets/spine/{tagString[6]}/{tagString[7]}.skel";
+            bool isExternal = tagString[0] == "External";
+            string spineRoot = isExternal ? "spine_external" : "spine";
+
+            string AtlasFile = $@"assets/{spineRoot}/{tagString[6]}/{tagString[7]}.atlas";
+            string SpineFile = $@"assets/{spineRoot}/{tagString[6]}/{tagString[7]}.skel";
             string DisplayName = tagString[5];
             if (dormMode)
             {
-                if (File.Exists($@"{AppDir}assets/spine/{tagString[6]}/{tagString[10]}.atlas"))
-                { AtlasFile = $@"assets/spine/{tagString[6]}/{tagString[10]}.atlas"; }
-                if (File.Exists($@"{AppDir}assets/spine/{tagString[6]}/{tagString[10]}.skel"))
-                { SpineFile = $@"assets/spine/{tagString[6]}/{tagString[10]}.skel"; }
-                DisplayName = $"{tagString[5]} [宿舍]";
+                if (tagString[10] != null)
+                {
+                    if (File.Exists($@"{AppDir}assets/{spineRoot}/{tagString[6]}/{tagString[10]}.atlas"))
+                    { AtlasFile = $@"assets/{spineRoot}/{tagString[6]}/{tagString[10]}.atlas"; }
+                    if (File.Exists($@"{AppDir}assets/{spineRoot}/{tagString[6]}/{tagString[10]}.skel"))
+                    { SpineFile = $@"assets/{spineRoot}/{tagString[6]}/{tagString[10]}.skel"; }
+                    DisplayName = $"{tagString[5]} [宿舍]";
+                }
             }
             //else
             //{
@@ -1081,6 +1158,20 @@ namespace GflChibiDesktop2
             //    SpineFile = $@"assets/spine/{tagString[6]}/{tagString[7]}.skel";
             //    DisplayName = tagString[5];
             //}
+            // 加载前校验数据文件是否存在
+            if (tagString[11] is not null)
+            {
+                foreach (string fname in tagString[11].Split('|', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    string fpath = $@"{AppDir}assets/{spineRoot}/{tagString[6]}/{fname}";
+                    if (!File.Exists(fpath))
+                    {
+                        HandyControl.Controls.Growl.ErrorGlobal($"加载失败：骨骼数据文件不存在。\n{fpath}");
+                        tvAfterSelect();
+                        return;
+                    }
+                }
+            }
             //Process.Start($@"{Path.GetFullPath("..")}/GflChibiDesktop2.exe");
             ModelLoadRequested?.Invoke(new ChibiModelData
             {
@@ -1208,7 +1299,7 @@ namespace GflChibiDesktop2
             tagString[5] = item.Tag[5];//content.display_full;
             tagString[6] = item.Tag[6];//content.path;
             tagString[7] = item.Tag[7];//content.filename;
-            if (LoadedPaths.Contains(tagString[6]))
+            if (LoadedPaths.Contains(tagString[6]) || (OwnerMainWindow?.GetLoadedPaths().Contains(tagString[6]) ?? false))
             {
                 HandyControl.Controls.Growl.InfoGlobal($"“{tagString[5]}”的数据正在被桌宠使用，无法删除。");
                 return;
@@ -1227,7 +1318,160 @@ namespace GflChibiDesktop2
             {
                 Directory.Delete($@"{AppDir}assets/spine/{dummy}", true);
             }
+            else if (Directory.Exists($@"{AppDir}assets/spine_external/{dummy}"))
+            {
+                Directory.Delete($@"{AppDir}assets/spine_external/{dummy}", true);
+                // 同步从外部数据表移除该条目并写盘
+                ExternalRoot er = ReadExternalSpineList();
+                if (er.content != null)
+                {
+                    er.content.RemoveAll(c => string.Equals(c.path, dummy, StringComparison.OrdinalIgnoreCase));
+                    SaveExternalSpineList(er);
+                }
+                // 重载数据列表，移除已删除的外部节点
+                LoadDummyList();
+                return;
+            }
             tvAfterSelect();
+        }
+
+        private void btn_ImportExternalSpine_Click(object sender, RoutedEventArgs e)
+        {
+            ImportExternalDialog dialog = new ImportExternalDialog();
+            dialog.ConfirmRequested += (name, files) => ImportExternalSpine(name, files);
+            HandyControl.Controls.Dialog.Show(dialog);
+        }
+
+        /// <summary>
+        /// 读取外部导入数据表（不存在则返回空表）。
+        /// </summary>
+        private ExternalRoot ReadExternalSpineList()
+        {
+            string path = $"{AppDir}spine_external.json";
+            if (File.Exists(path))
+            {
+                try
+                {
+                    return JsonConvert.DeserializeObject<ExternalRoot>(File.ReadAllText(path)) ?? new ExternalRoot();
+                }
+                catch
+                {
+                }
+            }
+            return new ExternalRoot();
+        }
+
+        private void SaveExternalSpineList(ExternalRoot root)
+        {
+            if (root.meta == null)
+            {
+                root.meta = new ExternalMeta
+                {
+                    uuid = Guid.NewGuid().ToString(),
+                    version = DateTime.Now.ToString("yyyyMMddHHmmss"),
+                    content = "外部导入数据"
+                };
+            }
+            File.WriteAllText($"{AppDir}spine_external.json", JsonConvert.SerializeObject(root, Newtonsoft.Json.Formatting.Indented));
+        }
+
+        /// <summary>
+        /// 导入外部骨骼数据：复制文件到 app\assets\spine_external 下并更新外部数据表。
+        /// </summary>
+        private void ImportExternalSpine(string skinName, string[] files)
+        {
+            try
+            {
+                // 文件数 3-6（基础三件套 + 可选的 r{基名} 文件）
+                if (files.Length < 3 || files.Length > 6)
+                {
+                    HandyControl.Controls.Growl.ErrorGlobal("导入失败：需要选择 3-6 个文件（基础 .atlas/.skel/.png 及可选的 r{基名} 文件）。");
+                    return;
+                }
+                // 仅允许 atlas/skel/png
+                var fileMap = new System.Collections.Generic.Dictionary<string, string>(); // 小写文件名 -> 完整路径
+                foreach (string f in files)
+                {
+                    string ext = System.IO.Path.GetExtension(f).ToLowerInvariant();
+                    if (ext != ".atlas" && ext != ".skel" && ext != ".png")
+                    {
+                        HandyControl.Controls.Growl.ErrorGlobal("导入失败：仅支持 .atlas、.skel、.png 文件。");
+                        return;
+                    }
+                    fileMap[System.IO.Path.GetFileName(f).ToLowerInvariant()] = f;
+                }
+                // 确定基础基名：非 r{其他skel基名} 形式的 .skel 文件
+                var skelNames = fileMap.Keys.Where(n => n.EndsWith(".skel")).ToList();
+                string baseName = null;
+                foreach (string n in skelNames)
+                {
+                    string bn = System.IO.Path.GetFileNameWithoutExtension(n);
+                    bool isRVersion = skelNames.Any(o => System.IO.Path.GetFileNameWithoutExtension(o) != bn &&
+                        string.Equals(bn, "r" + System.IO.Path.GetFileNameWithoutExtension(o), StringComparison.OrdinalIgnoreCase));
+                    if (!isRVersion)
+                    {
+                        baseName = bn;
+                        break;
+                    }
+                }
+                if (baseName == null)
+                {
+                    HandyControl.Controls.Growl.ErrorGlobal("导入失败：缺少基础 .skel 文件。");
+                    return;
+                }
+                // 必须包含基础三文件
+                if (!(fileMap.ContainsKey((baseName + ".atlas").ToLowerInvariant()) &&
+                      fileMap.ContainsKey((baseName + ".png").ToLowerInvariant()) &&
+                      fileMap.ContainsKey((baseName + ".skel").ToLowerInvariant())))
+                {
+                    HandyControl.Controls.Growl.ErrorGlobal($"导入失败：必须包含 {baseName}.atlas、{baseName}.png、{baseName}.skel 三个基础文件。");
+                    return;
+                }
+                // 其余文件基名必须为 base 或 r{base}
+                foreach (string n in fileMap.Keys)
+                {
+                    string bn = System.IO.Path.GetFileNameWithoutExtension(n);
+                    if (bn != baseName && !string.Equals(bn, "r" + baseName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        HandyControl.Controls.Growl.ErrorGlobal($"导入失败：额外文件基名必须为 {baseName} 或 r{baseName}。");
+                        return;
+                    }
+                }
+                bool hasR = fileMap.Keys.Any(n => string.Equals(System.IO.Path.GetFileNameWithoutExtension(n), "r" + baseName, StringComparison.OrdinalIgnoreCase));
+                string filenameR = hasR ? "r" + baseName : null;
+
+                string dirPath = $@"{AppDir}assets/spine_external/{baseName}";
+                Directory.CreateDirectory(dirPath);
+                foreach (string f in files)
+                {
+                    File.Copy(f, System.IO.Path.Combine(dirPath, System.IO.Path.GetFileName(f)), true);
+                }
+
+                // 更新外部数据表（同名条目覆盖）
+                ExternalRoot root = ReadExternalSpineList();
+                if (root.content == null)
+                {
+                    root.content = new System.Collections.Generic.List<ExternalContent>();
+                }
+                root.content.RemoveAll(c => string.Equals(c.name, baseName, StringComparison.OrdinalIgnoreCase) || string.Equals(c.path, baseName, StringComparison.OrdinalIgnoreCase));
+                root.content.Add(new ExternalContent
+                {
+                    name = baseName,
+                    display = skinName,
+                    path = baseName,
+                    filename = baseName,
+                    filename_r = filenameR,
+                    files = string.Join("|", files.Select(f => System.IO.Path.GetFileName(f)))
+                });
+                SaveExternalSpineList(root);
+
+                HandyControl.Controls.Growl.SuccessGlobal($"导入成功：{skinName}。");
+                LoadDummyList();
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.Growl.ErrorGlobal($"导入外部数据失败。\n{ex.Message}");
+            }
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -1275,8 +1519,8 @@ namespace GflChibiDesktop2
                 try
                 {
                     RootObject rb = ReadChibiList();
-                    btn_LoadDummyList.ToolTip = $"当前数据列表版本 {rb.meta.version}";
-                    lblListVersion.Text = rb.meta.version;
+                    //btn_LoadDummyList.Content = $"数据列表版本\n{rb.meta.version}";
+                    btn_LoadDummyList.ToolTip = $"从服务器重新加载数据列表\n当前数据列表版本 {rb.meta.version}";
                     int total = rb.content.Count;
 
                     int counter = 0;
