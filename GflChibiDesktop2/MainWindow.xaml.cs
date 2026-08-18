@@ -46,7 +46,7 @@ namespace GflChibiDesktop2
         private static Version GetProductVersion()
         {
             var attr = (AssemblyFileVersionAttribute?)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute));
-            if (attr != null && !string.IsNullOrEmpty(attr.Version) && Version.TryParse(attr.Version, out var v))
+            if (attr is not null && !string.IsNullOrEmpty(attr.Version) && Version.TryParse(attr.Version, out var v))
             {
                 return v;
             }
@@ -73,7 +73,7 @@ namespace GflChibiDesktop2
                     if (StartupPost)
                     {
                         StartupRoot? rt = JsonConvert.DeserializeObject<StartupRoot>(StartupStr);
-                        if (rt != null && rt.ret == 200)
+                        if (rt is not null && rt.ret == 200)
                         {
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
@@ -82,7 +82,7 @@ namespace GflChibiDesktop2
 
                             announcementMsg = rt.data?.msg;
                             Version latestVersion = new Version(rt.data?.latest);
-                            if (latestVersion != null)
+                            if (latestVersion is not null)
                             {
                                 if (latestVersion > productVersion)
                                 {
@@ -199,7 +199,7 @@ namespace GflChibiDesktop2
         private bool AutoStartInstance()
         {
             List<ChibiModelData>? saved = LoadSavedInstances();
-            if (saved == null)
+            if (saved is null)
             {
                 // 从未保存过实例列表：不自动打开任何桌宠，主窗口保持可见
                 return false;
@@ -233,7 +233,7 @@ namespace GflChibiDesktop2
         {
             try
             {
-                var list = pets.Select(p => p.Model).Where(m => m != null).Cast<ChibiModelData>().ToList();
+                var list = pets.Select(p => p.Model).Where(m => m is not null).Cast<ChibiModelData>().ToList();
                 File.WriteAllText(InstancesFilePath, JsonConvert.SerializeObject(list, Newtonsoft.Json.Formatting.Indented));
             }
             catch
@@ -354,7 +354,7 @@ namespace GflChibiDesktop2
             catch (OperationCanceledException)
             {
             }
-            if (pet.Manager != null && !pet.Manager.process.HasExited)
+            if (pet.Manager is not null && !pet.Manager.process.HasExited)
             {
                 pet.Manager.ForceCloseWindow();
             }
@@ -688,9 +688,9 @@ namespace GflChibiDesktop2
         private void UpdateStatus()
         {
             PetInstance? pet = SelectedPet;
-            context.IsRunning = pet?.Manager != null;
+            context.IsRunning = pet?.Manager is not null;
             context.IsChanged = pet?.IsChanged ?? false;
-            context.HasActiveTab = pet != null;
+            context.HasActiveTab = pet is not null;
         }
 
 

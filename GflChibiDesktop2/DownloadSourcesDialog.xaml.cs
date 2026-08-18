@@ -51,7 +51,7 @@ namespace GflChibiDesktop2
             {
                 ListBoxItem listBoxItem = new ListBoxItem();
                 listBoxItem.Name = $"lbiSource{item.id}";
-                listBoxItem.Content = $"[{item.id}] {item.name}";
+                listBoxItem.Content = $"{item.name}";
                 listBoxItem.IsEnabled = System.Convert.ToBoolean(item.enabled);
                 listBoxItem.ToolTip = item.desc;
 
@@ -65,16 +65,27 @@ namespace GflChibiDesktop2
 
                 lb_sources.Items.Add(listBoxItem);
             }
+
+            // 默认选中与当前下载源配置一致的项
+            string currentSource = tb_downloadSource.Text;
+            foreach (object item in lb_sources.Items)
+            {
+                if (item is ListBoxItem listBoxItem && listBoxItem.Tag is string[] tagString && tagString.Length > 3 && tagString[3] == currentSource)
+                {
+                    lb_sources.SelectedItem = listBoxItem;
+                    break;
+                }
+            }
         }
 
         private void lb_sources_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (lb_sources.SelectedItem != null)
+            if (lb_sources.SelectedItem is not null)
             {
                 ListBoxItem item = (ListBoxItem)lb_sources.SelectedItem;
                 string[] tagString = (string[])item.Tag;
                 tb_downloadSource.Text = tagString[3];
-                tb_sourceInfo.Text = $"#{tagString[0]} - {tagString[1]}\n{tagString[2]}\n{tagString[3]}";
+                tb_sourceInfo.Text = $"{tagString[1]}\n{tagString[2]}";
             }
         }
     }

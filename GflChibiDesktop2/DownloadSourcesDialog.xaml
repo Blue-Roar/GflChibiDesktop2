@@ -14,12 +14,14 @@
                 <Button Width="24" Height="24" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource ErrorGeometry}" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Top" Command="hc:ControlCommands.Close" Margin="3" />
             </hc:SimplePanel>
         </Border>
-        <Label Content="下载源：" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="48" Margin="10,33,0,0" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}"/>
-        <hc:TextBox x:Name="tb_downloadSource" HorizontalAlignment="Left" VerticalAlignment="Top" Width="426" Margin="64,33,0,0"  VerticalScrollBarVisibility="Disabled" MaxLines="1" IsReadOnly="True" BorderThickness="0" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0"/>
-        <ListBox x:Name="lb_sources" HorizontalAlignment="Left" Height="122" VerticalAlignment="Top" Width="175" Margin="10,68,0,0" SelectionChanged="lb_sources_SelectionChanged" />
-        <hc:TextBox x:Name="tb_sourceInfo" Height="122" VerticalAlignment="Top" Width="300" Margin="190,68,10,0" Padding="0" Background="{x:Null}" IsReadOnly="True" Text="未选择下载源" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextWrapping="WrapWithOverflow"/>
-        <Button x:Name="btn_UpdateSources" Content="刷新下载源" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="175" Margin="10,196,0,0" Click="btn_UpdateSources_Click"/>
-        <Button x:Name="btn_OK" Content="确定" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="100" Margin="285,196,0,0" Click="btn_OK_Click" />
-        <Button x:Name="btn_Cancel" Content="取消" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="100" Margin="390,196,0,0" Command="hc:ControlCommands.Close" />
+        <Grid Margin="0,30,0,0">
+            <Label Content="下载源：" HorizontalAlignment="Left" Height="28" VerticalAlignment="Top" Width="50" Margin="10,3,0,0" Padding="0" Background="{x:Null}" BorderBrush="{x:Null}"/>
+            <hc:TextBox x:Name="tb_downloadSource" VerticalAlignment="Top" Margin="65,3,10,0"  VerticalScrollBarVisibility="Disabled" MaxLines="1" IsReadOnly="True" BorderThickness="0" Background="{x:Null}" BorderBrush="{x:Null}" Padding="0"/>
+            <ListBox x:Name="lb_sources" HorizontalAlignment="Left" Width="175" Margin="10,35,0,50" SelectionChanged="lb_sources_SelectionChanged" />
+            <hc:TextBox x:Name="tb_sourceInfo" Margin="195,35,10,50" Padding="0" Background="{x:Null}" IsReadOnly="True" Text="未选择下载源" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextWrapping="WrapWithOverflow"/>
+            <Button x:Name="btn_UpdateSources" Content="刷新下载源" HorizontalAlignment="Left" Height="30" VerticalAlignment="Bottom" Width="175" Margin="10,0,0,10" Click="btn_UpdateSources_Click"/>
+            <Button x:Name="btn_OK" Content="确定" HorizontalAlignment="Right" Height="30" VerticalAlignment="Bottom" Width="100" Margin="0,0,120,10" Click="btn_OK_Click" />
+            <Button x:Name="btn_Cancel" Content="取消" HorizontalAlignment="Right" Height="30" VerticalAlignment="Bottom" Width="100" Margin="390,0,10,10" Command="hc:ControlCommands.Close" />
+        </Grid>
     </hc:SimplePanel>
 </UserControl>

@@ -353,7 +353,7 @@ namespace GflChibiDesktop2
             //设置代理UserAgent和超时
             request.UserAgent = userAgent;
             //request.Timeout = timeout;
-            //if (cookies != null)
+            //if (cookies is not null)
             //{
             //    request.CookieContainer = new CookieContainer();
             //    request.CookieContainer.Add(cookies);
@@ -387,13 +387,13 @@ namespace GflChibiDesktop2
             request.UserAgent = userAgent;
             //request.Timeout = timeout;
 
-            //if (cookies != null)
+            //if (cookies is not null)
             //{
             //    request.CookieContainer = new CookieContainer();
             //    request.CookieContainer.Add(cookies);
             //}
             //发送POST数据 
-            if (!(parameters == null || parameters.Count == 0))
+            if (!(parameters is null || parameters.Count == 0))
             {
                 StringBuilder buffer = new StringBuilder();
                 int i = 0;
@@ -460,7 +460,7 @@ namespace GflChibiDesktop2
         /// <returns>成功返回true 失败返回false</returns>
         public static bool CheckIsFormat(string strRegex, string strValue)
         {
-            if (strValue != null && strValue.Trim() != string.Empty)
+            if (!string.IsNullOrEmpty(strValue) && strValue.Trim() != string.Empty)
             {
                 Regex re = new Regex(strRegex);
                 if (re.IsMatch(strValue))

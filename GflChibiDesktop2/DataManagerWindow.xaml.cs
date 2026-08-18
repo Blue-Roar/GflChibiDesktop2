@@ -74,7 +74,7 @@ namespace GflChibiDesktop2
 
         public async Task UpdateSharedVariables()
         {
-            lblExtraStr.Content = announcementMsg;
+            lblAnnouncement.Content = announcementMsg;
 
             if (string.IsNullOrEmpty(homepageLink) || string.IsNullOrEmpty(updateLink) || string.IsNullOrEmpty(donateLink) || string.IsNullOrEmpty(chibiListLink))
             {
@@ -125,7 +125,7 @@ namespace GflChibiDesktop2
                         if (HttpRequestHelper.CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
 
                         Version latestVersion = new Version(rt.data?.latest);
-                        if (latestVersion != null)
+                        if (latestVersion is not null)
                         {
                             if (latestVersion != productVersion)
                             {
@@ -664,7 +664,7 @@ namespace GflChibiDesktop2
             btn_loadDormData.IsEnabled = false;
             btng_loadData.Visibility = Visibility.Collapsed;
 
-            if (item != null)
+            if (item is not null)
             {
                 lbl_InternalSelected.Text = item.ToolTip;
                 lbl_InternalSelected.Foreground = item.Foreground;

@@ -176,7 +176,7 @@ namespace GflChibiDesktop2
                 System.Net.WebRequest webRequest1 = System.Net.WebRequest.Create(URL);
                 webRequest1.Timeout = 1500;
                 System.Net.WebResponse webResponse1 = webRequest1.GetResponse();
-                return (webResponse1 == null ? false : true);
+                return (webResponse1 is null ? false : true);
             }
             catch
             {

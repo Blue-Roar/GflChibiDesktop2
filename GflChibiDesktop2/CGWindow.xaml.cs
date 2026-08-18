@@ -181,7 +181,7 @@ namespace GflChibiDesktop2
 
         private void menuItem_d_Unchecked(object sender, RoutedEventArgs e)
         {
-            if (cg_n_uri != null)
+            if (cg_n_uri is not null)
             {
                 ImageCG.Source = new BitmapImage(cg_n_uri);
             }
@@ -189,7 +189,7 @@ namespace GflChibiDesktop2
 
         private void menuItem_d_Checked(object sender, RoutedEventArgs e)
         {
-            if (cg_d_uri != null)
+            if (cg_d_uri is not null)
             {
                 ImageCG.Source = new BitmapImage(cg_d_uri);
             }

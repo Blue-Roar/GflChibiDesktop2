@@ -16,17 +16,17 @@
     <Window.TaskbarItemInfo>
         <TaskbarItemInfo x:Name="tii"/>
     </Window.TaskbarItemInfo>
-    <Grid MinHeight="256" MaxHeight="{DynamicResource {x:Static SystemParameters.PrimaryScreenHeightKey}}">
+    <Grid x:Name="grid" MinHeight="256" MaxHeight="{DynamicResource {x:Static SystemParameters.PrimaryScreenHeightKey}}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"></ColumnDefinition>
             <ColumnDefinition Width="210"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="24"/>
+            <RowDefinition Height="28"/>
             <RowDefinition />
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Label x:Name="lblExtraStr" Content="ExtraStr" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Background="{x:Null}" BorderBrush="{x:Null}" Padding="4,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Foreground="{DynamicResource PrimaryBrush}"/>
+        <Label x:Name="lblAnnouncement" Content="announcement" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Background="{x:Null}" BorderBrush="{x:Null}" Padding="4,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Foreground="{DynamicResource PrimaryBrush}"/>
         <CheckBox Grid.Row="0" Grid.Column="1" x:Name="chb_thinList" VerticalAlignment="Stretch" HorizontalAlignment="Right" Content="紧凑列表(_C)" Margin="0,0,105,0" Width="100" Click="chb_thinList_Click" IsChecked="True" />
         <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Right" Content="窗口置顶(_T)" Margin="0" Width="100" IsChecked="{Binding Topmost, ElementName=window}"/>
 

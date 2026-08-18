@@ -20,7 +20,6 @@ namespace GflChibiDesktop2
     /// </summary>
     public partial class AboutDialog : Window
     {
-        // 用于记录秘技输入序列
         private string _secretSequence = "";
         Version version;
         string build;
@@ -233,8 +232,8 @@ namespace GflChibiDesktop2
         private async void Check4Update()
         {
             lbl_status.Content = "正在获取版本信息……";
-            lbl_latest_version.Content = string.Empty;
-            lbl_latest_version.ToolTip = string.Empty;
+            lbl_latest_version.Content = "正在获取";
+            lbl_latest_version.ToolTip = null;
             txt_description.Text = string.Empty;
             try
             {
@@ -242,7 +241,9 @@ namespace GflChibiDesktop2
                 if (!defaultPost)
                 {
                     border_update.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, "DarkDangerBrush");
-                    HandyControl.Controls.Growl.WarningGlobal($"无法获取版本信息。API 接口调用失败。\n错误：{defaultStr}");
+                    lbl_latest_version.Content = "未知";
+                    txt_description.Text = $"无法获取版本信息。API 接口调用失败。\n错误：{defaultStr}";
+                    lbl_status.Content = "版本信息获取失败";
                     return;
                 }
                 UpdateRoot rt = JsonConvert.DeserializeObject<UpdateRoot>(defaultStr);
@@ -250,13 +251,16 @@ namespace GflChibiDesktop2
                 if (rt.ret != 200)
                 {
                     border_update.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, "DarkDangerBrush");
-                    HandyControl.Controls.Growl.WarningGlobal($"无法获取版本信息。API 接口调用失败。\n错误：API 接口返回了状态码 {rt.ret}");
+                    lbl_latest_version.Content = "未知";
+                    txt_description.Text = $"无法获取版本信息。API 接口调用失败。\n错误：API 接口返回了状态码 {rt.ret}";
+                    lbl_status.Content = "版本信息获取失败";
                     return;
                 }
 
-                if (rt.data.version == null) //检查请求
+                if (rt.data.version is null) //检查请求
                 {
                     border_update.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, "DarkDangerBrush");
+                    lbl_latest_version.Content = "未知";
                     lbl_status.Content = "获取版本信息出错，请手动前往更新";
                     btn_Actions.Content = "前往主页";
                 }
@@ -270,11 +274,11 @@ namespace GflChibiDesktop2
 
                     lbl_latest_version.Content = version;
                     lbl_latest_version.ToolTip = build;
+                    txt_description.Text = content;
 
                     if (version > productVersion) //版本号不同
                     {
                         border_update.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, "DarkInfoBrush");
-                        txt_description.Text = content;
                         btn_Actions.Content = "前往更新";
 
                         if (version.Revision > productVersion.Revision)
