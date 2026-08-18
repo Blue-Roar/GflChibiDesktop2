@@ -199,28 +199,21 @@ namespace GflChibiDesktop2
         private bool AutoStartInstance()
         {
             List<ChibiModelData>? saved = LoadSavedInstances();
-            if (saved != null && saved.Count > 0)
+            if (saved == null)
             {
-                foreach (var m in saved)
-                {
-                    StartInstance(m);
-                }
-                return true;
-            }
-
-            string nameFile = Path.Combine(AppDir, "assets", "name.txt");
-            string modelFile = Path.Combine(AppDir, "assets", "model.conf.json");
-            if (!File.Exists(nameFile) || !File.Exists(modelFile))
-            {
+                // 从未保存过实例列表：不自动打开任何桌宠，主窗口保持可见
                 return false;
             }
-            StartInstance(null);
-            return true;
+            foreach (var m in saved)
+            {
+                StartInstance(m);
+            }
+            return saved.Count > 0;
         }
 
         private static string InstancesFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "instances.json");
 
-        private List<ChibiModelData> LoadSavedInstances()
+        private List<ChibiModelData>? LoadSavedInstances()
         {
             try
             {
@@ -232,7 +225,8 @@ namespace GflChibiDesktop2
             catch
             {
             }
-            return new List<ChibiModelData>();
+            // 文件不存在或读取失败：表示从未保存过实例列表，返回 null 交由调用方回退默认配置
+            return null;
         }
 
         private void SaveInstances()
@@ -252,17 +246,20 @@ namespace GflChibiDesktop2
         /// </summary>
         private void StartNewInstance(object sender, RoutedEventArgs e)
         {
-            StartInstance(SelectedPet?.Model);
+            if (SelectedPet?.Model is ChibiModelData model)
+            {
+                StartInstance(model);
+            }
         }
 
-        private void StartInstance(ChibiModelData? model)
+        private void StartInstance(ChibiModelData model)
         {
             if (isExiting)
             {
                 return;
             }
             // 限制多开数量为 8 个
-            if (pets.Count >= 1)
+            if (pets.Count >= 8)
             {
                 if (Settings.Default.EasterEgg)
                 {
@@ -428,6 +425,7 @@ namespace GflChibiDesktop2
             {
             }
             UpdateStatus();
+            SaveInstances();
         }
 
         /// <summary>

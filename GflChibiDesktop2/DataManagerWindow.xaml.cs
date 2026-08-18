@@ -1083,11 +1083,6 @@ namespace GflChibiDesktop2
             //    SpineFile = $@"assets/spine/{tagString[6]}/{tagString[7]}.skel";
             //    DisplayName = tagString[5];
             //}
-            //if (File.Exists($@"{AppDir}assets/name.txt")) { File.Delete($@"{AppDir}assets/name.txt"); }
-            File.WriteAllText($@"{AppDir}assets/name.txt", DisplayName);
-            //if (File.Exists($@"{AppDir}assets/model.conf.json")) { File.Delete($@"{AppDir}assets/model.conf.json"); }
-            File.WriteAllText($@"{AppDir}assets/model.conf.json", "{\"skeleton\":\"" + SpineFile + "\",\"type\":\"skel\",\"atlas\":\"" + AtlasFile + "\",\"h\":448,\"w\":448,\"x\":224,\"y\":224}");
-
             //Process.Start($@"{Path.GetFullPath("..")}/GflChibiDesktop2.exe");
             ModelLoadRequested?.Invoke(new ChibiModelData
             {

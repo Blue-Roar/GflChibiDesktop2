@@ -1,4 +1,3 @@
-using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -50,7 +49,7 @@ namespace GflChibiDesktop2
         /// <summary>
         /// 创建实例工作目录，复用共享的 lua 模块与素材。
         /// </summary>
-        public static PetInstance Create(int id, ChibiModelData? model)
+        public static PetInstance Create(int id, ChibiModelData model)
         {
             string appDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app");
             string workDir = Path.Combine(appDir, "instances", id.ToString());
@@ -101,23 +100,10 @@ namespace GflChibiDesktop2
             CopyDirectory(Path.Combine(appDir, "lua"), Path.Combine(workDir, "lua"));
 
             // 实例配置
-            string name;
-            if (model != null)
-            {
-                name = model.DisplayName;
-                File.WriteAllText(Path.Combine(assetsDir, "name.txt"), model.DisplayName);
-                File.WriteAllText(Path.Combine(assetsDir, "model.conf.json"),
-                    "{\"skeleton\":\"" + model.SkeletonFile + "\",\"type\":\"skel\",\"atlas\":\"" + model.AtlasFile + "\",\"h\":448,\"w\":448,\"x\":224,\"y\":224}");
-            }
-            else
-            {
-                string srcName = Path.Combine(appDir, "assets", "name.txt");
-                string srcModel = Path.Combine(appDir, "assets", "model.conf.json");
-                name = File.Exists(srcName) ? File.ReadAllText(srcName) : $"桌宠 #{id}";
-                if (File.Exists(srcName)) File.Copy(srcName, Path.Combine(assetsDir, "name.txt"), true);
-                if (File.Exists(srcModel)) File.Copy(srcModel, Path.Combine(assetsDir, "model.conf.json"), true);
-                model = ParseModel(name, srcModel);
-            }
+            string name = model.DisplayName;
+            File.WriteAllText(Path.Combine(assetsDir, "name.txt"), model.DisplayName);
+            File.WriteAllText(Path.Combine(assetsDir, "model.conf.json"),
+                "{\"skeleton\":\"" + model.SkeletonFile + "\",\"type\":\"skel\",\"atlas\":\"" + model.AtlasFile + "\",\"h\":448,\"w\":448,\"x\":224,\"y\":224}");
 
             // 音频等共享配置
             foreach (string f in new[] { "audio.conf.json", "pet.conf.json" })
@@ -147,30 +133,6 @@ namespace GflChibiDesktop2
             }
 
             return new PetInstance(id, name, workDir) { Model = model };
-        }
-
-        /// <summary>
-        /// 从默认的 model.conf.json 解析出模型信息。
-        /// </summary>
-        private static ChibiModelData? ParseModel(string name, string modelJsonPath)
-        {
-            try
-            {
-                if (File.Exists(modelJsonPath))
-                {
-                    JObject obj = JObject.Parse(File.ReadAllText(modelJsonPath));
-                    return new ChibiModelData
-                    {
-                        DisplayName = name,
-                        SkeletonFile = obj["skeleton"]?.ToString() ?? string.Empty,
-                        AtlasFile = obj["atlas"]?.ToString() ?? string.Empty
-                    };
-                }
-            }
-            catch
-            {
-            }
-            return null;
         }
 
         /// <summary>
