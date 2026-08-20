@@ -32,7 +32,7 @@ end
 
 -- 加载设置
 local settings = settingsMan.load("settings.json", true)
-settings:default({ walk = true, drag = true, startDistance = 500, stopDistance = 200, scale = 100, drop = true, transparency = 255, autoHide = true, idleMotion = 1, simulateDorm = false, simulateInterval = 30 })
+settings:default({ walk = true, drag = true, startDistance = 500, stopDistance = 200, scale = 100, drop = true, transparency = 255, autoHide = true, idleMotion = 1, simulateDorm = false, simulateInterval = 30, moveFlip = false })
 -- 互斥保证：跟随鼠标与宿舍模拟不能同时启用
 if settings.walk and settings.simulateDorm then
     settings.simulateDorm = false
@@ -110,10 +110,10 @@ end
 
     ev.on(walker.walking, function() enterState("walk") end)
     ev.on(walker.walked, function() enterState("idle") end)
-    ev.on(walker.directionChanged, function() model.direction(walker.direction) end)
+    ev.on(walker.directionChanged, function() model.direction(settings.moveFlip and -walker.direction or walker.direction) end)
 
     enterStateThen["walk"] = function()
-        model.direction(walker.direction)
+        model.direction(settings.moveFlip and -walker.direction or walker.direction)
         model.loop("move")
     end
 
@@ -134,7 +134,7 @@ end
         simStartX = window.windowPos().x
         simTraveled = 0
         simMoving = true
-        model.direction(simDir)
+        model.direction(settings.moveFlip and -simDir or simDir)
         model.loop("move")
         state = "walk"
     end
@@ -233,6 +233,10 @@ end
         { type = "single", valueType = "number", prompt = "停止距离", hint = "水平小于这个距离，桌宠就会停止走动，调大一点可以避免走得太近" },
         function(v) settings.stopDistance = v walker.stopDistance = v settings:save() end,
         function() return settings.stopDistance end)
+    ipc.addPanelItem(
+        { type = "bool", prompt = "翻转朝向", hint = "部分初始面向左边的人形移动时会倒着跑，开启后修正" },
+        function(v) settings.moveFlip = v settings:save() end,
+        function() return settings.moveFlip end)
 end)();
 
 local dragger = nil;
