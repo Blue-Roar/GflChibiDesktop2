@@ -9,7 +9,9 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDark.xaml"/>
                 <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml"/>
+                <ResourceDictionary Source="Resources/Geometry.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <FontFamily x:Key="IconFont">pack://application:,,,/Resource/#iconfont</FontFamily>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

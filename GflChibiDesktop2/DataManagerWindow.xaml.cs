@@ -34,11 +34,12 @@ namespace GflChibiDesktop2
 
     public partial class DataManagerWindow : HandyControl.Controls.Window
     {
-        public static string AppDir => Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
+        public static string AppDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
         public readonly string productTitle = ((AssemblyTitleAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyTitleAttribute))).Title.ToString();
         public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version) ?? Assembly.GetExecutingAssembly().GetName().Version;
         public MainWindow? OwnerMainWindow { get; set; }
         public string homepageLink { get; set; }
+        public string repoLink { get; set; }
         public string updateLink { get; set; }
         public string chibiListLink { get; set; }
         public string announcementMsg { get; set; }
@@ -75,7 +76,7 @@ namespace GflChibiDesktop2
         {
             lblAnnouncement.Content = announcementMsg;
 
-            if (string.IsNullOrEmpty(homepageLink) || string.IsNullOrEmpty(updateLink) || string.IsNullOrEmpty(chibiListLink))
+            if (string.IsNullOrEmpty(homepageLink) || string.IsNullOrEmpty(repoLink) || string.IsNullOrEmpty(updateLink) || string.IsNullOrEmpty(chibiListLink))
             {
                 //HandyControl.Controls.Growl.WarningGlobal("部分链接未正确设置。重新获取链接……");
                 UpdateLinks();
@@ -118,9 +119,22 @@ namespace GflChibiDesktop2
                     IndexRoot rt = JsonConvert.DeserializeObject<IndexRoot>(indexStr);
                     if (rt.ret == 200)
                     {
-                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
-                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
-                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
+                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.homepage_link)) {
+                            homepageLink = rt.data.homepage_link;
+                            OwnerMainWindow.homepageLink = homepageLink;
+                        }
+                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.repo_link)) {
+                            repoLink = rt.data.repo_link;
+                            OwnerMainWindow.repoLink = repoLink;
+                        }
+                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.update_link)) {
+                            updateLink = rt.data.update_link;
+                            OwnerMainWindow.updateLink = updateLink;
+                        }
+                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.chibi_list_link)) {
+                            chibiListLink = rt.data.chibi_list_link;
+                            OwnerMainWindow.chibiListLink = chibiListLink;
+                        }
 
                         Version latestVersion = new Version(rt.data?.latest);
                         if (latestVersion is not null)

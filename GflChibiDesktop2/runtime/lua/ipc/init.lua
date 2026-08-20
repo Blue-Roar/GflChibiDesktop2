@@ -79,6 +79,8 @@ M.getV = function(param)
                     M.writeString(inst, param.hint) -- hint text
                     M.writeInt32(inst, 1) -- number input only
                     M.writeInt32(inst, r()) -- default value
+                    M.writeInt32(inst, param.min or -2147483648) -- min
+                    M.writeInt32(inst, param.max or 2147483647) -- max
                     M.wrote(inst, wrote)
                 end
             end

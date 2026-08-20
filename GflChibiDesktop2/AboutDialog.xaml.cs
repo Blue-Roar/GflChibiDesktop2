@@ -33,6 +33,7 @@ namespace GflChibiDesktop2
         public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version) ?? Assembly.GetExecutingAssembly().GetName().Version;
         public readonly string currentBuild = ((AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute))).InformationalVersion;
         public string homepageLink { get; set; }
+        public string repoLink { get; set; }
         public string updateLink { get; set; }
 
         public AboutDialog()
@@ -47,7 +48,6 @@ namespace GflChibiDesktop2
             txt_description.Text = string.Empty;
             Check4Update();
             btn_Close.Focus();
-            FetchBiliInfo();
 
             this.PreviewKeyDown += window_PreviewKeyDown;
             UpdateSecretSequence("");
@@ -353,35 +353,6 @@ namespace GflChibiDesktop2
                 HandyControl.Controls.Growl.ErrorGlobal($"无法打开链接。\n{ex.Message}");
             }
         }
-        private async void FetchBiliInfo()
-        {
-            try
-            {
-                var (ok1, indexStr1) = await HttpRequestHelper.GetWebRequestAsync("https://api.bilibili.com/x/space/acc/info?mid=13827887", Encoding.UTF8);
-                Console.WriteLine(indexStr1);
-                BiliSpaceInfoRoot rt = JsonConvert.DeserializeObject<BiliSpaceInfoRoot>(indexStr1);
-                if (ok1 && rt.code == 200)
-                {
-                    name_BrightSu.Text = rt.data.name;
-                    avatar_BrightSu.Source = new BitmapImage(new Uri(rt.data.face, UriKind.Absolute));
-                }
-
-                var (ok2, indexStr2) = await HttpRequestHelper.GetWebRequestAsync("https://api.bilibili.com/x/space/acc/info?mid=102421353", Encoding.UTF8);
-                Console.WriteLine(indexStr2);
-                rt = JsonConvert.DeserializeObject<BiliSpaceInfoRoot>(indexStr2);
-                if (ok2 && rt.code == 200)
-                {
-                    name_Huix.Text = rt.data.name;
-                    avatar_Huix.Source = new BitmapImage(new Uri(rt.data.face, UriKind.Absolute));
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return;
-            }
-        }
-
         private void btn_BrightSu_Click(object sender, RoutedEventArgs e)
         {
             OpenUrl("https://space.bilibili.com/13827887/");
@@ -390,6 +361,10 @@ namespace GflChibiDesktop2
         private void btn_Huix_Click(object sender, RoutedEventArgs e)
         {
             OpenUrl("https://space.bilibili.com/102421353/");
+        }
+        private void btn_Repo_Click(object sender, RoutedEventArgs e)
+        {
+            OpenUrl(repoLink);
         }
 
         int easterCount = 0;
@@ -476,5 +451,6 @@ namespace GflChibiDesktop2
         {
             Close();
         }
+
     }
 }

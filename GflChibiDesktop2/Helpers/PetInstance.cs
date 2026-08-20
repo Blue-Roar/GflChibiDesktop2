@@ -161,14 +161,36 @@ namespace GflChibiDesktop2
 
         /// <summary>
         /// 创建目录联接（优先 junction，失败则回退为复制）。
+        /// 目标目录尚不存在时也建立 junction（指向空目录），之后导入的数据自动可见。
         /// </summary>
         private static void LinkDir(string linkPath, string targetPath)
         {
-            if (Directory.Exists(linkPath)) return;
+            if (Directory.Exists(linkPath))
+            {
+                var info = new DirectoryInfo(linkPath);
+                if ((info.Attributes & FileAttributes.ReparsePoint) != 0) return;
+                // 已存在的普通空目录（首次启动时目标缺失产生的残留）：替换为 junction
+                if (Directory.GetFileSystemEntries(linkPath).Length == 0)
+                {
+                    try
+                    {
+                        Directory.Delete(linkPath, false);
+                    }
+                    catch
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    // 非空普通目录（mklink 失败后的复制回退产物）：保留
+                    return;
+                }
+            }
+            // 确保目标存在，junction 可指向空目录
             if (!Directory.Exists(targetPath))
             {
-                Directory.CreateDirectory(linkPath);
-                return;
+                Directory.CreateDirectory(targetPath);
             }
             try
             {

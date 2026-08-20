@@ -37,6 +37,7 @@ namespace GflChibiDesktop2
         AboutDialog? aboutDialog;
         public string announcementMsg = "";
         public string homepageLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/";
+        public string repoLink = "https://github.com/Blue-Roar/GflChibiDesktop2";
         public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/download";
         public string chibiListLink = "https://projects.brightsu.cn/GFL/chibi-list";
 
@@ -75,6 +76,7 @@ namespace GflChibiDesktop2
                         if (rt is not null && rt.ret == 200)
                         {
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.homepage_link)) { homepageLink = rt.data.homepage_link; }
+                            if (HttpRequestHelper.CheckIsUrlFormat(rt.data.repo_link)) { repoLink = rt.data.repo_link; }
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
 
@@ -240,7 +242,7 @@ namespace GflChibiDesktop2
             return true;
         }
 
-        private static string InstancesFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "instances.json");
+        private static string InstancesFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "instances.json");
 
         private List<ChibiModelData>? LoadSavedInstances()
         {
@@ -756,17 +758,32 @@ namespace GflChibiDesktop2
                             break;
                         case 1:
                             {
-                                SingleLineTextControl c = new(pet.Panel.Children.Count + 1);
-                                c.PromptText = reader.ReadString();
-                                c.HintText = reader.ReadString();
+                                string prompt = reader.ReadString();
+                                string hint = reader.ReadString();
                                 if (reader.ReadInt() == 1)
                                 {
-                                    c.Type = SingleLineTextControl.SingleLineTextType.Integer;
-                                    c.InputContent = reader.ReadInt().ToString();
+                                    // 数字输入（main.lua 中 type="single"、valueType="number"）：NumericUpDown 控件
+                                    NumericControl c = new(pet.Panel.Children.Count + 1);
+                                    c.PromptText = prompt;
+                                    c.HintText = hint;
+                                    c.Value = reader.ReadInt();
+                                    c.MinValue = reader.ReadInt();
+                                    c.MaxValue = reader.ReadInt();
+                                    c.PropertyChanged += (_, _) => OnPetControlChanged(pet);
+                                    c.changed = false;
+                                    pet.Panel.Children.Add(c);
                                 }
-                                c.PropertyChanged += (_, _) => OnPetControlChanged(pet);
-                                c.changed = false;
-                                pet.Panel.Children.Add(c);
+                                else
+                                {
+                                    // 单行文本输入
+                                    SingleLineTextControl c = new(pet.Panel.Children.Count + 1);
+                                    c.PromptText = prompt;
+                                    c.HintText = hint;
+                                    c.InputContent = reader.ReadString();
+                                    c.PropertyChanged += (_, _) => OnPetControlChanged(pet);
+                                    c.changed = false;
+                                    pet.Panel.Children.Add(c);
+                                }
                             }
                             break;
                         case 2:
@@ -900,6 +917,7 @@ namespace GflChibiDesktop2
             if (dataManagerWindow is not null)
             {
                 dataManagerWindow.homepageLink = homepageLink;
+                dataManagerWindow.repoLink = repoLink;
                 dataManagerWindow.updateLink = updateLink;
                 dataManagerWindow.chibiListLink = chibiListLink;
                 dataManagerWindow.announcementMsg = announcementMsg;
@@ -958,6 +976,7 @@ namespace GflChibiDesktop2
                 aboutDialog = new AboutDialog();
             }
             aboutDialog.homepageLink = homepageLink;
+            aboutDialog.repoLink = repoLink;
             aboutDialog.updateLink = updateLink;
             aboutDialog.Closed += (s, e) => aboutDialog = null;
             aboutDialog.Show();

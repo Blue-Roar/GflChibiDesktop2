@@ -12,6 +12,7 @@ namespace GflChibiDesktop2
         public class IndexData
         {
             public string homepage_link { get; set; }
+            public string repo_link { get; set; }
             public string update_link { get; set; }
             public string chibi_list_link { get; set; }
             public string latest { get; set; }
@@ -45,6 +46,7 @@ namespace GflChibiDesktop2
         public class StartupData
         {
             public string homepage_link { get; set; }
+            public string repo_link { get; set; }
             public string update_link { get; set; }
             public string chibi_list_link { get; set; }
             public int time { get; set; }

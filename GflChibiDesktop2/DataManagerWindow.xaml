@@ -88,33 +88,27 @@
                     <RowDefinition Height="1*" />
                     <RowDefinition Height="1*" />
                 </Grid.RowDefinitions>
-                <Button x:Name="btn_sources" Content="下载源设置" Click="btn_sources_Click" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" />
-                <Button x:Name="btn_loadCG" Content="加载立绘(_S)" Click="btn_loadCG_Click" IsEnabled="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" ToolTip="加载选定人形的立绘" Grid.Column="1"/>
+                <Button x:Name="btn_sources" Content="下载源设置" hc:IconElement.Geometry="{StaticResource GearsGeometry}" Click="btn_sources_Click" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" Padding="5" />
+                <Button x:Name="btn_loadCG" Content="加载立绘(_S)" Click="btn_loadCG_Click" IsEnabled="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" ToolTip="加载选定人形的立绘" Grid.Column="1" Padding="5" />
                 <hc:SearchBar x:Name="sbQuery" Grid.Column="2" SearchStarted="SearchBar_SearchStarted" OverridesDefaultStyle="True" ToolTip="搜索人形" Margin="2,0,2,0" IsRealTime="True" hc:InfoElement.ShowClearButton="True" Height="28" />
                 <!--<hc:AnimationPath Duration="0:0:5" Stretch="Uniform" StrokeThickness="2" Stroke="{DynamicResource PrimaryBrush}" Data="{StaticResource SubGeometry}" Grid.Column="2"/>-->
-                <Button x:Name="btn_downloadData" Grid.Column="3" Content="下载数据(_D)" IsEnabled="False" Click="btn_downloadData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="下载选定人形的骨骼数据" VerticalAlignment="Stretch"/>
-                <Button x:Name="btn_deleteData" Grid.Column="3" Content="删除数据(_D)" IsEnabled="False" Click="btn_deleteData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="删除选定人形的骨骼数据" VerticalAlignment="Stretch"/>
-                <Button x:Name="btn_loadData" Content="加载数据(_L)" VerticalAlignment="Stretch" Grid.Column="4" Click="btn_loadData_Click" Margin="2,0,2,0" IsEnabled="False" ToolTip="加载选定人形的骨骼数据" HorizontalAlignment="Stretch" />
+                <Button x:Name="btn_downloadData" Style="{DynamicResource ButtonDashedSuccess}" Grid.Column="3" hc:IconElement.Geometry="{StaticResource DownloadGeometry}" Content="下载数据(_D)" IsEnabled="False" Click="btn_downloadData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="下载选定人形的骨骼数据" VerticalAlignment="Stretch" Padding="5"/>
+                <Button x:Name="btn_deleteData" Style="{DynamicResource ButtonDashedDanger}" Grid.Column="3" hc:IconElement.Geometry="{StaticResource TrashGeometry}" Content="删除数据(_D)" IsEnabled="False" Click="btn_deleteData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="删除选定人形的骨骼数据" VerticalAlignment="Stretch" Padding="5"/>
+                <Button x:Name="btn_loadData" Content="加载数据(_L)" VerticalAlignment="Stretch" Grid.Column="4" Click="btn_loadData_Click" Margin="2,0,2,0" IsEnabled="False" ToolTip="加载选定人形的骨骼数据" HorizontalAlignment="Stretch" Padding="5" />
                 <hc:ButtonGroup x:Name="btng_loadData" VerticalAlignment="Stretch" Grid.Column="4" Margin="2,0,2,0">
-                    <Button x:Name="btn_loadDefaultData" Content="默认" Click="btn_loadData_Click" IsEnabled="False" ToolTip="加载选定人形的默认骨骼数据" />
-                    <Button x:Name="btn_loadDormData" Content="宿舍" Click="btn_loadDormData_Click" IsEnabled="False" ToolTip="加载选定人形的宿舍骨骼数据"/>
+                    <Button x:Name="btn_loadDefaultData" Content="默认" Click="btn_loadData_Click" IsEnabled="False" ToolTip="加载选定人形的默认骨骼数据" Padding="5" />
+                    <Button x:Name="btn_loadDormData" Content="宿舍" Click="btn_loadDormData_Click" IsEnabled="False" ToolTip="加载选定人形的宿舍骨骼数据" Padding="5" />
                 </hc:ButtonGroup>
-                <Button x:Name="btn_LoadDummyList" Content="重载数据列表" Click="btn_LoadDummyList_Click" Margin="2,0,2,0" Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ToolTip="从服务器重新加载数据列表"/>
-                <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" Margin="2" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center">
-                    <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_save_cg" IsChecked="True" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" HorizontalAlignment="Center" />
-                    <Label Content="保存到本地" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_save_cg}" />
-                </StackPanel>
+                <Button x:Name="btn_LoadDummyList" hc:IconElement.Geometry="{StaticResource RefreshGeometry}" Content="重载数据列表" Click="btn_LoadDummyList_Click" Margin="2,0,2,0" Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ToolTip="从服务器重新加载数据列表" Padding="5"/>
+                <ToggleButton Content="保存到本地" ToolTip="保存立绘数据到本地" Grid.Row="1" Grid.Column="1" Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_save_cg" IsChecked="True" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" HorizontalAlignment="Center" />
                 <Label x:Name="lblSelectedItem" Content="未选择" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" />
                 <!--<Label Content="供数据崩溃时使用" Foreground="{DynamicResource SecondaryTextBrush}" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" Visibility="{Binding Visibility, ElementName=btn_deleteData}" />
                 <Label Content="选择要加载的数据" Foreground="{DynamicResource SecondaryTextBrush}" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" Visibility="{Binding Visibility, ElementName=btng_loadData}" />-->
-                <Button x:Name="btn_ImportExternalSpine" Content="导入外部数据(_I)" Margin="2,0,2,0" Grid.Row="1" Grid.Column="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ToolTip="导入外部骨骼数据" Click="btn_ImportExternalSpine_Click"/>
-                <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" Margin="2" Grid.Row="1" Grid.Column="4" HorizontalAlignment="Center">
-                    <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_force_load" IsChecked="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" HorizontalAlignment="Center" />
-                    <Label Content="多开" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Right" IsEnabled="{Binding IsEnabled, ElementName=chb_force_load}" ToolTip="勾选后加载为多开一个新桌宠实例，而不是应用到当前选中的实例" />
-                </StackPanel>
+                <Button x:Name="btn_ImportExternalSpine" Style="{DynamicResource ButtonDashedWarning}" Content="导入外部数据(_I)" Margin="2,0,2,0" Grid.Row="1" Grid.Column="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ToolTip="导入外部骨骼数据" Click="btn_ImportExternalSpine_Click" Padding="5"/>
+                <ToggleButton Style="{StaticResource ToggleButtonSwitch}" Grid.Row="1" Grid.Column="4" Content="多开加载" ToolTip="勾选后加载为多开一个新桌宠实例，而不是应用到当前选中的实例" x:Name="chb_force_load" IsChecked="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" HorizontalAlignment="Center" />
             </Grid>
         </Grid>
-        <Label Content="人形骨骼数据、立绘图片等少女前线游戏素材版权均归散爆、云母组所有。&#xD;&#xA;仅供个人学习研究与交流用，严禁用于商业用途。使用此程序一切风险自负。" Grid.Row="3" Grid.ColumnSpan="2" VerticalContentAlignment="Center" Margin="2,0,0,0" Padding="10,5,5,5" Background="{x:Null}" BorderThickness="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="42"/>
+        <Label Content="人形骨骼数据、立绘图片等少女前线游戏素材版权均归散爆、云母组所有。&#xD;&#xA;仅供个人学习研究与交流用，严禁用于商业用途。使用此程序一切风险自负。" Grid.Row="3" Grid.ColumnSpan="2" VerticalContentAlignment="Center" Margin="4" Background="{x:Null}" BorderThickness="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="42"/>
         <Button x:Name="btnVersion" Content="程序版本：Version" Click="btnVersion_Click"  ToolTip="查看程序信息"  Grid.Column="0" Grid.Row="3" Width="130" HorizontalAlignment="Right" Margin="0,10,10,10" VerticalAlignment="Top" Grid.ColumnSpan="3" Height="30" Padding="0"/>
     </Grid>
 </hc:Window>

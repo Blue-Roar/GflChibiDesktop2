@@ -4,19 +4,21 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:hc="https://handyorg.github.io/handycontrol"
-             mc:Ignorable="d" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+             mc:Ignorable="d" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Width="200" Height="200"
              Background="{DynamicResource RegionBrush}" MouseMove="UserControl_MouseMove" Cursor="Arrow">
-    <Canvas Width="200" Height="187">
-        <TextBlock Background="{DynamicResource TitleBrush}" Height="44" Style="{StaticResource TextBlockDefault}" TextWrapping="Wrap" HorizontalAlignment="Stretch" TextAlignment="Center" Padding="0,4,0,0" Width="200" ><Run FontSize="14" Text="立绘窗口设置"/><LineBreak/><Run FontSize="11" Text="（仅对当前立绘窗口生效）"/></TextBlock>
-        <Label Content="大小：" Canvas.Left="10" Canvas.Top="50" Width="42" Padding="0" Height="30" Background="{x:Null}" BorderThickness="0"/>
-        <hc:NumericUpDown x:Name="nud_width" Value="0" Style="{StaticResource NumericUpDownExtend}" hc:InfoElement.Placeholder="水平坐标" Canvas.Left="57" Canvas.Top="50" Width="64" Padding="6,0,0,0" Height="30"/>
-        <hc:NumericUpDown x:Name="nud_height" Value="0" Style="{StaticResource NumericUpDownExtend}" hc:InfoElement.Placeholder="垂直坐标" Canvas.Left="126" Canvas.Top="50" Width="64" Padding="6,0,0,0" Height="30"/>
-        <Label Content="位置：" Canvas.Left="10" Canvas.Top="85" Width="42" Padding="0" Height="30" Background="{x:Null}" BorderThickness="0"/>
-        <hc:NumericUpDown x:Name="nud_posx" Value="0" Style="{StaticResource NumericUpDownExtend}" hc:InfoElement.Placeholder="水平坐标" Canvas.Left="57" Canvas.Top="85" Width="64" Padding="6,0,0,0" Height="30"/>
-        <hc:NumericUpDown x:Name="nud_posy" Value="0" Style="{StaticResource NumericUpDownExtend}" hc:InfoElement.Placeholder="垂直坐标" Canvas.Left="126" Canvas.Top="85" Width="64" Padding="6,0,0,0" Height="30"/>
-        <ToggleButton Content="固定位置禁止移动" Style="{StaticResource ToggleButtonSwitch}" Name="chb_fixPos" Padding="0" Canvas.Left="57" Canvas.Top="120" Width="133" />
-        <!--<Label Content="固定位置禁止移动" Canvas.Left="90" Canvas.Top="120" Width="100" Padding="0" Height="22" Background="{x:Null}" BorderThickness="0" HorizontalContentAlignment="Left"/>-->
-        <Button x:Name="btn_OK" Width="87" Style="{StaticResource ButtonPrimary}" Content="确定" Command="hc:ControlCommands.Close" Canvas.Left="10" Canvas.Top="147" Click="btn_OK_Click"/>
-        <Button x:Name="btn_Cancel" Width="87" Style="{StaticResource ButtonDefault}" Content="取消" Command="hc:ControlCommands.Close" Canvas.Left="103" Canvas.Top="147"/>
-    </Canvas>
+    <hc:SimplePanel>
+        <TextBlock Background="{DynamicResource TitleBrush}" Height="44" Style="{StaticResource TextBlockDefault}" TextWrapping="Wrap" HorizontalAlignment="Stretch" TextAlignment="Center" Padding="0,4,0,0" VerticalAlignment="Top" ><Run FontSize="14" Text="立绘窗口设置"/><LineBreak/><Run FontSize="11" Text="（仅对当前立绘窗口生效）"/></TextBlock>
+        <Grid Margin="0,44,0,0">
+            <Label Content="大小：" Width="42" Padding="0" Height="30" Background="{x:Null}" BorderThickness="0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
+            <hc:NumericUpDown x:Name="nud_width" Value="0" Style="{StaticResource NumericUpDownExtend}" hc:InfoElement.Placeholder="水平坐标" Width="64" Padding="6,0,0,0" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="57,10,0,0"/>
+            <hc:NumericUpDown x:Name="nud_height" Value="0" Style="{StaticResource NumericUpDownExtend}" hc:InfoElement.Placeholder="垂直坐标" Width="64" Padding="6,0,0,0" Height="30" Margin="126,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <Label Content="位置：" Width="42" Padding="0" Height="30" Background="{x:Null}" BorderThickness="0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,45,0,0"/>
+            <hc:NumericUpDown x:Name="nud_posx" Value="0" Style="{StaticResource NumericUpDownExtend}" hc:InfoElement.Placeholder="水平坐标" Width="64" Padding="6,0,0,0" Height="30" Margin="57,45,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+            <hc:NumericUpDown x:Name="nud_posy" Value="0" Style="{StaticResource NumericUpDownExtend}" hc:InfoElement.Placeholder="垂直坐标" Width="64" Padding="6,0,0,0" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="126,45,0,0"/>
+            <ToggleButton Content="固定位置禁止移动" Style="{StaticResource ToggleButtonSwitch}" Name="chb_fixPos" Margin="0,80,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" />
+            <!--<Label Content="固定位置禁止移动" Width="100" Padding="0" Height="22" Background="{x:Null}" BorderThickness="0" HorizontalContentAlignment="Left"/>-->
+            <Button x:Name="btn_OK" Width="85" Style="{StaticResource ButtonPrimary}" Content="确定" IsDefault="True" Command="hc:ControlCommands.Close" Click="btn_OK_Click" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,0,0,10"/>
+            <Button x:Name="btn_Cancel" Width="85" Style="{StaticResource ButtonDefault}" Content="取消" IsCancel="True" Command="hc:ControlCommands.Close" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,10,10"/>
+        </Grid>
+    </hc:SimplePanel>
 </UserControl>

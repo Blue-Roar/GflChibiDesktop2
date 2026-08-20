@@ -7,8 +7,8 @@
              mc:Ignorable="d" 
              d:DesignHeight="50" d:DesignWidth="400" Height="50">
     <Grid Height="50" VerticalAlignment="Top" d:DataContext="{d:DesignInstance {x:Type local:ButtonControl}, IsDesignTimeCreatable=True}" Margin="0">
-        <Button Content="{Binding Path=PromptText}" Margin="14,4,10,0" VerticalAlignment="Top" Click="Button_Click"/>
-        <Label x:Name="HintTextBox" Content="{Binding Path=HintText}" Margin="10,25,10,0" VerticalAlignment="Bottom"  Foreground="{StaticResource SecondaryTextBrush}" Background="{x:Null}" BorderThickness="0" Padding="0,0,0,0" HorizontalAlignment="Stretch"/>
-        <Border BorderBrush="DimGray" BorderThickness="0, 1, 0, 0"/>
+        <Border BorderBrush="{DynamicResource SecondaryBorderBrush}" BorderThickness="0, 1, 0, 0"/>
+        <Button Content="{Binding Path=PromptText}" Margin="10,3,10,0" VerticalAlignment="Top" Click="Button_Click"/>
+        <Label x:Name="HintTextBox" Content="{Binding Path=HintText}" Margin="10,0,10,4" VerticalAlignment="Bottom" Padding="0" Foreground="{StaticResource SecondaryTextBrush}" Background="{x:Null}" BorderThickness="0" HorizontalAlignment="Stretch" VerticalContentAlignment="Bottom"/>
     </Grid>
 </UserControl>
