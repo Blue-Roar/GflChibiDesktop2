@@ -103,9 +103,9 @@ namespace GflChibiDesktop2
                 if (File.Exists(src)) File.Copy(src, Path.Combine(workDir, f), true);
             }
 
-            // 复制 lua 模块（含 raylib DLL）。不用 junction 共享，避免多实例进程加载同一 DLL 时
-            // 出现渲染上下文冲突导致骨骼抽风/约束失效。
-            CopyDirectory(Path.Combine(appDir, "lua"), Path.Combine(workDir, "lua"));
+            // 共享 lua 模块（junction）。原"复制避免共享"基于多实例共享 DLL 导致骨骼抽风/约束失效的假设，
+            // 已确认根因是模型 FFD 数据异常（SkinnedMeshAttachment.c 已修复），共享无碍且省磁盘。
+            LinkDir(Path.Combine(workDir, "lua"), Path.Combine(appDir, "lua"));
 
             // 实例配置
             string name = model.DisplayName;

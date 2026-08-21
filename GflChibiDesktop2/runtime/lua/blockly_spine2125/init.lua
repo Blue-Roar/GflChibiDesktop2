@@ -130,7 +130,14 @@ _M.create = function (p, modelConfig)
     M.draw = function()
         ev.trigger(M.before_draw)
 
-        sp.spAnimationState_update(animationState, dp.frameTime())
+        -- 限制单帧动画推进：多开/卡顿时 GetFrameTime 可能异常增大，
+        -- 动画 time 大幅跳跃会使关键帧插值越过异常姿态（scale=0/transform约束），
+        -- 导致骨骼被错误拉长。clamp 到 0.1s 以内并防御 NaN/负值。
+        local dt = dp.frameTime()
+        if dt ~= dt then dt = 0 end -- NaN
+        if dt < 0 then dt = 0 end
+        if dt > 0.1 then dt = 0.1 end
+        sp.spAnimationState_update(animationState, dt)
         sp.spAnimationState_apply(animationState, skeleton)
         sp.spSkeleton_updateWorldTransform(skeleton)
 
