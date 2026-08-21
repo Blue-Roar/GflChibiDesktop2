@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using GflChibiDesktop2.Properties;
 using static GflChibiDesktop2.WebAPI;
@@ -53,11 +54,38 @@ namespace GflChibiDesktop2
             return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(2, 0, 0, 0);
         }
 
+        /// <summary>
+        /// 将 luajit 渲染进程写入系统图形性能首选项（高性能 GPU，2），避免部分人形在核显上卡顿。
+        /// </summary>
+        private static void EnsureLuajitGpuPreference()
+        {
+            try
+            {
+                const string keyPath = @"Software\Microsoft\DirectX\UserGpuPreferences";
+                const int gpuPreferenceHighPerformance = 2;
+                string luajitPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "luajit.exe");
+                using RegistryKey? key = Registry.CurrentUser.CreateSubKey(keyPath);
+                if (key is null)
+                {
+                    return;
+                }
+                object? existing = key.GetValue(luajitPath);
+                if (existing is null || (int)existing != gpuPreferenceHighPerformance)
+                {
+                    key.SetValue(luajitPath, gpuPreferenceHighPerformance, RegistryValueKind.DWord);
+                }
+            }
+            catch
+            {
+            }
+        }
+
         private PetInstance? SelectedPet => (PetTabs.SelectedItem as TabItem)?.Tag as PetInstance;
 
         public MainWindow()
         {
             InitializeComponent();
+            EnsureLuajitGpuPreference();
             //lblVersion.Content = $"程序版本 {productVersion}";
             // 启动统计请求放后台线程，避免阻塞窗口初始化
             string fallbackTitle = $"{productTitle} {productVersion.Major}.{productVersion.Minor}"; // 在 UI 线程缓存，供后台线程使用
