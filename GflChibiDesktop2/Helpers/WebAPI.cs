@@ -79,16 +79,16 @@ namespace GflChibiDesktop2
             public string msg { get; set; }
         }
 
-        public class DummyListData
+        public class ChibiListData
         {
-            //public string dummy_list_version { get; set; }
-            //public string dummy_list_version_log { get; set; }
-            //public string dummy_list_link { get; set; }
+            //public string chibi_list_version { get; set; }
+            //public string chibi_list_version_log { get; set; }
+            //public string chibi_list_link { get; set; }
             public string uuid { get; set; }
             public string url { get; set; }
         }
 
-        public class DummyListRoot
+        public class ChibiListRoot
         {
             /// <summary>
             /// 
@@ -97,7 +97,7 @@ namespace GflChibiDesktop2
             /// <summary>
             /// 
             /// </summary>
-            public DummyListData data { get; set; }
+            public ChibiListData data { get; set; }
             /// <summary>
             /// 
             /// </summary>

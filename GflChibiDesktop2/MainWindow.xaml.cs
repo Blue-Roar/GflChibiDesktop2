@@ -40,7 +40,7 @@ namespace GflChibiDesktop2
         public string homepageLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/";
         public string repoLink = "https://github.com/Blue-Roar/GflChibiDesktop2";
         public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/download";
-        public string chibiListLink = "https://projects.brightsu.cn/GFL/chibi-list";
+        public string chibiListLink = "https://api.brightsu.cn/GFL/chibi_list";
 
         string AppDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app") + Path.DirectorySeparatorChar;
 
@@ -62,7 +62,8 @@ namespace GflChibiDesktop2
             try
             {
                 const string keyPath = @"Software\Microsoft\DirectX\UserGpuPreferences";
-                const int gpuPreferenceHighPerformance = 2;
+                // 系统图形设置的合法格式是 REG_SZ 字符串（如 "GpuPreference=2;"），DWORD 不会被识别
+                const string gpuPreferenceHighPerformance = "GpuPreference=2;";
                 string luajitPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "luajit.exe");
                 using RegistryKey? key = Registry.CurrentUser.CreateSubKey(keyPath);
                 if (key is null)
@@ -70,9 +71,9 @@ namespace GflChibiDesktop2
                     return;
                 }
                 object? existing = key.GetValue(luajitPath);
-                if (existing is null || (int)existing != gpuPreferenceHighPerformance)
+                if (existing is not string s || !s.Contains("GpuPreference=2"))
                 {
-                    key.SetValue(luajitPath, gpuPreferenceHighPerformance, RegistryValueKind.DWord);
+                    key.SetValue(luajitPath, gpuPreferenceHighPerformance, RegistryValueKind.String);
                 }
             }
             catch
@@ -177,7 +178,27 @@ namespace GflChibiDesktop2
             DataContext = context;
             bool started = AutoStartInstance();
             notifyIcon.Init();
-            MinimizeWindow(started);
+            if (started)
+            {
+                // 静默启动：等窗口完成首次渲染后再隐藏到托盘。
+                // 若在首次显示前 Minimize/Hide，窗口从未以 Normal 状态完成初始化，
+                // 托盘恢复后标题栏（WindowChrome）拖动会失效。
+                ContentRendered += (_, _) =>
+                {
+                    if (isExiting)
+                    {
+                        return;
+                    }
+                    ShowInTaskbar = false;
+                    Hide();
+                    HandyControl.Controls.Growl.InfoGlobal($"{productTitle}已在后台静默启动。\n双击托盘图标显示主窗口。");
+                };
+            }
+            else
+            {
+                // 无自动恢复实例：窗口默认 Minimized（避免启动闪烁），此处恢复为正常显示
+                WindowState = WindowState.Normal;
+            }
         }
 
         /// <summary>
@@ -869,17 +890,11 @@ namespace GflChibiDesktop2
 
         private void Window_StateChanged(object? sender, EventArgs e)
         {
-            MinimizeWindow();
-        }
-
-        private void MinimizeWindow(bool isSilentRun = false)
-        {
-            if (isSilentRun) WindowState = WindowState.Minimized;
             if (WindowState == WindowState.Minimized)
             {
                 ShowInTaskbar = false;
                 Hide();
-                HandyControl.Controls.Growl.InfoGlobal($"{productTitle}{(isSilentRun ? "已在后台静默启动" : "已最小化到托盘")}。\n双击托盘图标显示主窗口。");
+                HandyControl.Controls.Growl.InfoGlobal($"{productTitle}已最小化到托盘。\n双击托盘图标显示主窗口。");
             }
         }
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace GflChibiDesktop2
 {
-    class DummyListReader
+    class ChibiListReader
     {
         public class Meta
         {

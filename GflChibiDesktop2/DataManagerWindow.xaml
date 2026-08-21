@@ -99,7 +99,7 @@
                     <Button x:Name="btn_loadDefaultData" Content="默认" Click="btn_loadData_Click" IsEnabled="False" ToolTip="加载选定人形的默认骨骼数据" Padding="5" />
                     <Button x:Name="btn_loadDormData" Content="宿舍" Click="btn_loadDormData_Click" IsEnabled="False" ToolTip="加载选定人形的宿舍骨骼数据" Padding="5" />
                 </hc:ButtonGroup>
-                <Button x:Name="btn_LoadDummyList" hc:IconElement.Geometry="{StaticResource RefreshGeometry}" Content="重载数据列表" Click="btn_LoadDummyList_Click" Margin="2,0,2,0" Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ToolTip="从服务器重新加载数据列表" Padding="5"/>
+                <Button x:Name="btn_LoadChibiList" hc:IconElement.Geometry="{StaticResource RefreshGeometry}" Content="重载数据列表" Click="btn_LoadChibiList_Click" Margin="2,0,2,0" Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ToolTip="从服务器重新加载数据列表" Padding="5"/>
                 <ToggleButton Content="保存到本地" ToolTip="保存立绘数据到本地" Grid.Row="1" Grid.Column="1" Style="{StaticResource ToggleButtonSwitch}" x:Name="chb_save_cg" IsChecked="True" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" HorizontalAlignment="Center" />
                 <Label x:Name="lblSelectedItem" Content="未选择" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" />
                 <!--<Label Content="供数据崩溃时使用" Foreground="{DynamicResource SecondaryTextBrush}" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{x:Null}" BorderThickness="0" Padding="0" HorizontalContentAlignment="Center" Grid.Row="1" Visibility="{Binding Visibility, ElementName=btn_deleteData}" />

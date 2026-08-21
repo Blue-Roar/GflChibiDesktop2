@@ -12,7 +12,7 @@ using System.Windows.Media;
 using Newtonsoft.Json;
 using GflChibiDesktop2.Properties;
 using GflChibiDesktop2.ViewModels;
-using static GflChibiDesktop2.DummyListReader;
+using static GflChibiDesktop2.ChibiListReader;
 using static GflChibiDesktop2.WebAPI;
 using MessageBox = HandyControl.Controls.MessageBox;
 
@@ -59,7 +59,7 @@ namespace GflChibiDesktop2
         /// <summary>
         /// 数据表是否已完成加载（防止排队的进度刷新覆盖完成提示）。
         /// </summary>
-        volatile bool dummyListLoaded = false;
+        volatile bool chibiListLoaded = false;
         /// <summary>
         /// 是否正在执行数据操作（下载/删除/更新列表等），期间禁止关闭窗口。
         /// </summary>
@@ -95,7 +95,7 @@ namespace GflChibiDesktop2
             {
                 // 网络请求与数据表构建异步执行（数据表方法内部用 Dispatcher 回 UI）
                 //await UpdateLinks();
-                await System.Threading.Tasks.Task.Run(() => LoadDummyList());
+                await System.Threading.Tasks.Task.Run(() => LoadChibiList());
             }
             catch (Exception ex)
             {
@@ -340,9 +340,9 @@ namespace GflChibiDesktop2
             }
         }
 
-        public void LoadDummyList()
+        public void LoadChibiList()
         {
-            dummyListLoaded = false;
+            chibiListLoaded = false;
             KillEmptyDirectory($@"{AppDir}assets/spine");
             Dispatcher.Invoke(() => sbQuery.Clear());
 
@@ -427,8 +427,8 @@ namespace GflChibiDesktop2
                 int total = rb.content.Count;
                 Dispatcher.Invoke(() =>
                 {
-                    //btn_LoadDummyList.Content = $"数据列表版本\n{rb.meta.version}";
-                    btn_LoadDummyList.ToolTip = $"从服务器重新加载数据列表\n当前人形数据列表版本 {rb.meta.version}";
+                    //btn_LoadChibiList.Content = $"数据列表版本\n{rb.meta.version}";
+                    btn_LoadChibiList.ToolTip = $"从服务器重新加载数据列表\n当前人形数据列表版本 {rb.meta.version}";
                     pb_loader.IsIndeterminate = false;
                     pb_loader.Maximum = total;
                     pb_loader.Value = 0;
@@ -451,7 +451,7 @@ namespace GflChibiDesktop2
                         int c = counter;
                         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
                         {
-                            if (dummyListLoaded) return;
+                            if (chibiListLoaded) return;
                             txt_loader.Text = $"正在处理：{c} / {total}";
                             pb_loader.Value = c;
                             tii.ProgressValue = (double)c / total;
@@ -685,7 +685,7 @@ namespace GflChibiDesktop2
 
                 //});
                 int loaded = counter;
-                dummyListLoaded = true;
+                chibiListLoaded = true;
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     tv_InternalSelector.ItemsSource = tree;
@@ -852,13 +852,13 @@ namespace GflChibiDesktop2
             }
         }
 
-        private async void btn_LoadDummyList_Click(object sender, RoutedEventArgs e)
+        private async void btn_LoadChibiList_Click(object sender, RoutedEventArgs e)
         {
-            btn_LoadDummyList.IsEnabled = false;
+            btn_LoadChibiList.IsEnabled = false;
             isBusy = true;
             try
             {
-                await LoadDummyListCore();
+                await LoadChibiListCore();
             }
             catch (Exception ex)
             {
@@ -866,7 +866,7 @@ namespace GflChibiDesktop2
             }
             finally
             {
-                btn_LoadDummyList.IsEnabled = true;
+                btn_LoadChibiList.IsEnabled = true;
                 isBusy = false;
             }
         }
@@ -874,26 +874,26 @@ namespace GflChibiDesktop2
         /// <summary>
         /// 刷新人形数据表：网络请求异步执行，避免阻塞 UI。
         /// </summary>
-        private async Task LoadDummyListCore()
+        private async Task LoadChibiListCore()
         {
             var (postOk, responseStr) = await HttpRequestHelper.PostWebRequestAsync(chibiListLink, string.Empty, Encoding.UTF8);
 
             if (postOk)
             {
-                DummyListRoot rt = JsonConvert.DeserializeObject<DummyListRoot>(responseStr);
+                ChibiListRoot rt = JsonConvert.DeserializeObject<ChibiListRoot>(responseStr);
 
                 if (rt.ret != 200) //API请求失败
                 {
                     if (File.Exists($"{AppDir}chibi_list.json"))//本地存在即加载本地
                     {
-                        LoadDummyList();
+                        LoadChibiList();
                     }
                     else
                     {
                         MessageBoxResult downloadListResult = MessageBox.Show("本地人形数据表不存在，且 API 接口调用失败。加载进程已中止。\n是否重试？", "数据表加载失败", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes);
                         if (downloadListResult == MessageBoxResult.Yes)
                         {
-                            await LoadDummyListCore();
+                            await LoadChibiListCore();
                         }
                     }
                     return;
@@ -908,12 +908,12 @@ namespace GflChibiDesktop2
                         txt_loader.Text = "正在更新人形数据表";
                         HttpClass.DownloadFile(rt.data.url, $"{AppDir}chibi_list.json", pb_downloader, txt_downloader);
                         sp_downloader.Visibility = Visibility.Collapsed;
-                        await LoadDummyListCore();
+                        await LoadChibiListCore();
                         return;
                     }
                     else//相同则加载本地
                     {
-                        LoadDummyList();
+                        LoadChibiList();
                     }
                 }
                 else//API成功，本地不存在
@@ -921,7 +921,7 @@ namespace GflChibiDesktop2
                     bool downloaded = HttpClass.DownloadFile(rt.data.url, $"{AppDir}chibi_list.json", pb_loader, txt_loader);
                     if (downloaded)
                     {
-                        await LoadDummyListCore();
+                        await LoadChibiListCore();
                     }
                     else
                     {
@@ -933,14 +933,14 @@ namespace GflChibiDesktop2
             {
                 if (File.Exists($"{AppDir}chibi_list.json"))//存在本地即加载本地
                 {
-                    LoadDummyList();
+                    LoadChibiList();
                 }
                 else
                 {
                     MessageBoxResult downloadListResult = MessageBox.Show("本地数据表不存在，且 API 接口调用失败。加载进程已中止。\n是否重试？", "数据表加载失败", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.Yes);
                     if (downloadListResult == MessageBoxResult.Yes)
                     {
-                        await LoadDummyListCore();
+                        await LoadChibiListCore();
                     }
                 }
             }
@@ -1343,7 +1343,7 @@ namespace GflChibiDesktop2
                     SaveExternalSpineList(er);
                 }
                 // 重载数据列表，移除已删除的外部节点
-                LoadDummyList();
+                LoadChibiList();
                 return;
             }
             tvAfterSelect();
@@ -1480,7 +1480,7 @@ namespace GflChibiDesktop2
                 SaveExternalSpineList(root);
 
                 HandyControl.Controls.Growl.SuccessGlobal($"导入成功：{skinName}。");
-                LoadDummyList();
+                LoadChibiList();
             }
             catch (Exception ex)
             {
@@ -1533,8 +1533,8 @@ namespace GflChibiDesktop2
                 try
                 {
                     RootObject rb = ReadChibiList();
-                    //btn_LoadDummyList.Content = $"数据列表版本\n{rb.meta.version}";
-                    btn_LoadDummyList.ToolTip = $"从服务器重新加载数据列表\n当前数据列表版本 {rb.meta.version}";
+                    //btn_LoadChibiList.Content = $"数据列表版本\n{rb.meta.version}";
+                    btn_LoadChibiList.ToolTip = $"从服务器重新加载数据列表\n当前数据列表版本 {rb.meta.version}";
                     int total = rb.content.Count;
 
                     int counter = 0;
@@ -1603,7 +1603,7 @@ namespace GflChibiDesktop2
             }
             else
             {
-                LoadDummyList();
+                LoadChibiList();
             }
         }
 
