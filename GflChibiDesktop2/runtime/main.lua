@@ -29,6 +29,7 @@ local enterState = function(name)
     state = name
     enterStateThen[name]()
 end
+local simStopMove -- 供 drag 块在拖动时中止宿舍模拟动作（由 walk 块赋值）
 
 -- 加载设置
 local settings = settingsMan.load("settings.json", true)
@@ -139,10 +140,11 @@ end
         state = "walk"
     end
 
-    local function simStopMove()
+    simStopMove = function()
         simMoving = false
         simRemain = 0
         simTraveled = 0
+        simTimer = 0
         enterState("idle")
     end
 
@@ -245,13 +247,18 @@ local dragger = nil;
 (function()
     local updating = false
     dragger = dragmove.createWithWindowDefault {
-        checkCanStart = function() return state == "idle" or state == "drop" end,
+        -- walk 状态（宿舍模拟/跟随鼠标走动）也允许拖拽
+        checkCanStart = function() return state == "idle" or state == "walk" or state == "drop" end,
         key = window.mouseButton.left,
         model = model
     }
 
     ev.on(window.after_draw, dragger.trigger) -- 拖拽响应
-    ev.on(dragger.dragging, function() enterState("drag") end)
+    ev.on(dragger.dragging, function()
+        -- 拖动开始：立即中止宿舍模拟动作（移动/计时）
+        if simStopMove ~= nil then simStopMove() end
+        enterState("drag")
+    end)
     
     if (model.findAnimation("pick") ~= nil) then
         enterStateThen["drag"] = function() model.loop("pick") end
@@ -304,6 +311,8 @@ end)();
 ipc.addPanelItem(
         { type = "button", prompt = "重置小人坐标", hint = "如屏幕里面找不到小人，请最小化所有窗口然后点击此按钮" },
         function()
+            -- 重置坐标同时中止宿舍模拟动作（移动/计时）
+            if simStopMove ~= nil then simStopMove() end
             window.setPosition(0, 0)
             settings:save()
             enterState("idle")
