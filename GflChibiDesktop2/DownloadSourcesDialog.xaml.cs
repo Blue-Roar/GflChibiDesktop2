@@ -36,13 +36,13 @@ namespace GflChibiDesktop2
             var (sourcesPost, sourcesStr) = await HttpRequestHelper.PostWebRequestAsync("https://api.brightsu.cn/GflChibiDesktop2/sources", string.Empty, Encoding.UTF8);
             if (!sourcesPost)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"获取下载源列表失败。API 接口调用失败。\n错误：{sourcesStr}");
+                if (!Properties.Settings.Default.SuppressConnectionErrorPrompts) GrowlHelper.ErrorGlobal($"获取下载源列表失败。API 接口调用失败。\n错误：{sourcesStr}");
                 return;
             }
             SourcesRoot rt = JsonConvert.DeserializeObject<SourcesRoot>(sourcesStr);
             if (rt.ret != 200)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"获取下载源列表失败。API 接口调用失败。\n错误：API 接口返回了状态码 {rt.ret}");
+                if (!Properties.Settings.Default.SuppressConnectionErrorPrompts) GrowlHelper.ErrorGlobal($"获取下载源列表失败。API 接口调用失败。\n错误：API 接口返回了状态码 {rt.ret}");
                 return;
             }
 

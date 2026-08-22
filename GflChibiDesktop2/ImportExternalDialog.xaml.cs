@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using System;
 using System.Linq;
 using System.Windows;
@@ -69,12 +69,12 @@ namespace GflChibiDesktop2
             string name = tb_skinName.Text?.Trim() ?? "";
             if (string.IsNullOrEmpty(name))
             {
-                HandyControl.Controls.Growl.WarningGlobal("请输入皮肤名称。");
+                HandyControl.Controls.MessageBox.Warning("请输入皮肤名称。", "外部数据导入");
                 return;
             }
             if (selectedFiles.Length == 0)
             {
-                HandyControl.Controls.Growl.WarningGlobal("请选择骨骼数据文件。");
+                HandyControl.Controls.MessageBox.Warning("请选择骨骼数据文件。", "外部数据导入");
                 return;
             }
             ConfirmRequested?.Invoke(name, selectedFiles);

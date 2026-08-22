@@ -350,7 +350,7 @@ namespace GflChibiDesktop2
             }
             catch (Exception ex)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"无法打开链接。\n{ex.Message}");
+                GrowlHelper.ErrorGlobal($"无法打开链接。\n{ex.Message}");
             }
         }
         private void btn_BrightSu_Click(object sender, RoutedEventArgs e)
@@ -386,7 +386,7 @@ namespace GflChibiDesktop2
                 if (easterCount < 2)
                 {
                     easterCount++;
-                    HandyControl.Controls.Growl.InfoGlobal("你已经解锁过高级模式了");
+                    GrowlHelper.InfoGlobal("你已经解锁过高级模式了");
                     // System.Media.SystemSounds.Beep.Play();
                 }
                 else
@@ -431,7 +431,7 @@ namespace GflChibiDesktop2
                     //tbtn_easter.IsEnabled = false;
                     //tbtn_easter.Description = "你已经戳过了";
 
-                    HandyControl.Controls.Growl.InfoGlobal(new HandyControl.Data.GrowlInfo()
+                    GrowlHelper.InfoGlobal(new HandyControl.Data.GrowlInfo()
                     {
                         Message = $"“{voices[i]}”",
                         ShowDateTime = false
@@ -440,7 +440,7 @@ namespace GflChibiDesktop2
             }
             else
             {
-                HandyControl.Controls.Growl.InfoGlobal("Cheat Activated!\n已解锁高级模式");
+                GrowlHelper.InfoGlobal("Cheat Activated!\n已解锁高级模式");
                 Settings.Default.EasterEgg = true;
                 Settings.Default.Save();
             }

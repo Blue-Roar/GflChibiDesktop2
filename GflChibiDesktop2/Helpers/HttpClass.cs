@@ -119,7 +119,7 @@ namespace GflChibiDesktop2
             }
             catch
             {
-                HandyControl.Controls.Growl.WarningGlobal($"无法下载 {URL}，请检查下载源设置。");
+                if (!Properties.Settings.Default.SuppressConnectionErrorPrompts) GrowlHelper.WarningGlobal($"无法下载 {URL}，请检查下载源设置。");
                 return false;
             }
         }
@@ -158,7 +158,7 @@ namespace GflChibiDesktop2
             }
             catch
             {
-                HandyControl.Controls.Growl.WarningGlobal($"无法下载 {URL}，请检查下载源设置。");
+                if (!Properties.Settings.Default.SuppressConnectionErrorPrompts) GrowlHelper.WarningGlobal($"无法下载 {URL}，请检查下载源设置。");
                 return false;
             }
         }

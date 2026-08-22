@@ -119,9 +119,9 @@ namespace GflChibiDesktop2
                             Version latestVersion = new Version(rt.data?.latest);
                             if (latestVersion is not null)
                             {
-                                if (latestVersion > productVersion)
+                                if (latestVersion > productVersion && !Properties.Settings.Default.SuppressUpdatePrompts)
                                 {
-                                    HandyControl.Controls.Growl.AskGlobal(new HandyControl.Data.GrowlInfo()
+                                    GrowlHelper.AskGlobal(new HandyControl.Data.GrowlInfo()
                                     {
                                         //IsCustom = true,
                                         Type = HandyControl.Data.InfoType.Info,
@@ -153,8 +153,8 @@ namespace GflChibiDesktop2
                         {
                             Dispatcher.BeginInvoke(() =>
                             {
-                                if (!isExiting)
-                                    HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt?.ret}");
+                                if (!isExiting && !Properties.Settings.Default.SuppressConnectionErrorPrompts)
+                                    GrowlHelper.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt?.ret}");
                             });
                         }
                     }
@@ -162,8 +162,8 @@ namespace GflChibiDesktop2
                     {
                         Dispatcher.BeginInvoke(() =>
                         {
-                            if (!isExiting)
-                                HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n{StartupStr}");
+                            if (!isExiting && !Properties.Settings.Default.SuppressConnectionErrorPrompts)
+                                GrowlHelper.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n{StartupStr}");
                         });
                     }
                 }
@@ -171,8 +171,8 @@ namespace GflChibiDesktop2
                 {
                     Dispatcher.BeginInvoke(() =>
                     {
-                        if (!isExiting)
-                            HandyControl.Controls.Growl.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：{ex.Message}");
+                        if (!isExiting && !Properties.Settings.Default.SuppressConnectionErrorPrompts)
+                            GrowlHelper.WarningGlobal($"API接口调用失败。部分功能可能会受到影响。\n错误：{ex.Message}");
                     });
                 }
             });
@@ -197,7 +197,10 @@ namespace GflChibiDesktop2
                     }
                     ShowInTaskbar = false;
                     Hide();
-                    HandyControl.Controls.Growl.InfoGlobal($"{productTitle}已在后台静默启动。\n双击托盘图标显示主窗口。");
+                    if (!Properties.Settings.Default.SuppressMinimizePrompts)
+                    {
+                        GrowlHelper.InfoGlobal($"{productTitle}已在后台静默启动。\n双击托盘图标显示主窗口。");
+                    }
                 };
             }
             else
@@ -278,7 +281,7 @@ namespace GflChibiDesktop2
                 }
                 else
                 {
-                    StartInstance(m);
+                    StartInstance(m, true);
                 }
                 started++;
             }
@@ -303,7 +306,7 @@ namespace GflChibiDesktop2
             }
             catch (Exception ex)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"恢复桌宠失败。\n{ex.Message}");
+                GrowlHelper.ErrorGlobal($"恢复桌宠失败。\n{ex.Message}");
             }
         }
 
@@ -321,7 +324,8 @@ namespace GflChibiDesktop2
                 }
                 if (!File.Exists(Path.Combine(appDir, f)))
                 {
-                    HandyControl.Controls.Growl.WarningGlobal($"“{model.DisplayName}”的桌宠数据文件缺失，已跳过自动加载：\n{f}");
+                    // if (!Properties.Settings.Default.SuppressLoadPrompts)
+                        GrowlHelper.WarningGlobal($"“{model.DisplayName}”的桌宠数据文件缺失，已跳过自动加载：\n{f}");
                     return false;
                 }
             }
@@ -391,7 +395,7 @@ namespace GflChibiDesktop2
             }
         }
 
-        private void StartInstance(ChibiModelData model)
+        private void StartInstance(ChibiModelData model, bool silently = false)
         {
             if (isExiting)
             {
@@ -420,7 +424,7 @@ namespace GflChibiDesktop2
                 }
                 else
                 {
-                    HandyControl.Controls.Growl.WarningGlobal("最多同时开启 8 个桌宠实例。");
+                    HandyControl.Controls.MessageBox.Warning("最多同时开启 8 个桌宠实例。",productTitle);
                     return;
                 }
             }
@@ -439,10 +443,12 @@ namespace GflChibiDesktop2
                 AddTab(pet);
                 PetTabs.SelectedItem = pet.Tab;
                 UpdateStatus();
+                if (!Properties.Settings.Default.SuppressLoadPrompts && !silently)
+                    GrowlHelper.InfoGlobal($"已加载 {model.DisplayName}。");
             }
             catch (Exception ex)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"开启桌宠实例失败。\n{ex.Message}");
+                GrowlHelper.ErrorGlobal($"开启桌宠实例失败。\n{ex.Message}");
             }
         }
 
@@ -559,7 +565,7 @@ namespace GflChibiDesktop2
             }
             catch (Exception ex)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"恢复桌宠“{pet.Name}”失败。\n{ex.Message}");
+                GrowlHelper.ErrorGlobal($"恢复桌宠“{pet.Name}”失败。\n{ex.Message}");
             }
             finally
             {
@@ -617,7 +623,7 @@ namespace GflChibiDesktop2
             {
                 pet.RestartAttempts++;
                 int attempts = pet.RestartAttempts;
-                HandyControl.Controls.Growl.WarningGlobal($"桌宠“{pet.Name}”异常退出，3 秒后自动重启（第 {attempts}/3 次）。");
+                GrowlHelper.WarningGlobal($"桌宠“{pet.Name}”异常退出，3 秒后自动重启（第 {attempts}/3 次）。");
                 _ = System.Threading.Tasks.Task.Run(async () =>
                 {
                     await System.Threading.Tasks.Task.Delay(3000);
@@ -634,7 +640,7 @@ namespace GflChibiDesktop2
                 return;
             }
 
-            HandyControl.Controls.Growl.WarningGlobal($"桌宠“{pet.Name}”异常退出次数过多，已停止自动重启。");
+            GrowlHelper.WarningGlobal($"桌宠“{pet.Name}”异常退出次数过多，已停止自动重启。");
             RemovePet(pet);
         }
 
@@ -660,11 +666,11 @@ namespace GflChibiDesktop2
                     () => Dispatcher.BeginInvoke(() => { if (pm is not null) ReadIpc(pm, pet); }));
                 pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
                 pet.Manager = pm;
-                HandyControl.Controls.Growl.InfoGlobal($"桌宠“{pet.Name}”已自动重启。");
+                GrowlHelper.InfoGlobal($"桌宠“{pet.Name}”已自动重启。");
             }
             catch (Exception ex)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"自动重启桌宠“{pet.Name}”失败。\n{ex.Message}");
+                GrowlHelper.ErrorGlobal($"自动重启桌宠“{pet.Name}”失败。\n{ex.Message}");
             }
             finally
             {
@@ -709,6 +715,7 @@ namespace GflChibiDesktop2
                 //Content = "✕",
                 Width = 20,
                 Height = 20,
+                //Style = (Style)FindResource("ButtonDanger"),
                 Padding = new Thickness(0),
                 Margin = new Thickness(0),
                 ToolTip = "关闭并删除桌宠实例"
@@ -756,7 +763,7 @@ namespace GflChibiDesktop2
                 {
                     e.Cancel = true;
                     dm.Activate();
-                    HandyControl.Controls.Growl.InfoGlobal("在退出程序前，请先关闭数据管理窗口。");
+                    GrowlHelper.InfoGlobal("在退出程序前，请先关闭数据管理窗口。");
                     skipConfirmOnClose = false;
                     return;
                 }
@@ -861,7 +868,7 @@ namespace GflChibiDesktop2
             PetInstance? pet = SelectedPet;
             if (pet?.Manager is null)
             {
-                HandyControl.Controls.Growl.WarningGlobal("当前桌宠实例未运行，无法保存配置。");
+                GrowlHelper.WarningGlobal("当前桌宠实例未运行，无法保存配置。");
                 return;
             }
             SavePetConfig(pet);
@@ -910,7 +917,7 @@ namespace GflChibiDesktop2
             PetInstance? pet = SelectedPet;
             if (pet?.Manager is null)
             {
-                HandyControl.Controls.Growl.WarningGlobal("当前桌宠实例未运行，无法放弃更改。");
+                GrowlHelper.WarningGlobal("当前桌宠实例未运行，无法放弃更改。");
                 return;
             }
             using var w = pet.Manager.txIpc.BeginWrite();
@@ -1050,7 +1057,8 @@ namespace GflChibiDesktop2
             {
                 ShowInTaskbar = false;
                 Hide();
-                HandyControl.Controls.Growl.InfoGlobal($"{productTitle}已最小化到托盘。\n双击托盘图标显示主窗口。");
+                if (!Properties.Settings.Default.SuppressMinimizePrompts)
+                    GrowlHelper.InfoGlobal($"{productTitle}已最小化到托盘。\n双击托盘图标显示主窗口。");
             }
         }
 
@@ -1157,7 +1165,6 @@ namespace GflChibiDesktop2
                 {
                     await RestartSelected(data);
                 }
-                HandyControl.Controls.Growl.InfoGlobal($"已加载 {data.DisplayName}。");
                 SaveInstances();
             }
             catch (OperationCanceledException)
@@ -1243,6 +1250,64 @@ namespace GflChibiDesktop2
             set
             {
                 AutoRun.SetAutoRun(CurrentExePath, productTitle, value);
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 禁用全部全局提示（总开关，同时影响以下各项）。
+        /// </summary>
+        public bool SuppressGlobalGrowl
+        {
+            get => Settings.Default.SuppressGlobalGrowl;
+            set
+            {
+                Settings.Default.SuppressGlobalGrowl = value;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        public bool SuppressLoadPrompts
+        {
+            get => Settings.Default.SuppressLoadPrompts;
+            set
+            {
+                Settings.Default.SuppressLoadPrompts = value;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        public bool SuppressUpdatePrompts
+        {
+            get => Settings.Default.SuppressUpdatePrompts;
+            set
+            {
+                Settings.Default.SuppressUpdatePrompts = value;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        public bool SuppressMinimizePrompts
+        {
+            get => Settings.Default.SuppressMinimizePrompts;
+            set
+            {
+                Settings.Default.SuppressMinimizePrompts = value;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        public bool SuppressConnectionErrorPrompts
+        {
+            get => Settings.Default.SuppressConnectionErrorPrompts;
+            set
+            {
+                Settings.Default.SuppressConnectionErrorPrompts = value;
+                Settings.Default.Save();
                 OnPropertyChanged();
             }
         }

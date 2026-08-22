@@ -12,6 +12,10 @@ namespace GflChibiDesktop2.Properties
         public bool EasterEgg { get; set; } = false;
         public bool SuppressMultiInstanceWarning { get; set; } = false;
         public bool SuppressGlobalGrowl { get; set; } = false;
+        public bool SuppressLoadPrompts { get; set; } = false;
+        public bool SuppressUpdatePrompts { get; set; } = false;
+        public bool SuppressMinimizePrompts { get; set; } = false;
+        public bool SuppressConnectionErrorPrompts { get; set; } = false;
         private static string FilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "gfl_settings.json");
 
         private class SettingsData
@@ -20,6 +24,10 @@ namespace GflChibiDesktop2.Properties
             public bool EasterEgg { get; set; }
             public bool SuppressMultiInstanceWarning { get; set; }
             public bool SuppressGlobalGrowl { get; set; }
+            public bool SuppressLoadPrompts { get; set; }
+            public bool SuppressUpdatePrompts { get; set; }
+            public bool SuppressMinimizePrompts { get; set; }
+            public bool SuppressConnectionErrorPrompts { get; set; }
         }
 
         private Settings()
@@ -38,6 +46,10 @@ namespace GflChibiDesktop2.Properties
                             if (json.SuppressMultiInstanceWarning) SuppressMultiInstanceWarning = json.SuppressMultiInstanceWarning;
                         }
                         if (json.SuppressGlobalGrowl) SuppressGlobalGrowl = json.SuppressGlobalGrowl;
+                        if (json.SuppressLoadPrompts) SuppressLoadPrompts = json.SuppressLoadPrompts;
+                        if (json.SuppressUpdatePrompts) SuppressUpdatePrompts = json.SuppressUpdatePrompts;
+                        if (json.SuppressMinimizePrompts) SuppressMinimizePrompts = json.SuppressMinimizePrompts;
+                        if (json.SuppressConnectionErrorPrompts) SuppressConnectionErrorPrompts = json.SuppressConnectionErrorPrompts;
                     }
                 }
             }
@@ -59,7 +71,11 @@ namespace GflChibiDesktop2.Properties
                     DownloadSource = DownloadSource,
                     EasterEgg = EasterEgg,
                     SuppressMultiInstanceWarning = SuppressMultiInstanceWarning,
-                    SuppressGlobalGrowl = SuppressGlobalGrowl
+                    SuppressGlobalGrowl = SuppressGlobalGrowl,
+                    SuppressLoadPrompts = SuppressLoadPrompts,
+                    SuppressUpdatePrompts = SuppressUpdatePrompts,
+                    SuppressMinimizePrompts = SuppressMinimizePrompts,
+                    SuppressConnectionErrorPrompts = SuppressConnectionErrorPrompts
                 };
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(FilePath, json);

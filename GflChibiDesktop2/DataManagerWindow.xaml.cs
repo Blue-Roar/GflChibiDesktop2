@@ -78,7 +78,7 @@ namespace GflChibiDesktop2
 
             if (string.IsNullOrEmpty(homepageLink) || string.IsNullOrEmpty(repoLink) || string.IsNullOrEmpty(updateLink) || string.IsNullOrEmpty(chibiListLink))
             {
-                //HandyControl.Controls.Growl.WarningGlobal("部分链接未正确设置。重新获取链接……");
+                //GrowlHelper.WarningGlobal("部分链接未正确设置。重新获取链接……");
                 UpdateLinks();
             }
         }
@@ -99,7 +99,7 @@ namespace GflChibiDesktop2
             }
             catch (Exception ex)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"初始化加载失败。\n{ex.Message}");
+                if (!Properties.Settings.Default.SuppressLoadPrompts) GrowlHelper.ErrorGlobal($"初始化加载失败。\n{ex.Message}");
             }
             finally
             {
@@ -139,9 +139,9 @@ namespace GflChibiDesktop2
                         Version latestVersion = new Version(rt.data?.latest);
                         if (latestVersion is not null)
                         {
-                            if (latestVersion != productVersion)
+                            if (latestVersion != productVersion && !Properties.Settings.Default.SuppressUpdatePrompts)
                             {
-                                HandyControl.Controls.Growl.AskGlobal(new HandyControl.Data.GrowlInfo()
+                                GrowlHelper.AskGlobal(new HandyControl.Data.GrowlInfo()
                                 {
                                     //IsCustom = true,
                                     Type = HandyControl.Data.InfoType.Info,
@@ -162,17 +162,17 @@ namespace GflChibiDesktop2
                     }
                     else
                     {
-                        Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt.ret}"));
+                        Dispatcher.BeginInvoke(() => { if (!Properties.Settings.Default.SuppressConnectionErrorPrompts) GrowlHelper.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：API 接口返回了状态码 {rt.ret}"); });
                     }
                 }
                 else
                 {
-                    Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{indexStr}"));
+                    Dispatcher.BeginInvoke(() => { if (!Properties.Settings.Default.SuppressConnectionErrorPrompts) GrowlHelper.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{indexStr}"); });
                 }
             }
             catch (Exception ex)
             {
-                Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{ex}"));
+                Dispatcher.BeginInvoke(() => { if (!Properties.Settings.Default.SuppressConnectionErrorPrompts) GrowlHelper.ErrorGlobal($"API 接口调用失败，链接更新失败。\n部分功能可能会受到影响。\n错误：{ex}"); });
             }
         }
 
@@ -664,7 +664,7 @@ namespace GflChibiDesktop2
                     }
                     catch (Exception ex)
                     {
-                        Dispatcher.Invoke(() => HandyControl.Controls.Growl.ErrorGlobal($"构建人形数据列表时出错。\n{ex}"));
+                        Dispatcher.Invoke(() => { GrowlHelper.ErrorGlobal($"构建人形数据列表时出错。\n{ex}"); });
                     }
                 }
 
@@ -700,7 +700,7 @@ namespace GflChibiDesktop2
             }
             catch (Exception ex)
             {
-                Dispatcher.BeginInvoke(() => HandyControl.Controls.Growl.ErrorGlobal($"加载人形数据列表时出错。\n{ex}"));
+                Dispatcher.BeginInvoke(() => { if (!Properties.Settings.Default.SuppressLoadPrompts) GrowlHelper.ErrorGlobal($"加载人形数据列表时出错。\n{ex}"); });
             }
             Dispatcher.BeginInvoke(() => tvAfterSelect());
         }
@@ -862,7 +862,7 @@ namespace GflChibiDesktop2
             }
             catch (Exception ex)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"获取与更新数据表时出错。\n{ex.Message}");
+                if (!Properties.Settings.Default.SuppressConnectionErrorPrompts) GrowlHelper.ErrorGlobal($"获取与更新数据表时出错。\n{ex.Message}");
             }
             finally
             {
@@ -925,7 +925,7 @@ namespace GflChibiDesktop2
                     }
                     else
                     {
-                        HandyControl.Controls.Growl.ErrorGlobal("数据表下载失败");
+                        if (!Properties.Settings.Default.SuppressConnectionErrorPrompts) GrowlHelper.ErrorGlobal("数据表下载失败");
                     }
                 }
             }
@@ -1019,7 +1019,7 @@ namespace GflChibiDesktop2
             }
             else
             {
-                HandyControl.Controls.Growl.InfoGlobal($"{tagString[5]} ({tagString[1]}) 没有对应的立绘数据。");
+                if (!Properties.Settings.Default.SuppressLoadPrompts) GrowlHelper.InfoGlobal($"{tagString[5]} ({tagString[1]}) 没有对应的立绘数据。");
             }
         }
 
@@ -1180,7 +1180,7 @@ namespace GflChibiDesktop2
                     string fpath = $@"{AppDir}assets/{spineRoot}/{tagString[6]}/{fname}";
                     if (!File.Exists(fpath))
                     {
-                        HandyControl.Controls.Growl.ErrorGlobal($"加载失败：骨骼数据文件不存在。\n{fpath}");
+                        if (!Properties.Settings.Default.SuppressLoadPrompts) GrowlHelper.ErrorGlobal($"加载失败：骨骼数据文件不存在。\n{fpath}");
                         tvAfterSelect();
                         return;
                     }
@@ -1283,12 +1283,12 @@ namespace GflChibiDesktop2
                     }
                     else
                     {
-                        HandyControl.Controls.Growl.ErrorGlobal("人形数据下载失败。\nURL 无效。请检查下载源设置。");
+                        GrowlHelper.ErrorGlobal("人形数据下载失败。\nURL 无效。请检查下载源设置。");
                     }
                 }
                 else
                 {
-                    HandyControl.Controls.Growl.ErrorGlobal("人形数据下载失败。\n服务器端未包含该人形的有效数据。");
+                    GrowlHelper.ErrorGlobal("人形数据下载失败。\n服务器端未包含该人形的有效数据。");
                 }
 
                 tv_InternalSelector.IsEnabled = true;
@@ -1315,7 +1315,7 @@ namespace GflChibiDesktop2
             tagString[7] = item.Tag[7];//content.filename;
             if (LoadedPaths.Contains(tagString[6]) || (OwnerMainWindow?.GetLoadedPaths().Contains(tagString[6]) ?? false))
             {
-                HandyControl.Controls.Growl.InfoGlobal($"“{tagString[5]}”的数据正在被桌宠使用，无法删除。");
+                GrowlHelper.InfoGlobal($"“{tagString[5]}”的数据正在被桌宠使用，无法删除。");
                 return;
             }
 
@@ -1399,7 +1399,7 @@ namespace GflChibiDesktop2
                 // 文件数 3-6（基础三件套 + 可选的 r{基名} 文件）
                 if (files.Length < 3 || files.Length > 6)
                 {
-                    HandyControl.Controls.Growl.ErrorGlobal("导入失败：需要选择 3-6 个文件（基础 .atlas/.skel/.png 及可选的 r{基名} 文件）。");
+                    HandyControl.Controls.MessageBox.Warning("导入失败：需要选择 3-6 个文件（基础 .atlas/.skel/.png 及可选的 r 开头的宿舍模式数据文件）。", "外部数据导入");
                     return;
                 }
                 // 仅允许 atlas/skel/png
@@ -1409,7 +1409,7 @@ namespace GflChibiDesktop2
                     string ext = System.IO.Path.GetExtension(f).ToLowerInvariant();
                     if (ext != ".atlas" && ext != ".skel" && ext != ".png")
                     {
-                        HandyControl.Controls.Growl.ErrorGlobal("导入失败：仅支持 .atlas、.skel、.png 文件。");
+                        HandyControl.Controls.MessageBox.Warning("导入失败：仅支持 .atlas、.skel、.png 文件。", "外部数据导入");
                         return;
                     }
                     fileMap[System.IO.Path.GetFileName(f).ToLowerInvariant()] = f;
@@ -1430,7 +1430,7 @@ namespace GflChibiDesktop2
                 }
                 if (baseName == null)
                 {
-                    HandyControl.Controls.Growl.ErrorGlobal("导入失败：缺少基础 .skel 文件。");
+                    HandyControl.Controls.MessageBox.Warning("导入失败：缺少基础 .skel 文件。","外部数据导入");
                     return;
                 }
                 // 必须包含基础三文件
@@ -1438,7 +1438,7 @@ namespace GflChibiDesktop2
                       fileMap.ContainsKey((baseName + ".png").ToLowerInvariant()) &&
                       fileMap.ContainsKey((baseName + ".skel").ToLowerInvariant())))
                 {
-                    HandyControl.Controls.Growl.ErrorGlobal($"导入失败：必须包含 {baseName}.atlas、{baseName}.png、{baseName}.skel 三个基础文件。");
+                    HandyControl.Controls.MessageBox.Warning($"导入失败：必须包含 {baseName}.atlas、{baseName}.png、{baseName}.skel 三个基础文件。", "外部数据导入");
                     return;
                 }
                 // 其余文件基名必须为 base 或 r{base}
@@ -1447,7 +1447,7 @@ namespace GflChibiDesktop2
                     string bn = System.IO.Path.GetFileNameWithoutExtension(n);
                     if (bn != baseName && !string.Equals(bn, "r" + baseName, StringComparison.OrdinalIgnoreCase))
                     {
-                        HandyControl.Controls.Growl.ErrorGlobal($"导入失败：额外文件基名必须为 {baseName} 或 r{baseName}。");
+                        HandyControl.Controls.MessageBox.Warning($"导入失败：额外文件基名必须为 {baseName} 或 r{baseName}。", "外部数据导入");
                         return;
                     }
                 }
@@ -1479,12 +1479,12 @@ namespace GflChibiDesktop2
                 });
                 SaveExternalSpineList(root);
 
-                HandyControl.Controls.Growl.SuccessGlobal($"导入成功：{skinName}。");
+                GrowlHelper.SuccessGlobal($"导入成功：{skinName}。");
                 LoadChibiList();
             }
             catch (Exception ex)
             {
-                HandyControl.Controls.Growl.ErrorGlobal($"导入外部数据失败。\n{ex.Message}");
+                GrowlHelper.ErrorGlobal($"导入外部数据失败。\n{ex.Message}");
             }
         }
 
@@ -1493,7 +1493,7 @@ namespace GflChibiDesktop2
             if (isBusy)
             {
                 e.Cancel = true;
-                HandyControl.Controls.Growl.InfoGlobal("正在进行数据操作，请稍候…");
+                GrowlHelper.InfoGlobal("正在进行数据操作，请稍候…");
             }
         }
 
@@ -1583,7 +1583,7 @@ namespace GflChibiDesktop2
                             }
                             catch (Exception ex)
                             {
-                                HandyControl.Controls.Growl.ErrorGlobal($"构建人形数据列表时出错。\n{ex}");
+                                GrowlHelper.ErrorGlobal($"构建人形数据列表时出错。\n{ex}");
                             }
                         }
 
@@ -1597,7 +1597,7 @@ namespace GflChibiDesktop2
                 }
                 catch (Exception ex)
                 {
-                    HandyControl.Controls.Growl.ErrorGlobal($"加载人形数据列表时出错。\n{ex}");
+                    GrowlHelper.ErrorGlobal($"加载人形数据列表时出错。\n{ex}");
                 }
                 tvAfterSelect();
             }
