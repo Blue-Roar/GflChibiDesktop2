@@ -33,7 +33,7 @@
         </Grid>
         <Grid Grid.Row="1" Grid.ColumnSpan="2" Background="{DynamicResource RegionBrush}">
             <Grid.RowDefinitions>
-                <RowDefinition Height="24"/>
+                <RowDefinition Height="28"/>
                 <RowDefinition/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="65"/>
@@ -42,7 +42,8 @@
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <TextBlock Margin="5" x:Name="lbl_InternalSelected" Text="请选择要加载的人形" TextAlignment="Center" Padding="0" Grid.ColumnSpan="2" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Label x:Name="lbl_InternalSelected" Content="请选择要加载的人形" BorderThickness="0" Grid.ColumnSpan="2" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,0,105,0"/>
+            <CheckBox Grid.Row="0" Grid.Column="1" x:Name="chb_filterUndownloaded" VerticalAlignment="Stretch" Content="仅已就绪(_R)" Width="100" Click="chb_filterUndownloaded_Click" HorizontalAlignment="Right" ToolTip="只显示已下载的项目"/>
             <Image Margin="5,0,0,0" x:Name="img_Preview" Grid.Row="1" RenderTransformOrigin="0,0" UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality"></Image>
             <StackPanel Margin="0,5,5,0" Grid.Row="1" FlowDirection="LeftToRight" HorizontalAlignment="Right" VerticalAlignment="Top" >
                 <StackPanel FlowDirection="LeftToRight" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="2" >

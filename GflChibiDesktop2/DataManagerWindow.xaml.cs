@@ -55,6 +55,16 @@ namespace GflChibiDesktop2
         /// </summary>
         public System.Collections.Generic.HashSet<string> LoadedPaths { get; set; } = new System.Collections.Generic.HashSet<string>();
 
+        /// <summary>
+        /// 是否已联网：未联网时禁用联网功能并只显示已下载的数据。
+        /// </summary>
+        bool isOnline = true;
+
+        /// <summary>
+        /// 是否只显示已下载的数据。
+        /// </summary>
+        bool filterUndownloaded = false;
+
         List<ComponentModel> initializeDataSet = new List<ComponentModel>();
         /// <summary>
         /// 数据表是否已完成加载（防止排队的进度刷新覆盖完成提示）。
@@ -95,7 +105,12 @@ namespace GflChibiDesktop2
             {
                 // 网络请求与数据表构建异步执行（数据表方法内部用 Dispatcher 回 UI）
                 //await UpdateLinks();
-                await System.Threading.Tasks.Task.Run(() => LoadChibiList());
+                await System.Threading.Tasks.Task.Run(() =>
+                {
+                    isOnline = DetectOnline();
+                    filterUndownloaded = !isOnline;
+                    LoadChibiList();
+                });
             }
             catch (Exception ex)
             {
@@ -106,7 +121,47 @@ namespace GflChibiDesktop2
                 Cursor = System.Windows.Input.Cursors.Arrow;
                 IsEnabled = true;
                 isBusy = false;
+                ApplyOfflineMode();
             }
+        }
+
+        /// <summary>
+        /// 检测当前是否可联网（探测下载源地址）。
+        /// </summary>
+        private static bool DetectOnline()
+        {
+            if (Settings.Default.ForceOfflineMode == true) return false;
+
+            try
+            {
+                return HttpClass.UrlIsExists("https://api.brightsu.cn/");
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 未联网时禁用需要联网的功能按钮。
+        /// </summary>
+        private void ApplyOfflineMode()
+        {
+            if (isOnline)
+            {
+                return;
+            }
+            btn_sources.IsEnabled = false;
+            btn_LoadChibiList.IsEnabled = false;
+            chb_preview.IsChecked = false;
+            chb_preview.IsEnabled = false;
+            //chb_preview_d.IsEnabled = false;
+            chb_save_cg.IsChecked = true;
+            chb_save_cg.IsEnabled = false;
+            Title += " [离线模式]";
+            lblAnnouncement.Content = "离线模式下，多数功能不可用。";
+            chb_filterUndownloaded.IsChecked = true;
+            chb_filterUndownloaded.IsEnabled = false;
         }
 
         private async Task UpdateLinks()
@@ -324,20 +379,50 @@ namespace GflChibiDesktop2
         }
 
         /// <summary>
-        /// 移除没有子节点的一级分类（Level&lt;3 且没有子项指向它）。
+        /// 移除没有子节点的一级分类（Level<3 且没有子项指向它）。
         /// 外部导入节点（ext_ 前缀）是叶子数据节点，不应被当作空分类移除。
         /// </summary>
         private void RemoveEmptyParents(Dictionary<int, List<ComponentModel>> index)
         {
-            var emptyParents = initializeDataSet.Where(n => n.Level < 3 && !n.ComponentName.StartsWith("ext_") && !index.ContainsKey(n.ComponentID)).ToList();
-            foreach (var ep in emptyParents)
+            // 迭代移除：二级分类清空后再移除其所属的一级分类，直到不再有可移除的节点
+            bool removed;
+            do
             {
-                initializeDataSet.Remove(ep);
-                if (index.TryGetValue(ep.ParentID, out var pl))
+                removed = false;
+                var emptyParents = initializeDataSet.Where(n =>
+                    n.Level < 3 &&
+                    !n.ComponentName.StartsWith("ext_") &&
+                    (!index.TryGetValue(n.ComponentID, out var children) || children.Count == 0)).ToList();
+                foreach (var ep in emptyParents)
                 {
-                    pl.Remove(ep);
+                    initializeDataSet.Remove(ep);
+                    if (index.TryGetValue(ep.ParentID, out var pl))
+                    {
+                        pl.Remove(ep);
+                    }
+                    removed = true;
                 }
+            } while (removed);
+        }
+
+        /// <summary>
+        /// 判断某个模型数据目录是否已下载（普通数据目录或外部导入目录）。
+        /// </summary>
+        private static bool IsDownloaded(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return false;
             }
+            if (Directory.Exists($@"{AppDir}assets/spine/{path}"))
+            {
+                return true;
+            }
+            if (Directory.Exists($@"{AppDir}assets/spine_external/{path}"))
+            {
+                return true;
+            }
+            return false;
         }
 
         public void LoadChibiList()
@@ -437,6 +522,22 @@ namespace GflChibiDesktop2
                 });
 
                 int counter = 0;
+                // 过滤掉未下载的节点，预扫描需要保留的主节点（自身已下载 或 存在已下载的皮肤子节点）
+                var keepMains = new HashSet<string>();
+                if (filterUndownloaded)
+                {
+                    foreach (var c in rb.content)
+                    {
+                        if (c.name == c.parent)
+                        {
+                            if (IsDownloaded(c.path)) keepMains.Add(c.name);
+                        }
+                        else if (IsDownloaded(c.path))
+                        {
+                            keepMains.Add(c.parent);
+                        }
+                    }
+                }
 
                 foreach (Content content in rb.content)
                 {
@@ -472,6 +573,11 @@ namespace GflChibiDesktop2
 
                         if (content.name == content.parent)
                         {
+                            // 自身未下载且无任何已下载子节点时才过滤
+                            if (filterUndownloaded && !keepMains.Contains(content.name))
+                            {
+                                continue;
+                            }
                             node.Level = 3;
                             if (content.category == "TDOLL")
                             {
@@ -648,6 +754,11 @@ namespace GflChibiDesktop2
                         }
                         else
                         {
+                            // 过滤掉未下载的皮肤子节点自身未下载则过滤
+                            if (filterUndownloaded && !IsDownloaded(content.path))
+                            {
+                                continue;
+                            }
                             node.Level = 4;
                             //if (content.type == "HUMAN") { node.Level = 3; }
                             node.ParentID = 109;
@@ -707,7 +818,7 @@ namespace GflChibiDesktop2
         private ComponentModel SelectedItem;
         private void tv_InternalSelector_Selected(object sender, RoutedEventArgs e)
         {
-            lbl_InternalSelected.Text = "请选择要加载的人形";
+            lbl_InternalSelected.Content = "请选择要加载的人形";
             lbl_InternalSelected.Foreground = defaultColor;
             lblSelectedItem.Content = "未选择";
             lblSelectedItem.Foreground = defaultColor;
@@ -739,7 +850,7 @@ namespace GflChibiDesktop2
 
             if (item is not null)
             {
-                lbl_InternalSelected.Text = item.ToolTip;
+                lbl_InternalSelected.Content = item.ToolTip.Replace("_", "__");
                 lbl_InternalSelected.Foreground = item.Foreground;
                 if (!item.ComponentName.Contains("class"))
                 {
@@ -764,8 +875,8 @@ namespace GflChibiDesktop2
 
                     if (tagString[8] != null)
                     {
-                        btn_loadCG.IsEnabled = true;
-                        chb_save_cg.IsEnabled = true;
+                        btn_loadCG.IsEnabled = isOnline;
+                        chb_save_cg.IsEnabled = isOnline;
                         string cg_filename = tagString[8];
                         if ((bool)chb_preview_d.IsChecked) //默认大破立绘
                         {
@@ -780,6 +891,7 @@ namespace GflChibiDesktop2
                             if (File.Exists(cgURL))
                             {
                                 img_Preview.Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(cgURL, UriKind.Absolute));
+                                btn_loadCG.IsEnabled = true;
                             }
                             else
                             {
@@ -797,7 +909,7 @@ namespace GflChibiDesktop2
 
                     if ((tagString[6] != null) && (tagString[7] != null) && (tagString[11] != null)) //存在数据
                     {
-                        btn_downloadData.IsEnabled = true;
+                        btn_downloadData.IsEnabled = isOnline;
                         btn_downloadData.Visibility = Visibility.Visible;
                         bool isExternal = tagString[0] == "External";
                         string spineRoot = isExternal ? "spine_external" : "spine";
@@ -825,7 +937,7 @@ namespace GflChibiDesktop2
                                 // 数据已完整下载：隐藏下载，显示删除（但正在使用的数据不允许删除）
                                 btn_downloadData.IsEnabled = false;
                                 btn_downloadData.Visibility = Visibility.Collapsed;
-                                bool inUse = LoadedPaths.Contains(tagString[6]);
+                                bool inUse = LoadedPaths.Contains($"{spineRoot}/{tagString[6]}");
                                 btn_deleteData.IsEnabled = !inUse;
                                 btn_deleteData.Visibility = Visibility.Visible;
                                 if (inUse)
@@ -1089,7 +1201,7 @@ namespace GflChibiDesktop2
 
                 tv_InternalSelector.IsEnabled = true;
                 btn_loadCG.IsEnabled = true;
-                chb_save_cg.IsEnabled = true;
+                chb_save_cg.IsEnabled = isOnline;
                 tvAfterSelect();
             }
             finally
@@ -1313,7 +1425,10 @@ namespace GflChibiDesktop2
             tagString[5] = item.Tag[5];//content.display_full;
             tagString[6] = item.Tag[6];//content.path;
             tagString[7] = item.Tag[7];//content.filename;
-            if (LoadedPaths.Contains(tagString[6]) || (OwnerMainWindow?.GetLoadedPaths().Contains(tagString[6]) ?? false))
+            bool isExternal = tagString[0] == "External";
+            string spineRoot = isExternal ? "spine_external" : "spine";
+            string loadedKey = $"{spineRoot}/{tagString[6]}";
+            if (LoadedPaths.Contains(loadedKey) || (OwnerMainWindow?.GetLoadedPaths().Contains(loadedKey) ?? false))
             {
                 GrowlHelper.InfoGlobal($"“{tagString[5]}”的数据正在被桌宠使用，无法删除。");
                 return;
@@ -1612,14 +1727,7 @@ namespace GflChibiDesktop2
             //ResourceDictionary resourceDictionary = new ResourceDictionary();
             //Application.LoadComponent(resourceDictionary, new Uri("pack://application:,,,/HandyControl;component/Themes/Theme.xaml", UriKind.Relative));
             //Application.Current.Resources.MergedDictionaries.Add(resourceDictionary);
-            if ((bool)chb_thinList.IsChecked)
-            {
-                tv_InternalSelector.SetValue(StyleProperty, Application.Current.Resources["TreeView.Small"]);
-            }
-            else
-            {
-                tv_InternalSelector.SetValue(StyleProperty, Application.Current.Resources["TreeViewBaseStyle"]);
-            }
+            tv_InternalSelector.SetValue(StyleProperty, (bool)chb_thinList.IsChecked ? Application.Current.Resources["TreeView.Small"] : Application.Current.Resources["TreeViewBaseStyle"]);
         }
 
         private void chb_preview_d_Click(object sender, RoutedEventArgs e)
@@ -1635,6 +1743,12 @@ namespace GflChibiDesktop2
         private void ShowAbout()
         {
             OwnerMainWindow?.ShowAbout();
+        }
+
+        private void chb_filterUndownloaded_Click(object sender, RoutedEventArgs e)
+        {
+            filterUndownloaded = (bool)chb_filterUndownloaded.IsChecked;
+            LoadChibiList();
         }
     }
 }

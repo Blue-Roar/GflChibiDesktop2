@@ -20,6 +20,7 @@
                     <MenuItem Click="DataManager" Header="人形数据配置(_D)"/>
                     <Separator/>
                     <MenuItem Header="开机自启(_B)" IsCheckable="True" IsChecked="{Binding IsAutoRun}"/>
+                    <MenuItem Header="离线模式(_O)" IsCheckable="True" IsChecked="{Binding ForceOfflineMode}"/>
                     <MenuItem Header="消息设置(_N)">
                         <MenuItem Header="禁用加载提示(_L)" IsCheckable="True" IsChecked="{Binding SuppressLoadPrompts}"/>
                         <MenuItem Header="禁用更新提示(_U)" IsCheckable="True" IsChecked="{Binding SuppressUpdatePrompts}"/>

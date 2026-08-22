@@ -16,6 +16,7 @@ namespace GflChibiDesktop2.Properties
         public bool SuppressUpdatePrompts { get; set; } = false;
         public bool SuppressMinimizePrompts { get; set; } = false;
         public bool SuppressConnectionErrorPrompts { get; set; } = false;
+        public bool ForceOfflineMode { get; set; } = false;
         private static string FilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "gfl_settings.json");
 
         private class SettingsData
@@ -28,6 +29,7 @@ namespace GflChibiDesktop2.Properties
             public bool SuppressUpdatePrompts { get; set; }
             public bool SuppressMinimizePrompts { get; set; }
             public bool SuppressConnectionErrorPrompts { get; set; }
+            public bool ForceOfflineMode { get; set; }
         }
 
         private Settings()
@@ -50,6 +52,7 @@ namespace GflChibiDesktop2.Properties
                         if (json.SuppressUpdatePrompts) SuppressUpdatePrompts = json.SuppressUpdatePrompts;
                         if (json.SuppressMinimizePrompts) SuppressMinimizePrompts = json.SuppressMinimizePrompts;
                         if (json.SuppressConnectionErrorPrompts) SuppressConnectionErrorPrompts = json.SuppressConnectionErrorPrompts;
+                        if (json.ForceOfflineMode) ForceOfflineMode = json.ForceOfflineMode;
                     }
                 }
             }
@@ -75,7 +78,8 @@ namespace GflChibiDesktop2.Properties
                     SuppressLoadPrompts = SuppressLoadPrompts,
                     SuppressUpdatePrompts = SuppressUpdatePrompts,
                     SuppressMinimizePrompts = SuppressMinimizePrompts,
-                    SuppressConnectionErrorPrompts = SuppressConnectionErrorPrompts
+                    SuppressConnectionErrorPrompts = SuppressConnectionErrorPrompts,
+                    ForceOfflineMode = ForceOfflineMode
                 };
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(FilePath, json);

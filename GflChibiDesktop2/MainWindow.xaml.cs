@@ -1146,7 +1146,8 @@ namespace GflChibiDesktop2
                     string[] parts = s.Split('/');
                     if (parts.Length >= 3 && parts[0] == "assets" && (parts[1] == "spine" || parts[1] == "spine_external"))
                     {
-                        paths.Add(parts[2]);
+                        // 带目录前缀区分内置/导入数据，避免同名数据互相误判
+                        paths.Add($"{parts[1]}/{parts[2]}");
                     }
                 }
             }
@@ -1307,6 +1308,17 @@ namespace GflChibiDesktop2
             set
             {
                 Settings.Default.SuppressConnectionErrorPrompts = value;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        public bool ForceOfflineMode
+        {
+            get => Settings.Default.ForceOfflineMode;
+            set
+            {
+                Settings.Default.ForceOfflineMode = value;
                 Settings.Default.Save();
                 OnPropertyChanged();
             }
