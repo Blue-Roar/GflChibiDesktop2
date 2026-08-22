@@ -17,7 +17,20 @@ namespace GflChibiDesktop2
 
         public string PromptText { get => promptText; set { promptText = value; OnPropertyChanged(); } }
         public string HintText { get => hintText; set { hintText = value; OnPropertyChanged(); } }
-        public bool Choice { get => choice; set { choice = value; OnPropertyChanged(); changed = true; } }
+        public bool Choice
+        {
+            get => choice;
+            set
+            {
+                // 仅在值实际变化时触发，避免 ToggleButton 加载时回写相同值造成“伪更改”
+                if (choice != value)
+                {
+                    choice = value;
+                    OnPropertyChanged();
+                    changed = true;
+                }
+            }
+        }
 
         protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? name = null)
         {

@@ -11,6 +11,7 @@ namespace GflChibiDesktop2.Properties
         public string DownloadSource { get; set; } = "https://gfl-data.brightsu.cn/res/";
         public bool EasterEgg { get; set; } = false;
         public bool SuppressMultiInstanceWarning { get; set; } = false;
+        public bool SuppressGlobalGrowl { get; set; } = false;
         private static string FilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "gfl_settings.json");
 
         private class SettingsData
@@ -18,6 +19,7 @@ namespace GflChibiDesktop2.Properties
             public string DownloadSource { get; set; }
             public bool EasterEgg { get; set; }
             public bool SuppressMultiInstanceWarning { get; set; }
+            public bool SuppressGlobalGrowl { get; set; }
         }
 
         private Settings()
@@ -35,6 +37,7 @@ namespace GflChibiDesktop2.Properties
                             EasterEgg = json.EasterEgg;
                             if (json.SuppressMultiInstanceWarning) SuppressMultiInstanceWarning = json.SuppressMultiInstanceWarning;
                         }
+                        if (json.SuppressGlobalGrowl) SuppressGlobalGrowl = json.SuppressGlobalGrowl;
                     }
                 }
             }
@@ -55,7 +58,8 @@ namespace GflChibiDesktop2.Properties
                 {
                     DownloadSource = DownloadSource,
                     EasterEgg = EasterEgg,
-                    SuppressMultiInstanceWarning = SuppressMultiInstanceWarning
+                    SuppressMultiInstanceWarning = SuppressMultiInstanceWarning,
+                    SuppressGlobalGrowl = SuppressGlobalGrowl
                 };
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(FilePath, json);

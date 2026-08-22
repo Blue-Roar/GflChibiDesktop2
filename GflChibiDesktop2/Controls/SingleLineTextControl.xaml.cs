@@ -25,7 +25,20 @@ namespace GflChibiDesktop2
 
         public string PromptText { get => promptText; set { promptText = value; OnPropertyChanged(); } }
         public string HintText { get => hintText; set { hintText = value; OnPropertyChanged(); } }
-        public string InputContent { get => inputContent; set { inputContent = value; OnPropertyChanged(); changed = true; } }
+        public string InputContent
+        {
+            get => inputContent;
+            set
+            {
+                // 仅在值实际变化时触发，避免 TextBox 加载时回写相同值造成“伪更改”
+                if (inputContent != value)
+                {
+                    inputContent = value;
+                    OnPropertyChanged();
+                    changed = true;
+                }
+            }
+        }
         public bool changed = false;
 
         public SingleLineTextType Type

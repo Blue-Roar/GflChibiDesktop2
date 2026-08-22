@@ -19,7 +19,20 @@ namespace GflChibiDesktop2
 
         public string PromptText { get => promptText; set { promptText = value; OnPropertyChanged(); } }
         public string HintText { get => hintText; set { hintText = value; OnPropertyChanged(); } }
-        public double? Value { get => value; set { this.value = value; OnPropertyChanged(); changed = true; } }
+        public double? Value
+        {
+            get => value;
+            set
+            {
+                // 仅在值实际变化时触发，避免绑定目标（NumericUpDown）加载时回写相同值造成“伪更改”
+                if (this.value != value)
+                {
+                    this.value = value;
+                    OnPropertyChanged();
+                    changed = true;
+                }
+            }
+        }
         public double? MinValue { get => minValue; set { minValue = value; OnPropertyChanged(); } }
         public double? MaxValue { get => maxValue; set { maxValue = value; OnPropertyChanged(); } }
         public bool changed = false;

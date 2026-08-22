@@ -17,6 +17,10 @@ namespace GflChibiDesktop2
         public TabItem? Tab { get; set; }
         public TextBlock? TabTitle { get; set; }
         public StackPanel Panel { get; } = new();
+        /// <summary>
+        /// 暂停时显示在控制面板位置上的提示信息（默认隐藏）。
+        /// </summary>
+        public TextBlock? HintPanel { get; set; }
         public bool IsChanged { get; set; }
         /// <summary>
         /// 该实例当前使用的模型（用于多开持久化恢复）。
@@ -30,6 +34,10 @@ namespace GflChibiDesktop2
         /// 是否由用户主动停止（主动停止后不自动重启）。
         /// </summary>
         public bool StopRequested { get; set; }
+        /// <summary>
+        /// 是否处于暂停状态（进程已停止、标签页保留，重启后仍保持暂停）。
+        /// </summary>
+        public bool IsSuspended { get; set; }
         /// <summary>
         /// 异常退出后的自动重启尝试次数。
         /// </summary>

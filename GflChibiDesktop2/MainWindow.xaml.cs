@@ -31,6 +31,9 @@ namespace GflChibiDesktop2
         readonly MainWindowDataContext context = new();
         readonly List<PetInstance> pets = new();
         int nextPetId = 1;
+        System.Windows.Media.Geometry playGeometry;
+        System.Windows.Media.Geometry pauseGeometry;
+        System.Windows.Media.Geometry closeGeometry;
         bool isExiting = false;
         bool hasCentered = false;
         bool skipConfirmOnClose = false;
@@ -87,6 +90,9 @@ namespace GflChibiDesktop2
         {
             InitializeComponent();
             EnsureLuajitGpuPreference();
+            playGeometry = (System.Windows.Media.Geometry)FindResource("PlayGeometry");
+            pauseGeometry = (System.Windows.Media.Geometry)FindResource("PauseGeometry");
+            closeGeometry = (System.Windows.Media.Geometry)FindResource("CloseGeometry");
             //lblVersion.Content = $"程序版本 {productVersion}";
             // 启动统计请求放后台线程，避免阻塞窗口初始化
             string fallbackTitle = $"{productTitle} {productVersion.Major}.{productVersion.Minor}"; // 在 UI 线程缓存，供后台线程使用
@@ -247,15 +253,16 @@ namespace GflChibiDesktop2
         /// <returns>是否成功启动了至少一个桌宠实例（false 表示无任何配置，此时主窗口保持可见）。</returns>
         private bool AutoStartInstance()
         {
-            List<ChibiModelData>? saved = LoadSavedInstances();
+            List<SavedInstance>? saved = LoadSavedInstances();
             if (saved is null)
             {
                 // 从未保存过实例列表：不自动打开任何桌宠，主窗口保持可见
                 return false;
             }
             int started = 0;
-            foreach (var m in saved)
+            foreach (var s in saved)
             {
+                ChibiModelData? m = s.Model;
                 if (m is null)
                 {
                     continue;
@@ -264,10 +271,40 @@ namespace GflChibiDesktop2
                 {
                     continue;
                 }
-                StartInstance(m);
+                if (s.Suspended)
+                {
+                    // 上次退出时处于暂停状态：恢复标签页但不启动进程
+                    StartSuspendedInstance(m);
+                }
+                else
+                {
+                    StartInstance(m);
+                }
                 started++;
             }
             return started > 0;
+        }
+
+        /// <summary>
+        /// 恢复暂停的桌宠：创建标签页但不启动进程，控制面板隐藏。
+        /// </summary>
+        private void StartSuspendedInstance(ChibiModelData model)
+        {
+            try
+            {
+                PetInstance pet = PetInstance.Create(nextPetId++, model);
+                pet.IsSuspended = true;
+                pet.StopRequested = true;
+                pets.Add(pet);
+                AddTab(pet);
+                pet.Panel.Visibility = Visibility.Collapsed;
+                if (pet.HintPanel is not null) pet.HintPanel.Visibility = Visibility.Visible;
+                UpdateStatus();
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.Growl.ErrorGlobal($"恢复桌宠失败。\n{ex.Message}");
+            }
         }
 
         /// <summary>
@@ -293,13 +330,25 @@ namespace GflChibiDesktop2
 
         private static string InstancesFilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "instances.json");
 
-        private List<ChibiModelData>? LoadSavedInstances()
+        private List<SavedInstance>? LoadSavedInstances()
         {
             try
             {
                 if (File.Exists(InstancesFilePath))
                 {
-                    return JsonConvert.DeserializeObject<List<ChibiModelData>>(File.ReadAllText(InstancesFilePath)) ?? new List<ChibiModelData>();
+                    string json = File.ReadAllText(InstancesFilePath);
+                    // 新格式：包含暂停状态
+                    var saved = JsonConvert.DeserializeObject<List<SavedInstance>>(json);
+                    if (saved is not null && (saved.Count == 0 || saved.Any(s => s.Model is not null)))
+                    {
+                        return saved;
+                    }
+                    // 旧格式：纯 ChibiModelData 数组（元素无 Model 字段时全部为空）
+                    var legacy = JsonConvert.DeserializeObject<List<ChibiModelData>>(json);
+                    if (legacy is not null)
+                    {
+                        return legacy.Select(m => new SavedInstance { Model = m, Suspended = false }).ToList();
+                    }
                 }
             }
             catch
@@ -313,12 +362,22 @@ namespace GflChibiDesktop2
         {
             try
             {
-                var list = pets.Select(p => p.Model).Where(m => m is not null).Cast<ChibiModelData>().ToList();
+                var list = pets.Select(p => new SavedInstance { Model = p.Model, Suspended = p.IsSuspended })
+                    .Where(s => s.Model is not null).ToList();
                 File.WriteAllText(InstancesFilePath, JsonConvert.SerializeObject(list, Newtonsoft.Json.Formatting.Indented));
             }
             catch
             {
             }
+        }
+
+        /// <summary>
+        /// 实例列表持久化记录（含暂停状态）。
+        /// </summary>
+        public class SavedInstance
+        {
+            public ChibiModelData? Model { get; set; }
+            public bool Suspended { get; set; }
         }
 
         /// <summary>
@@ -445,14 +504,67 @@ namespace GflChibiDesktop2
             context.IsBusyClosing = false;
         }
 
-        private async void StopSelectedInstance(object sender, RoutedEventArgs e)
+        private async void ToggleSuspendSelected(object sender, RoutedEventArgs e)
         {
             PetInstance? pet = SelectedPet;
-            if (pet is null)
+            if (pet is null || context.IsBusyClosing)
             {
                 return;
             }
-            await StopInstance(pet);
+            if (pet.Manager is not null)
+            {
+                // 运行中 → 暂停（暂时关闭，不删除；标签页保留，之后可恢复）
+                pet.StopRequested = true;
+                pet.RestartAttempts = 0;
+                // 暂停期间忽略进程退出事件，避免 OnPetExited 误删标签页
+                pet.IsRestarting = true;
+                await StopManager(pet);
+                pet.IsRestarting = false;
+                pet.IsSuspended = true;
+                // 暂停期间隐藏控制面板，避免操作触发 IPC 出错；显示提示信息
+                pet.Panel.Visibility = Visibility.Collapsed;
+                if (pet.HintPanel is not null) pet.HintPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                // 已暂停 → 恢复启动
+                ResumeInstance(pet);
+            }
+            UpdateStatus();
+        }
+
+        /// <summary>
+        /// 恢复暂停的桌宠实例（复用原标签页与工作目录）。
+        /// </summary>
+        private void ResumeInstance(PetInstance pet)
+        {
+            pet.StopRequested = false;
+            pet.RestartAttempts = 0;
+            pet.IsSuspended = false;
+            pet.IsRestarting = true;
+            try
+            {
+                pet.Panel.Children.Clear();
+                pet.IsChanged = false;
+                ProcessManager? pm = null;
+                pm = new ProcessManager(
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
+                    pet.WorkDir,
+                    "main.lua",
+                    () => Dispatcher.BeginInvoke(() => { if (pm is not null) ReadIpc(pm, pet); }));
+                pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
+                pet.Manager = pm;
+                pet.Panel.Visibility = Visibility.Visible;
+                if (pet.HintPanel is not null) pet.HintPanel.Visibility = Visibility.Collapsed;
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.Growl.ErrorGlobal($"恢复桌宠“{pet.Name}”失败。\n{ex.Message}");
+            }
+            finally
+            {
+                pet.IsRestarting = false;
+            }
         }
 
         private async Task StopInstance(PetInstance pet)
@@ -594,22 +706,38 @@ namespace GflChibiDesktop2
             pet.TabTitle = new TextBlock { Text = GetTabTitle(pet), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
             var close = new Button
             {
-                Content = "✕",
+                //Content = "✕",
                 Width = 20,
                 Height = 20,
                 Padding = new Thickness(0),
                 Margin = new Thickness(0),
-                ToolTip = "结束该桌宠"
+                ToolTip = "关闭并删除桌宠实例"
             };
+
+            HandyControl.Controls.IconElement.SetGeometry(close, closeGeometry);
             close.Click += (_, _) => _ = StopInstance(pet);
             header.Children.Add(pet.TabTitle);
             header.Children.Add(close);
             tab.Header = header;
 
+            // 控制面板 + 暂停提示（默认隐藏，暂停时显示）
+            pet.HintPanel = new TextBlock
+            {
+                Text = "该桌宠实例已暂停，点击“启动”按钮恢复。",
+                Visibility = Visibility.Collapsed,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(12)
+            };
+            var container = new Grid();
+            container.Children.Add(pet.HintPanel);
+            container.Children.Add(pet.Panel);
+
             var scroller = new ScrollViewer
             {
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Content = pet.Panel
+                Content = container
             };
             tab.Content = scroller;
             PetTabs.Items.Add(tab);
@@ -733,7 +861,8 @@ namespace GflChibiDesktop2
             PetInstance? pet = SelectedPet;
             if (pet?.Manager is null)
             {
-                throw new NullReferenceException();
+                HandyControl.Controls.Growl.WarningGlobal("当前桌宠实例未运行，无法保存配置。");
+                return;
             }
             SavePetConfig(pet);
             SaveInstances();
@@ -781,7 +910,8 @@ namespace GflChibiDesktop2
             PetInstance? pet = SelectedPet;
             if (pet?.Manager is null)
             {
-                throw new NullReferenceException();
+                HandyControl.Controls.Growl.WarningGlobal("当前桌宠实例未运行，无法放弃更改。");
+                return;
             }
             using var w = pet.Manager.txIpc.BeginWrite();
             w.Write(3);
@@ -863,6 +993,19 @@ namespace GflChibiDesktop2
                     }
                 }
             }
+            // 面板重建完成后延迟复位 IsChanged，清除控件加载时回写源属性造成的“伪更改”
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+            {
+                if (!pets.Contains(pet))
+                {
+                    return;
+                }
+                pet.IsChanged = false;
+                if (SelectedPet == pet)
+                {
+                    context.IsChanged = false;
+                }
+            });
         }
 
         private void OnPetControlChanged(PetInstance pet)
@@ -885,6 +1028,19 @@ namespace GflChibiDesktop2
             context.IsRunning = pet?.Manager is not null;
             context.IsChanged = pet?.IsChanged ?? false;
             context.HasActiveTab = pet is not null;
+            // 未启动（暂停/无实例）时隐藏保存、放弃按钮，避免无意义的操作入口
+            Visibility cfgVisible = pet?.Manager is not null ? Visibility.Visible : Visibility.Collapsed;
+            btnSaveConfig.Visibility = cfgVisible;
+            btnDiscardConfig.Visibility = cfgVisible;
+            if (btnSuspend is not null)
+            {
+                bool running = pet?.Manager is not null;
+                btnSuspend.Content = running ? "暂停(_W)" : "启动(_W)";
+                btnSuspend.ToolTip = running
+                    ? "暂时关闭当前桌宠实例（配置保留）"
+                    : "重新启动当前桌宠实例";
+                HandyControl.Controls.IconElement.SetGeometry(btnSuspend, running ? pauseGeometry : playGeometry);
+            }
         }
 
 
