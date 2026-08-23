@@ -29,6 +29,7 @@
                         <!--<Separator/>
                         <MenuItem Header="禁用全局提示(不建议)(_A)" IsCheckable="True" IsChecked="{Binding SuppressGlobalGrowl}"/>-->
                     </MenuItem>
+                    <MenuItem Header="使用系统窗口样式(_B)" IsCheckable="True" IsChecked="{Binding DisableCustomWindowChrome}"/>
                     <Separator/>
                     <MenuItem Click="menuItemAbout_Click" Header="关于(_A)"/>
                     <Separator/>

@@ -102,6 +102,13 @@ namespace GflChibiDesktop2
         public MainWindow()
         {
             InitializeComponent();
+            if (Properties.Settings.Default.DisableCustomWindowChrome)
+            {
+                // 移除 HandyControl 构造中强制设置的 WindowChrome（System.Windows.Shell），恢复系统非客户区
+                System.Windows.Shell.WindowChrome.SetWindowChrome(this, null);
+                Style = null;
+                WindowStyle = WindowStyle.SingleBorderWindow;
+            }
             EnsureLuajitGpuPreference();
             playGeometry = (System.Windows.Media.Geometry)FindResource("PlayGeometry");
             pauseGeometry = (System.Windows.Media.Geometry)FindResource("PauseGeometry");
@@ -735,7 +742,14 @@ namespace GflChibiDesktop2
             };
 
             HandyControl.Controls.IconElement.SetGeometry(close, closeGeometry);
-            close.Click += (_, _) => _ = StopInstance(pet);
+            close.Click += (_, _) =>
+            {
+                MessageBoxResult result = HandyControl.Controls.MessageBox.Show($"是否关闭并删除桌宠“{pet.Name}”？\n删除后该实例的配置数据将一并清除，无法恢复。", "删除桌宠确认", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+                if (result == MessageBoxResult.Yes)
+                {
+                    _ = StopInstance(pet);
+                }
+            };
             header.Children.Add(pet.TabTitle);
             header.Children.Add(close);
             tab.Header = header;
@@ -1332,6 +1346,20 @@ namespace GflChibiDesktop2
             set
             {
                 Settings.Default.ForceOfflineMode = value;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 禁用 hc:Window 重绘窗体样式（使用系统原生窗口）。
+        /// </summary>
+        public bool DisableCustomWindowChrome
+        {
+            get => Settings.Default.DisableCustomWindowChrome;
+            set
+            {
+                Settings.Default.DisableCustomWindowChrome = value;
                 Settings.Default.Save();
                 OnPropertyChanged();
             }

@@ -79,6 +79,13 @@ namespace GflChibiDesktop2
         {
             InitializeComponent();
 
+            if (Properties.Settings.Default.DisableCustomWindowChrome)
+            {
+                // 移除 HandyControl 构造中强制设置的 WindowChrome（System.Windows.Shell），恢复系统非客户区
+                System.Windows.Shell.WindowChrome.SetWindowChrome(this, null);
+                Style = null;
+                WindowStyle = WindowStyle.SingleBorderWindow;
+            }
             btnVersion.Content = $"程序版本：{productVersion}";
         }
 

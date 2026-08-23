@@ -17,6 +17,7 @@ namespace GflChibiDesktop2.Properties
         public bool SuppressMinimizePrompts { get; set; } = false;
         public bool SuppressConnectionErrorPrompts { get; set; } = false;
         public bool ForceOfflineMode { get; set; } = false;
+        public bool DisableCustomWindowChrome { get; set; } = false;
         private static string FilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "gfl_settings.json");
 
         private class SettingsData
@@ -30,6 +31,7 @@ namespace GflChibiDesktop2.Properties
             public bool SuppressMinimizePrompts { get; set; }
             public bool SuppressConnectionErrorPrompts { get; set; }
             public bool ForceOfflineMode { get; set; }
+            public bool DisableCustomWindowChrome { get; set; }
         }
 
         private Settings()
@@ -53,6 +55,7 @@ namespace GflChibiDesktop2.Properties
                         if (json.SuppressMinimizePrompts) SuppressMinimizePrompts = json.SuppressMinimizePrompts;
                         if (json.SuppressConnectionErrorPrompts) SuppressConnectionErrorPrompts = json.SuppressConnectionErrorPrompts;
                         if (json.ForceOfflineMode) ForceOfflineMode = json.ForceOfflineMode;
+                        if (json.DisableCustomWindowChrome) DisableCustomWindowChrome = json.DisableCustomWindowChrome;
                     }
                 }
             }
@@ -79,7 +82,8 @@ namespace GflChibiDesktop2.Properties
                     SuppressUpdatePrompts = SuppressUpdatePrompts,
                     SuppressMinimizePrompts = SuppressMinimizePrompts,
                     SuppressConnectionErrorPrompts = SuppressConnectionErrorPrompts,
-                    ForceOfflineMode = ForceOfflineMode
+                    ForceOfflineMode = ForceOfflineMode,
+                    DisableCustomWindowChrome = DisableCustomWindowChrome
                 };
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(FilePath, json);
