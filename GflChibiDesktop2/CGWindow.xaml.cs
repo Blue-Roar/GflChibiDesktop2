@@ -30,6 +30,12 @@ namespace GflChibiDesktop2
         Uri? cg_n_uri;
         Uri? cg_d_uri;
 
+        /// <summary>
+        /// 当前正在显示的立绘文件名（普通 / 大破），用于删除立绘时的占用检查。
+        /// </summary>
+        public string? DisplayedCgN { get; private set; }
+        public string? DisplayedCgD { get; private set; }
+
         private void Window_IsHitTestVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             try
@@ -57,8 +63,10 @@ namespace GflChibiDesktop2
             {
                 Title = dummy_display;
                 menuItem_dummy.Header = dummy_display;
+                DisplayedCgN = cg_n_filename;
+                DisplayedCgD = cg_d_filename;
                 cg_n_uri = new Uri($"{cg_url}{cg_n_filename}", UriKind.Absolute);
-                ImageCG.Source = new BitmapImage(cg_n_uri);
+                ImageCG.Source = LoadBitmap(cg_n_uri);
                 menuItem_d.IsEnabled = true;
                 menuItem_d.Visibility = Visibility.Visible;
                 cg_d_uri = new Uri($"{cg_url}{cg_d_filename}", UriKind.Absolute);
@@ -70,14 +78,29 @@ namespace GflChibiDesktop2
             }
         }
 
+        /// <summary>
+        /// 以 OnLoad 方式加载图片：加载后立即释放文件句柄，避免锁定立绘文件导致无法删除。
+        /// </summary>
+        private static BitmapImage LoadBitmap(Uri uri)
+        {
+            var bmp = new BitmapImage();
+            bmp.BeginInit();
+            bmp.CacheOption = BitmapCacheOption.OnLoad;
+            bmp.UriSource = uri;
+            bmp.EndInit();
+            return bmp;
+        }
+
         public void LoadCG(string dummy_display, string cg_url, string cg_n_filename)
         {
             try
             {
                 Title = dummy_display;
                 menuItem_dummy.Header = dummy_display;
+                DisplayedCgN = cg_n_filename;
+                DisplayedCgD = null;
                 cg_n_uri = new Uri($"{cg_url}{cg_n_filename}", UriKind.Absolute);
-                ImageCG.Source = new BitmapImage(cg_n_uri);
+                ImageCG.Source = LoadBitmap(cg_n_uri);
                 menuItem_d.IsEnabled = false;
                 menuItem_d.Visibility = Visibility.Collapsed;
                 Show();
@@ -183,7 +206,7 @@ namespace GflChibiDesktop2
         {
             if (cg_n_uri is not null)
             {
-                ImageCG.Source = new BitmapImage(cg_n_uri);
+                ImageCG.Source = LoadBitmap(cg_n_uri);
             }
         }
 
@@ -191,7 +214,7 @@ namespace GflChibiDesktop2
         {
             if (cg_d_uri is not null)
             {
-                ImageCG.Source = new BitmapImage(cg_d_uri);
+                ImageCG.Source = LoadBitmap(cg_d_uri);
             }
         }
 

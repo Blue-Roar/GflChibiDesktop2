@@ -30,7 +30,6 @@ namespace GflChibiDesktop2
 
         readonly MainWindowDataContext context = new();
         readonly List<PetInstance> pets = new();
-        int nextPetId = 1;
         System.Windows.Media.Geometry playGeometry;
         System.Windows.Media.Geometry pauseGeometry;
         System.Windows.Media.Geometry closeGeometry;
@@ -85,6 +84,20 @@ namespace GflChibiDesktop2
         }
 
         private PetInstance? SelectedPet => (PetTabs.SelectedItem as TabItem)?.Tag as PetInstance;
+
+        /// <summary>
+        /// 取最小的未被占用的实例编号（删除实例后编号可复用）。
+        /// </summary>
+        private int GetNextPetId()
+        {
+            var used = pets.Select(p => p.Id).ToHashSet();
+            int id = 1;
+            while (used.Contains(id))
+            {
+                id++;
+            }
+            return id;
+        }
 
         public MainWindow()
         {
@@ -295,7 +308,7 @@ namespace GflChibiDesktop2
         {
             try
             {
-                PetInstance pet = PetInstance.Create(nextPetId++, model);
+                PetInstance pet = PetInstance.Create(GetNextPetId(), model);
                 pet.IsSuspended = true;
                 pet.StopRequested = true;
                 pets.Add(pet);
@@ -430,7 +443,7 @@ namespace GflChibiDesktop2
             }
             try
             {
-                PetInstance pet = PetInstance.Create(nextPetId++, model);
+                PetInstance pet = PetInstance.Create(GetNextPetId(), model);
                 ProcessManager? pm = null;
                 pm = new ProcessManager(
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),

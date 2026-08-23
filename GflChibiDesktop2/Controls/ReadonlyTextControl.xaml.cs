@@ -13,7 +13,8 @@ namespace GflChibiDesktop2
         {
             InitializeComponent();
             DataContext = this;
-            this.Text = text;
+            // Label 会把 '_' 当作助记键前缀（吞字符/触发导航键），双写转义
+            this.Text = text?.Replace("_", "__");
         }
 
         public ReadonlyTextControl() : this("哼、哼、哼，啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊！")

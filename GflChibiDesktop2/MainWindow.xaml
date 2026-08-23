@@ -21,10 +21,10 @@
                     <Separator/>
                     <MenuItem Header="开机自启(_B)" IsCheckable="True" IsChecked="{Binding IsAutoRun}"/>
                     <MenuItem Header="离线模式(_O)" IsCheckable="True" IsChecked="{Binding ForceOfflineMode}"/>
-                    <MenuItem Header="消息设置(_N)">
-                        <MenuItem Header="禁用加载提示(_L)" IsCheckable="True" IsChecked="{Binding SuppressLoadPrompts}"/>
-                        <MenuItem Header="禁用更新提示(_U)" IsCheckable="True" IsChecked="{Binding SuppressUpdatePrompts}"/>
-                        <MenuItem Header="禁用最小化提示(_M)" IsCheckable="True" IsChecked="{Binding SuppressMinimizePrompts}"/>
+                    <MenuItem Header="消息提示设置(_N)">
+                        <MenuItem Header="禁用加载成功提示(_L)" IsCheckable="True" IsChecked="{Binding SuppressLoadPrompts}"/>
+                        <MenuItem Header="禁用检查更新提示(_U)" IsCheckable="True" IsChecked="{Binding SuppressUpdatePrompts}"/>
+                        <MenuItem Header="禁用后台运行提示(_M)" IsCheckable="True" IsChecked="{Binding SuppressMinimizePrompts}"/>
                         <MenuItem Header="禁用连接错误提示(_C)" IsCheckable="True" IsChecked="{Binding SuppressConnectionErrorPrompts}"/>
                         <!--<Separator/>
                         <MenuItem Header="禁用全局提示(不建议)(_A)" IsCheckable="True" IsChecked="{Binding SuppressGlobalGrowl}"/>-->

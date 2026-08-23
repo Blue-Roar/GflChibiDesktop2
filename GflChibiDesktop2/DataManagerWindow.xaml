@@ -90,7 +90,12 @@
                     <RowDefinition Height="1*" />
                 </Grid.RowDefinitions>
                 <Button x:Name="btn_sources" Content="下载源设置" hc:IconElement.Geometry="{StaticResource GearsGeometry}" Click="btn_sources_Click" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" Padding="5" />
-                <Button x:Name="btn_loadCG" Content="加载立绘(_S)" Click="btn_loadCG_Click" IsEnabled="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="2,0,2,0" ToolTip="加载选定人形的立绘" Grid.Column="1" Padding="5" />
+                <Border Grid.Column="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="{DynamicResource DefaultCornerRadius}" BorderThickness="1" Margin="2,2,2,2">
+                    <Grid>
+                        <Button x:Name="btn_loadCG" BorderThickness="0" Grid.Column="1" Content="加载立绘(_S)" Click="btn_loadCG_Click" IsEnabled="False" ToolTip="加载选定人形的立绘" Padding="5" HorizontalAlignment="Stretch" Margin="0,0,25,0" />
+                        <Button x:Name="btn_deleteCG" BorderThickness="0" Grid.Column="1" Foreground="{DynamicResource DangerBrush}" hc:IconElement.Geometry="{StaticResource TrashGeometry}" Click="btn_deleteCG_Click" IsEnabled="False" ToolTip="删除选定人形的立绘" HorizontalAlignment="Right" Width="25" Padding="0,5,0,5" />
+                    </Grid>
+                </Border>
                 <hc:SearchBar x:Name="sbQuery" Grid.Column="2" SearchStarted="SearchBar_SearchStarted" OverridesDefaultStyle="True" ToolTip="搜索人形" Margin="2,0,2,0" IsRealTime="True" hc:InfoElement.ShowClearButton="True" Height="28" />
                 <!--<hc:AnimationPath Duration="0:0:5" Stretch="Uniform" StrokeThickness="2" Stroke="{DynamicResource PrimaryBrush}" Data="{StaticResource SubGeometry}" Grid.Column="2"/>-->
                 <Button x:Name="btn_downloadData" Style="{DynamicResource ButtonDashedSuccess}" Grid.Column="3" hc:IconElement.Geometry="{StaticResource DownloadGeometry}" Content="下载数据(_D)" IsEnabled="False" Click="btn_downloadData_Click" HorizontalAlignment="Stretch" Margin="2,0,2,0" ToolTip="下载选定人形的骨骼数据" VerticalAlignment="Stretch" Padding="5"/>

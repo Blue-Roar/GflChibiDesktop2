@@ -875,7 +875,12 @@ namespace GflChibiDesktop2
 
                     if (tagString[8] != null)
                     {
-                        btn_loadCG.IsEnabled = isOnline;
+                        // 已有本地立绘时可离线加载查看；否则需联网在线加载
+                        bool hasLocalCG = (!string.IsNullOrEmpty(tagString[8]) && File.Exists($@"{AppDir}assets/pic/{tagString[8]}"))
+                                       || (!string.IsNullOrEmpty(tagString[9]) && File.Exists($@"{AppDir}assets/pic/{tagString[9]}"));
+                        btn_loadCG.IsEnabled = isOnline || hasLocalCG;
+                        // 立绘正在被显示时禁用删除按钮
+                        btn_deleteCG.IsEnabled = hasLocalCG && !IsCgInUse(tagString[8], tagString[9]);
                         chb_save_cg.IsEnabled = isOnline;
                         string cg_filename = tagString[8];
                         if ((bool)chb_preview_d.IsChecked) //默认大破立绘
@@ -890,7 +895,13 @@ namespace GflChibiDesktop2
                         {
                             if (File.Exists(cgURL))
                             {
-                                img_Preview.Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(cgURL, UriKind.Absolute));
+                                // OnLoad：加载后立即释放文件句柄，避免预览占用立绘文件导致无法删除
+                                var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                                bmp.BeginInit();
+                                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                                bmp.UriSource = new Uri(cgURL, UriKind.Absolute);
+                                bmp.EndInit();
+                                img_Preview.Source = bmp;
                                 btn_loadCG.IsEnabled = true;
                             }
                             else
@@ -937,7 +948,9 @@ namespace GflChibiDesktop2
                                 // 数据已完整下载：隐藏下载，显示删除（但正在使用的数据不允许删除）
                                 btn_downloadData.IsEnabled = false;
                                 btn_downloadData.Visibility = Visibility.Collapsed;
-                                bool inUse = LoadedPaths.Contains($"{spineRoot}/{tagString[6]}");
+                                // 实时查询主窗口正在使用的实例（本地快照可能滞后于实例关闭）
+                                string loadedKey = $"{spineRoot}/{tagString[6]}";
+                                bool inUse = LoadedPaths.Contains(loadedKey) || (OwnerMainWindow?.GetLoadedPaths().Contains(loadedKey) ?? false);
                                 btn_deleteData.IsEnabled = !inUse;
                                 btn_deleteData.Visibility = Visibility.Visible;
                                 if (inUse)
@@ -1128,6 +1141,8 @@ namespace GflChibiDesktop2
                         }
                     }
                 }
+                // 立绘已打开（被占用），立即禁用删除按钮
+                btn_deleteCG.IsEnabled = false;
             }
             else
             {
@@ -1413,6 +1428,80 @@ namespace GflChibiDesktop2
             }
         }
 
+        private void btn_deleteCG_Click(object sender, RoutedEventArgs e)
+        {
+            ComponentModel item = SelectedItem;
+            if (item?.Tag is not string[] tagString || tagString.Length < 10)
+            {
+                return;
+            }
+            // tagString[5]=display_full, tagString[8]=cg, tagString[9]=cg_d
+            var files = new List<string>();
+            foreach (string f in new[] { tagString[8], tagString[9] })
+            {
+                if (string.IsNullOrEmpty(f))
+                {
+                    continue;
+                }
+                string p = $@"{AppDir}assets/pic/{f}";
+                if (File.Exists(p))
+                {
+                    files.Add(p);
+                }
+            }
+            if (files.Count == 0)
+            {
+                GrowlHelper.InfoGlobal($"“{tagString[5]}”没有已下载的立绘数据。");
+                return;
+            }
+            // 立绘正在被立绘窗口显示时禁止删除
+            if (IsCgInUse(tagString[8], tagString[9]))
+            {
+                GrowlHelper.InfoGlobal($"“{tagString[5]}”的立绘正在被显示，无法删除。");
+                return;
+            }
+            MessageBoxResult deleteCGResult = MessageBox.Show($"是否删除人形“{tagString[5]}”的立绘数据？\n\n注意：删除后将无法离线查看该立绘，除非重新下载。", "立绘删除确认", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+            if (deleteCGResult != MessageBoxResult.Yes)
+            {
+                return;
+            }
+            try
+            {
+                foreach (string p in files)
+                {
+                    File.Delete(p);
+                }
+                KillEmptyDirectory($@"{AppDir}assets/pic");
+                img_Preview.Source = null;
+                tvAfterSelect();
+                GrowlHelper.SuccessGlobal($"已删除“{tagString[5]}”的立绘数据。");
+            }
+            catch (System.IO.IOException)
+            {
+                GrowlHelper.ErrorGlobal("删除立绘失败：立绘文件正被占用（可能正在预览或立绘窗口显示中）。\n请关闭立绘窗口后再试。");
+            }
+            catch (Exception ex)
+            {
+                GrowlHelper.ErrorGlobal($"删除立绘失败。\n{ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 检查立绘文件是否正被某个立绘窗口（CGWindow）显示。
+        /// </summary>
+        private static bool IsCgInUse(string? cg, string? cgD)
+        {
+            foreach (Window w in Application.Current.Windows)
+            {
+                if (w is CGWindow win && win.IsVisible &&
+                    (win.DisplayedCgN == cg || win.DisplayedCgN == cgD || win.DisplayedCgD == cg || win.DisplayedCgD == cgD))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private void btn_deleteData_Click(object sender, RoutedEventArgs e)
         {
             ComponentModel item = SelectedItem;
@@ -1443,25 +1532,36 @@ namespace GflChibiDesktop2
 
         private void DeleteData(string dummy)
         {
-            if (Directory.Exists($@"{AppDir}assets/spine/{dummy}"))
+            try
             {
-                Directory.Delete($@"{AppDir}assets/spine/{dummy}", true);
-            }
-            else if (Directory.Exists($@"{AppDir}assets/spine_external/{dummy}"))
-            {
-                Directory.Delete($@"{AppDir}assets/spine_external/{dummy}", true);
-                // 同步从外部数据表移除该条目并写盘
-                ExternalRoot er = ReadExternalSpineList();
-                if (er.content != null)
+                if (Directory.Exists($@"{AppDir}assets/spine/{dummy}"))
                 {
-                    er.content.RemoveAll(c => string.Equals(c.path, dummy, StringComparison.OrdinalIgnoreCase));
-                    SaveExternalSpineList(er);
+                    Directory.Delete($@"{AppDir}assets/spine/{dummy}", true);
                 }
-                // 重载数据列表，移除已删除的外部节点
-                LoadChibiList();
-                return;
+                else if (Directory.Exists($@"{AppDir}assets/spine_external/{dummy}"))
+                {
+                    Directory.Delete($@"{AppDir}assets/spine_external/{dummy}", true);
+                    // 同步从外部数据表移除该条目并写盘
+                    ExternalRoot er = ReadExternalSpineList();
+                    if (er.content != null)
+                    {
+                        er.content.RemoveAll(c => string.Equals(c.path, dummy, StringComparison.OrdinalIgnoreCase));
+                        SaveExternalSpineList(er);
+                    }
+                    // 重载数据列表，移除已删除的外部节点
+                    LoadChibiList();
+                    return;
+                }
+                tvAfterSelect();
             }
-            tvAfterSelect();
+            catch (System.IO.IOException)
+            {
+                GrowlHelper.ErrorGlobal("删除数据失败：文件正被占用（可能正在被桌宠或立绘窗口使用）。\n请先关闭相关窗口后再试。");
+            }
+            catch (Exception ex)
+            {
+                GrowlHelper.ErrorGlobal($"删除数据失败。\n{ex.Message}");
+            }
         }
 
         private void btn_ImportExternalSpine_Click(object sender, RoutedEventArgs e)
