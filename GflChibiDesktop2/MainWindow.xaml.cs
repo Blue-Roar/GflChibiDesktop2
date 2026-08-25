@@ -452,6 +452,7 @@ namespace GflChibiDesktop2
             {
                 PetInstance pet = PetInstance.Create(GetNextPetId(), model);
                 ProcessManager? pm = null;
+                InjectTransparentMode(pet.WorkDir);
                 pm = new ProcessManager(
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
                     pet.WorkDir,
@@ -494,6 +495,7 @@ namespace GflChibiDesktop2
             await StopManager(pet);
             pet.Panel.Children.Clear();
             pet.IsChanged = false;
+            InjectTransparentMode(pet.WorkDir);
             ProcessManager? pm = null;
             pm = new ProcessManager(
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
@@ -504,6 +506,31 @@ namespace GflChibiDesktop2
             pet.Manager = pm;
             pet.IsRestarting = false;
             UpdateStatus();
+        }
+
+        /// <summary>
+        /// 把透明实现模式（dwm/ulw）写入实例 settings.json，供 lua 渲染进程读取。
+        /// </summary>
+        private static void InjectTransparentMode(string workDir)
+        {
+            try
+            {
+                string settingsFile = Path.Combine(workDir, "settings.json");
+                Newtonsoft.Json.Linq.JObject root;
+                if (File.Exists(settingsFile))
+                {
+                    root = Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(settingsFile));
+                }
+                else
+                {
+                    root = new Newtonsoft.Json.Linq.JObject();
+                }
+                root["transparentMode"] = Properties.Settings.Default.TransparentMode == "ulw" ? "ulw" : "dwm";
+                File.WriteAllText(settingsFile, root.ToString(Newtonsoft.Json.Formatting.None));
+            }
+            catch
+            {
+            }
         }
 
         private async Task StopManager(PetInstance pet)
@@ -572,6 +599,7 @@ namespace GflChibiDesktop2
             {
                 pet.Panel.Children.Clear();
                 pet.IsChanged = false;
+                InjectTransparentMode(pet.WorkDir);
                 ProcessManager? pm = null;
                 pm = new ProcessManager(
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
@@ -676,17 +704,18 @@ namespace GflChibiDesktop2
             pet.IsRestarting = true;
             try
             {
-                pet.Panel.Children.Clear();
-                pet.IsChanged = false;
-                ProcessManager? pm = null;
-                pm = new ProcessManager(
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
-                    pet.WorkDir,
-                    "main.lua",
-                    () => Dispatcher.BeginInvoke(() => { if (pm is not null) ReadIpc(pm, pet); }));
-                pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
-                pet.Manager = pm;
-                GrowlHelper.InfoGlobal($"桌宠“{pet.Name}”已自动重启。");
+            pet.Panel.Children.Clear();
+            pet.IsChanged = false;
+            InjectTransparentMode(pet.WorkDir);
+            ProcessManager? pm = null;
+            pm = new ProcessManager(
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
+                pet.WorkDir,
+                "main.lua",
+                () => Dispatcher.BeginInvoke(() => { if (pm is not null) ReadIpc(pm, pet); }));
+            pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
+            pet.Manager = pm;
+            GrowlHelper.InfoGlobal($"桌宠“{pet.Name}”已自动重启。");
             }
             catch (Exception ex)
             {
@@ -1360,6 +1389,20 @@ namespace GflChibiDesktop2
             set
             {
                 Settings.Default.DisableCustomWindowChrome = value;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 使用兼容透明实现（UpdateLayeredWindow），解决部分系统/驱动下透明窗口显示黑底的问题。
+        /// </summary>
+        public bool UseUlwTransparency
+        {
+            get => Settings.Default.TransparentMode == "ulw";
+            set
+            {
+                Settings.Default.TransparentMode = value ? "ulw" : "dwm";
                 Settings.Default.Save();
                 OnPropertyChanged();
             }

@@ -30,6 +30,7 @@
                         <MenuItem Header="禁用全局提示(不建议)(_A)" IsCheckable="True" IsChecked="{Binding SuppressGlobalGrowl}"/>-->
                     </MenuItem>
                     <MenuItem Header="使用系统窗口样式(_B)" IsCheckable="True" IsChecked="{Binding DisableCustomWindowChrome}"/>
+                    <MenuItem Header="兼容透明模式(_U)" IsCheckable="True" IsChecked="{Binding UseUlwTransparency}" ToolTip="部分系统（Win11+新显卡驱动等）下透明窗口会显示黑底，开启后改用 UpdateLayeredWindow 实现；切换后需重启桌宠实例生效"/>
                     <Separator/>
                     <MenuItem Click="menuItemAbout_Click" Header="关于(_A)"/>
                     <Separator/>
