@@ -452,7 +452,6 @@ namespace GflChibiDesktop2
             {
                 PetInstance pet = PetInstance.Create(GetNextPetId(), model);
                 ProcessManager? pm = null;
-                InjectTransparentMode(pet.WorkDir);
                 pm = new ProcessManager(
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
                     pet.WorkDir,
@@ -495,7 +494,6 @@ namespace GflChibiDesktop2
             await StopManager(pet);
             pet.Panel.Children.Clear();
             pet.IsChanged = false;
-            InjectTransparentMode(pet.WorkDir);
             ProcessManager? pm = null;
             pm = new ProcessManager(
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
@@ -506,31 +504,6 @@ namespace GflChibiDesktop2
             pet.Manager = pm;
             pet.IsRestarting = false;
             UpdateStatus();
-        }
-
-        /// <summary>
-        /// 把透明实现模式（dwm/ulw）写入实例 settings.json，供 lua 渲染进程读取。
-        /// </summary>
-        private static void InjectTransparentMode(string workDir)
-        {
-            try
-            {
-                string settingsFile = Path.Combine(workDir, "settings.json");
-                Newtonsoft.Json.Linq.JObject root;
-                if (File.Exists(settingsFile))
-                {
-                    root = Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(settingsFile));
-                }
-                else
-                {
-                    root = new Newtonsoft.Json.Linq.JObject();
-                }
-                root["transparentMode"] = Properties.Settings.Default.TransparentMode == "ulw" ? "ulw" : "dwm";
-                File.WriteAllText(settingsFile, root.ToString(Newtonsoft.Json.Formatting.None));
-            }
-            catch
-            {
-            }
         }
 
         private async Task StopManager(PetInstance pet)
@@ -599,7 +572,6 @@ namespace GflChibiDesktop2
             {
                 pet.Panel.Children.Clear();
                 pet.IsChanged = false;
-                InjectTransparentMode(pet.WorkDir);
                 ProcessManager? pm = null;
                 pm = new ProcessManager(
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
@@ -706,7 +678,6 @@ namespace GflChibiDesktop2
             {
             pet.Panel.Children.Clear();
             pet.IsChanged = false;
-            InjectTransparentMode(pet.WorkDir);
             ProcessManager? pm = null;
             pm = new ProcessManager(
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
@@ -1395,15 +1366,40 @@ namespace GflChibiDesktop2
         }
 
         /// <summary>
-        /// 使用兼容透明实现（UpdateLayeredWindow），解决部分系统/驱动下透明窗口显示黑底的问题。
+        /// 兼容透明模式（UpdateLayeredWindow）：通过 app/transparent_mode.txt 控制，
+        /// lua 渲染进程读取该文件决定透明实现；解决部分系统/驱动下透明窗口显示黑底的问题。
         /// </summary>
         public bool UseUlwTransparency
         {
-            get => Settings.Default.TransparentMode == "ulw";
+            get
+            {
+                try
+                {
+                    string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "transparent_mode.txt");
+                    return File.Exists(path) && File.ReadAllText(path).Trim() == "ulw";
+                }
+                catch
+                {
+                    return false;
+                }
+            }
             set
             {
-                Settings.Default.TransparentMode = value ? "ulw" : "dwm";
-                Settings.Default.Save();
+                try
+                {
+                    string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "transparent_mode.txt");
+                    if (value)
+                    {
+                        File.WriteAllText(path, "ulw");
+                    }
+                    else if (File.Exists(path))
+                    {
+                        File.Delete(path);
+                    }
+                }
+                catch
+                {
+                }
                 OnPropertyChanged();
             }
         }

@@ -157,10 +157,6 @@ end
 ---@param param M.param
 M.create = function(param)
     M.param = param
-    -- 透明实现模式：transparent_mode.txt / 环境变量（测试用）优先；否则用 settings（主程序设置注入）
-    if ulwMode == nil and param.transparentMode ~= nil then
-        ulwMode = param.transparentMode
-    end
 
     rl.SetConfigFlags(rl.FLAG_MSAA_4X_HINT)
     rl.SetConfigFlags(rl.FLAG_WINDOW_UNDECORATED)
@@ -169,10 +165,8 @@ M.create = function(param)
     if param.vsync then rl.SetConfigFlags(rl.FLAG_VSYNC_HINT) end
     if param.transparent then
         if M.isUlw() then
-            -- ULW 模式：仍需 FLAG_WINDOW_TRANSPARENT 以获得带 alpha 的帧缓冲；
-            -- 透明显示由 UpdateLayeredWindow 位图提供，DWM blur-behind 对该窗口不再生效
-            rl.SetConfigFlags(rl.FLAG_WINDOW_TRANSPARENT)
-            log("[window] transparent mode = ulw (UpdateLayeredWindow), framebuffer alpha enabled\n")
+            -- ULW 模式：不启用 GLFW 透明/blur-behind，窗口内容完全由 UpdateLayeredWindow 位图提供
+            log("[window] transparent mode = ulw (UpdateLayeredWindow)\n")
         else
             rl.SetConfigFlags(rl.FLAG_WINDOW_TRANSPARENT)
             log("[window] transparent mode = dwm (raylib default)\n")
@@ -281,8 +275,9 @@ M.run = function()
         ev.trigger(M.before_draw)
 
         if M.isUlw() then
-            -- ULW 模式：渲染到带 alpha 的纹理，再交给 UpdateLayeredWindow
+            -- ULW 模式：渲染到带 alpha 的纹理，先清除避免残影叠加，再交给 UpdateLayeredWindow
             rl.BeginTextureMode(M.ulwRT)
+            rl.pClearBackground(transparent)
         else
             rl.BeginDrawing()
             rl.pClearBackground(transparent)
@@ -294,7 +289,12 @@ M.run = function()
         if M.isUlw() then
             rl.EndTextureMode()
             M.ulwUpdate()
-            -- ULW 模式无 SwapBuffers，raylib 内置限帧不生效；且其 WaitTime 为空操作，用系统 Sleep 限帧
+            -- 保留 raylib 正常 SwapBuffers 路径：GLFW 窗口消息循环/绘制（点击、WM_PAINT）依赖它；
+            -- 显示内容由 UpdateLayeredWindow 位图覆盖，此处仅为维持窗口机制正常
+            rl.BeginDrawing()
+            rl.pClearBackground(transparent)
+            rl.EndDrawing()
+            -- ULW 模式无 vsync，raylib 内置限帧不生效；且其 WaitTime 为空操作，用系统 Sleep 限帧
             local fps = M.param.settings.fps
             if fps == nil or fps <= 0 then fps = 60 end
             local elapsed = (rl.GetTime() - frameStart) * 1000.0

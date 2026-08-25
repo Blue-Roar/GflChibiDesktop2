@@ -18,10 +18,6 @@ namespace GflChibiDesktop2.Properties
         public bool SuppressConnectionErrorPrompts { get; set; } = false;
         public bool ForceOfflineMode { get; set; } = false;
         public bool DisableCustomWindowChrome { get; set; } = false;
-        /// <summary>
-        /// 桌宠透明实现：dwm（默认，raylib 原生）或 ulw（UpdateLayeredWindow 逐像素 alpha，兼容透明失效环境）。
-        /// </summary>
-        public string TransparentMode { get; set; } = "dwm";
         private static string FilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "gfl_settings.json");
 
         private class SettingsData
@@ -36,7 +32,6 @@ namespace GflChibiDesktop2.Properties
             public bool SuppressConnectionErrorPrompts { get; set; }
             public bool ForceOfflineMode { get; set; }
             public bool DisableCustomWindowChrome { get; set; }
-            public string TransparentMode { get; set; }
         }
 
         private Settings()
@@ -61,7 +56,6 @@ namespace GflChibiDesktop2.Properties
                         if (json.SuppressConnectionErrorPrompts) SuppressConnectionErrorPrompts = json.SuppressConnectionErrorPrompts;
                         if (json.ForceOfflineMode) ForceOfflineMode = json.ForceOfflineMode;
                         if (json.DisableCustomWindowChrome) DisableCustomWindowChrome = json.DisableCustomWindowChrome;
-                        if (!string.IsNullOrEmpty(json.TransparentMode)) TransparentMode = json.TransparentMode;
                     }
                 }
             }
@@ -89,8 +83,7 @@ namespace GflChibiDesktop2.Properties
                     SuppressMinimizePrompts = SuppressMinimizePrompts,
                     SuppressConnectionErrorPrompts = SuppressConnectionErrorPrompts,
                     ForceOfflineMode = ForceOfflineMode,
-                    DisableCustomWindowChrome = DisableCustomWindowChrome,
-                    TransparentMode = TransparentMode
+                    DisableCustomWindowChrome = DisableCustomWindowChrome
                 };
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(FilePath, json);

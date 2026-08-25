@@ -33,7 +33,7 @@ local simStopMove -- 供 drag 块在拖动时中止宿舍模拟动作（由 walk
 
 -- 加载设置
 local settings = settingsMan.load("settings.json", true)
-settings:default({ walk = true, drag = true, startDistance = 500, stopDistance = 200, scale = 100, drop = true, transparency = 255, autoHide = true, idleMotion = 1, simulateDorm = false, simulateInterval = 30, moveFlip = false, transparentMode = nil })
+settings:default({ walk = true, drag = true, startDistance = 500, stopDistance = 200, scale = 100, drop = true, transparency = 255, autoHide = true, idleMotion = 1, simulateDorm = false, simulateInterval = 30, moveFlip = false })
 -- 互斥保证：跟随鼠标与宿舍模拟不能同时启用
 if settings.walk and settings.simulateDorm then
     settings.simulateDorm = false
@@ -43,7 +43,7 @@ settings:save()
 -- 设置透明度（ULW 模式下由位图 alpha 提供，跳过 LWA_ALPHA）
 if not window.isUlw() then win32.setTransparency(settings.transparency) end
 -- 新建窗口
-window.create { vsync = true, topmost = true, transparent = true, autoHide = true, settings = settings:access("window"), transparentMode = settings.transparentMode }
+window.create { vsync = true, topmost = true, transparent = true, autoHide = true, settings = settings:access("window") }
 if not window.isUlw() then win32.setTransparency(settings.transparency) end
 -- 窗口关闭前保存设置（含人形坐标），避免退出后位置丢失
 ev.on(window.window_closing, function() settings:save() end)
