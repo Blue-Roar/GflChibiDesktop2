@@ -1365,6 +1365,45 @@ namespace GflChibiDesktop2
             }
         }
 
+        /// <summary>
+        /// 兼容透明模式（UpdateLayeredWindow）：通过 app/transparent_mode.conf 控制，
+        /// lua 渲染进程读取该文件决定透明实现；解决部分系统/驱动下透明窗口显示黑底的问题。
+        /// </summary>
+        public bool UseUlwTransparency
+        {
+            get
+            {
+                try
+                {
+                    string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "transparent_mode.conf");
+                    return File.Exists(path) && File.ReadAllText(path).Trim() == "ulw";
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            set
+            {
+                try
+                {
+                    string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "transparent_mode.conf");
+                    if (value)
+                    {
+                        File.WriteAllText(path, "ulw");
+                    }
+                    else if (File.Exists(path))
+                    {
+                        File.Delete(path);
+                    }
+                }
+                catch
+                {
+                }
+                OnPropertyChanged();
+            }
+        }
+
         private static string CurrentExePath => System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)

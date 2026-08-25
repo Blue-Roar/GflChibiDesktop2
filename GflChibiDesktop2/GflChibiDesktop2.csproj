@@ -12,9 +12,9 @@
     <AssemblyTitle>少女前线桌面Q宠</AssemblyTitle>
     <Description>少女前线桌面Q宠</Description>
     <Copyright>© 2020~2026 BrightSu</Copyright>
-    <AssemblyVersion>2.1.3.5</AssemblyVersion>
-    <FileVersion>2.1.3.5</FileVersion>
-    <InformationalVersion>20260823</InformationalVersion>
+    <AssemblyVersion>2.1.3.6</AssemblyVersion>
+    <FileVersion>2.1.3.6</FileVersion>
+    <InformationalVersion>20260825</InformationalVersion>
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <PackageProjectUrl>https://projects.brightsu.cn/GflChibiDesktop/V2/</PackageProjectUrl>
     <ApplicationIcon>hk416_happy.ico</ApplicationIcon>
