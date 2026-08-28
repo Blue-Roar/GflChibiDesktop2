@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:GflChibiDesktop2"
         mc:Ignorable="d" WindowState="Minimized"
         d:DataContext="{d:DesignInstance local:MainWindowDataContext, IsDesignTimeCreatable=True}"
-        Title="少女前线桌面Q宠" Height="375" Width="400" MinHeight="375" MinWidth="400" WindowStartupLocation="CenterScreen"
+        Title="少女前线桌面Q宠" Height="375" Width="500" MinHeight="375" MinWidth="400" WindowStartupLocation="CenterScreen"
         Closing="Window_Closing" Closed="Window_Closed" StateChanged="Window_StateChanged"
         Background="{DynamicResource SecondaryRegionBrush}" Foreground="{DynamicResource PrimaryTextBrush}" Icon="/hk416_happy.ico">
     <hc:Window.Resources>
@@ -17,24 +17,11 @@
             <hc:NotifyIcon.ContextMenu>
                 <ContextMenu x:Name="trayMenu">
                     <MenuItem Command="hc:ControlCommands.PushMainWindow2Top" Header="显示主窗口(_S)" Click="notifyIcon_MouseDoubleClick"/>
-                    <MenuItem Click="DataManager" Header="人形数据配置(_D)"/>
                     <Separator/>
-                    <MenuItem Header="开机自启(_B)" IsCheckable="True" IsChecked="{Binding IsAutoRun}"/>
-                    <MenuItem Header="离线模式(_O)" IsCheckable="True" IsChecked="{Binding ForceOfflineMode}"/>
-                    <MenuItem Header="消息提示设置(_N)">
-                        <MenuItem Header="禁用加载成功提示(_L)" IsCheckable="True" IsChecked="{Binding SuppressLoadPrompts}"/>
-                        <MenuItem Header="禁用检查更新提示(_U)" IsCheckable="True" IsChecked="{Binding SuppressUpdatePrompts}"/>
-                        <MenuItem Header="禁用后台运行提示(_M)" IsCheckable="True" IsChecked="{Binding SuppressMinimizePrompts}"/>
-                        <MenuItem Header="禁用连接错误提示(_C)" IsCheckable="True" IsChecked="{Binding SuppressConnectionErrorPrompts}"/>
-                        <!--<Separator/>
-                        <MenuItem Header="禁用全局提示(不建议)(_A)" IsCheckable="True" IsChecked="{Binding SuppressGlobalGrowl}"/>-->
-                    </MenuItem>
-                    <MenuItem Header="使用系统窗口样式(_B)" IsCheckable="True" IsChecked="{Binding DisableCustomWindowChrome}"/>
-                    <MenuItem Header="运行模块(_R)">
-                        <MenuItem x:Name="miModuleNew" Header="新版(luajit)" IsCheckable="True" Click="ModuleSelect_Click"/>
-                        <MenuItem x:Name="miModuleLegacy" Header="旧版(legacy)" IsCheckable="True" Click="ModuleSelect_Click"/>
-                    </MenuItem>
-                    <MenuItem Header="透明兼容模式(_U)" IsCheckable="True" IsChecked="{Binding UseUlwTransparency}" Visibility="{Binding UseLegacyModule, Converter={StaticResource runningStatusConverter}, ConverterParameter=Visible/Collapsed}" ToolTip="部分系统下本应透明的桌宠窗口会显示黑色背景，开启兼容模式或许可以解决；切换后需重启桌宠实例生效"/>
+                    <MenuItem Click="DataManager" Header="人形数据配置(_D)"/>
+                    <!-- <MenuItem Header="开机自启(_B)" IsCheckable="True" IsChecked="{Binding IsAutoRun}"/> -->
+                    <!-- <MenuItem Header="离线模式(_O)" IsCheckable="True" IsChecked="{Binding ForceOfflineMode}"/> -->
+                    <MenuItem Click="ShowSettings_Click" Header="首选项(_P)"/>
                     <Separator/>
                     <MenuItem Click="menuItemAbout_Click" Header="关于(_A)"/>
                     <Separator/>
@@ -44,7 +31,7 @@
         </hc:NotifyIcon>
         <Grid Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="28"/>
+                <RowDefinition Height="32"/>
                 <RowDefinition Height="48"/>
                 <RowDefinition/>
                 <RowDefinition Height="48"/>
@@ -52,14 +39,15 @@
             <Grid Grid.Row="0" Background="{StaticResource ThirdlyRegionBrush}">
                 <Label Content="当前实例状态：" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Background="{x:Null}" BorderThickness="0" Padding="0,0,0,0" Height="20"/>
                 <Label Content="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=未运行/正在运行}" Foreground="{Binding Path=IsRunning, Converter={StaticResource ResourceKey=runningStatusConverter}, ConverterParameter=Red/Green}" HorizontalAlignment="Left" Margin="95,0,0,0" VerticalAlignment="Center" Background="{x:Null}" BorderThickness="0" Padding="0,0,0,0" Height="20" FontWeight="SemiBold"/>
+                <Button x:Name="btnSuspend" Style="{DynamicResource ButtonPrimary}" Content="暂停(_W)" hc:IconElement.Geometry="{StaticResource PauseGeometry}" Click="ToggleSuspendSelected" IsEnabled="{Binding HasActiveTab}" ToolTip="暂时关闭当前桌宠实例（不删除），再次点击可恢复" HorizontalAlignment="Left" Margin="150,0,0,0" Width="80" VerticalAlignment="Center" Padding="4" Height="24"/>
                 <CheckBox VerticalAlignment="Center" HorizontalAlignment="Right" Content="窗口置顶(_T)" Margin="0,0,10,0" Width="90" Height="20" IsChecked="{Binding Topmost, ElementName=window}" Grid.Column="1" />
             </Grid>
             <Grid Grid.Row="1">
-                <Button x:Name="btnSuspend" Style="{DynamicResource ButtonPrimary}" Content="暂停(_W)" hc:IconElement.Geometry="{StaticResource PauseGeometry}" HorizontalAlignment="Left" Margin="10,0,0,0" Padding="5" Width="100" Click="ToggleSuspendSelected" IsEnabled="{Binding HasActiveTab}" ToolTip="暂时关闭当前桌宠实例（不删除），再次点击可恢复"/>
+                <Button Content="删除(_R)" hc:IconElement.Geometry="{StaticResource TrashGeometry}" Style="{DynamicResource ButtonDanger}" HorizontalAlignment="Left" Margin="10,0,0,0" Padding="5" Width="100" Click="DeleteSelected" IsEnabled="{Binding HasActiveTab}" ToolTip="删除当前桌宠实例，配置数据将一并清除"/>
                 <Button Content="人形扩编(_E)" hc:IconElement.Geometry="{StaticResource AddGeometry}" HorizontalAlignment="Left" Margin="120,0,0,0" Padding="5" Width="100" Click="StartNewInstance" IsEnabled="{Binding HasActiveTab}" ToolTip="基于当前选中的桌宠配置，新开一个桌宠实例"/>
                 <ToggleButton Background="{DynamicResource RegionBrush}" Style="{StaticResource ToggleButtonSwitch}" Content="开机自启(_B)" HorizontalAlignment="Right" Margin="0,0,10,0" Width="125" IsChecked="{Binding IsAutoRun}" ToolTip="登录 Windows 时自动启动本程序" Height="28" HorizontalContentAlignment="Left" Grid.ColumnSpan="2"/>
             </Grid>
-            <TabControl x:Name="PetTabs" Grid.Row="2" Margin="0,1,0,0" SelectionChanged="PetTabs_SelectionChanged" BorderThickness="0"/>
+            <TabControl x:Name="PetTabs" Grid.Row="2" Margin="0,1,0,0" SelectionChanged="PetTabs_SelectionChanged" BorderThickness="0" TabStripPlacement="Left"/>
             <Grid Grid.Row="3">
                 <Button x:Name="btnSaveConfig" Content="保存配置(_S)" Style="{DynamicResource ButtonDashedPrimary}"  hc:IconElement.Geometry="{StaticResource SaveGeometry}" HorizontalAlignment="Left" Margin="10,0,0,0" Width="100" IsEnabled="{Binding IsChanged}" Click="SaveConfig" Padding="5"/>
                 <Button x:Name="btnDiscardConfig" Content="放弃更改(_Q)" Style="{DynamicResource ButtonDashedDanger}" hc:IconElement.Geometry="{StaticResource DeleteGeometry}" HorizontalAlignment="Left" Margin="120,0,0,0" Width="100" IsEnabled="{Binding IsChanged}" Click="DiscardConfigChange" Padding="5"/>

@@ -36,13 +36,16 @@
   <!-- 保证备用渲染模块（V1 模式）先于本程序构建；Private=false 防止 ProjectReference 把 legacy 启动文件复制到输出根目录 -->
   <ItemGroup>
     <ProjectReference Include="..\GflChibiDesktopLegacy\GflChibiDesktopLegacy.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\GflChibiDesktopLegacy\GflChibiDesktopLegacyGL.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
 
   <Target Name="CopyLegacyModuleToOutput" AfterTargets="Build">
     <ItemGroup>
-      <LegacyFiles Include="$(MSBuildProjectDirectory)\..\GflChibiDesktopLegacy\bin\$(Configuration)\net6.0-windows\win-x64\**\*" />
+      <LegacyDXFiles Include="$(MSBuildProjectDirectory)\..\GflChibiDesktopLegacy\bin\$(Configuration)\net6.0-windows\win-x64\**\*" />
+      <LegacyGLFiles Include="$(MSBuildProjectDirectory)\..\GflChibiDesktopLegacy\bin\LegacyGL\$(Configuration)\net6.0-windows\win-x64\**\*" />
     </ItemGroup>
-    <Copy SourceFiles="@(LegacyFiles)" DestinationFiles="@(LegacyFiles->'$(OutDir)app\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(LegacyDXFiles)" DestinationFiles="@(LegacyDXFiles->'$(OutDir)app\LegacyDX\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(LegacyGLFiles)" DestinationFiles="@(LegacyGLFiles->'$(OutDir)app\LegacyGL\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 
   <ItemGroup>

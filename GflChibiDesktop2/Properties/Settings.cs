@@ -20,6 +20,8 @@ namespace GflChibiDesktop2.Properties
         public bool DisableCustomWindowChrome { get; set; } = false;
         /// <summary>运行模块：true=旧版(legacy)渲染模块；false=新版(luajit)渲染模块。</summary>
         public bool UseLegacyModule { get; set; } = false;
+        /// <summary>渲染后端：true=OpenGL(DesktopGL)；false=DirectX(WindowsDX)。</summary>
+        public bool UseOpenGL { get; set; } = true;
         private static string FilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "gfl_settings.json");
 
         private class SettingsData
@@ -35,6 +37,7 @@ namespace GflChibiDesktop2.Properties
             public bool ForceOfflineMode { get; set; }
             public bool DisableCustomWindowChrome { get; set; }
             public bool UseLegacyModule { get; set; }
+            public bool UseOpenGL { get; set; }
         }
 
         private Settings()
@@ -60,6 +63,7 @@ namespace GflChibiDesktop2.Properties
                         if (json.ForceOfflineMode) ForceOfflineMode = json.ForceOfflineMode;
                         if (json.DisableCustomWindowChrome) DisableCustomWindowChrome = json.DisableCustomWindowChrome;
                         if (json.UseLegacyModule) UseLegacyModule = json.UseLegacyModule;
+                        if (json.UseOpenGL) UseOpenGL = json.UseOpenGL;
                     }
                 }
             }
@@ -88,7 +92,8 @@ namespace GflChibiDesktop2.Properties
                     SuppressConnectionErrorPrompts = SuppressConnectionErrorPrompts,
                     ForceOfflineMode = ForceOfflineMode,
                     DisableCustomWindowChrome = DisableCustomWindowChrome,
-                    UseLegacyModule = UseLegacyModule
+                    UseLegacyModule = UseLegacyModule,
+                    UseOpenGL = UseOpenGL
                 };
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(FilePath, json);

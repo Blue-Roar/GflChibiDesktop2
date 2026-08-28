@@ -138,6 +138,9 @@ namespace GflChibiDesktop
                 // 面板命令在后台线程读取，回调操作 App.globalValues/Topmost 等 UI 依赖，须派发到 UI 线程
                 Ipc = new LegacyIpc(LegacyArgs.ReadIpcName, LegacyArgs.WriteIpcName, a => Dispatcher.Invoke(a));
 
+                Ipc.AddReadonly(() => "少前桌宠V1重构版");
+                Ipc.AddReadonly(() => Path.GetFileName(App.globalValues.SelectAtlasFile));
+
                 Ipc.AddCombo("动画", "选择当前播放的动画",
                     () => App.globalValues.AnimeList ?? new List<string>(),
                     () =>
@@ -163,31 +166,31 @@ namespace GflChibiDesktop
                     () => (int)(App.globalValues.Opacity * 255),
                     v => App.globalValues.Opacity = v / 255.0, 0, 255);
 
-                Ipc.AddNumeric("FPS", "帧率",
+                Ipc.AddNumeric("帧率", "FPS",
                     () => App.globalValues.Speed,
                     v => App.globalValues.Speed = v, 1, 60);
 
-                Ipc.AddNumeric("水平位置", "",
+                Ipc.AddNumeric("水平位置", "人形在画布上的水平坐标",
                     () => (int)App.globalValues.PosX,
                     v => App.globalValues.PosX = v, 0, (int)App.globalValues.FrameWidth);
 
-                Ipc.AddNumeric("垂直位置", "",
+                Ipc.AddNumeric("垂直位置", "人形在画布上的垂直坐标",
                     () => (int)App.globalValues.PosY,
                     v => App.globalValues.PosY = v, 0, (int)App.globalValues.FrameHeight);
 
-                Ipc.AddNumeric("旋转角度", "",
+                Ipc.AddNumeric("旋转角度", "人形在画布上的旋转角度",
                     () => (int)App.globalValues.Rotation,
                     v => App.globalValues.Rotation = v, 0, 359);
 
-                Ipc.AddBool("循环播放", "",
+                Ipc.AddBool("循环播放", "循环播放选中的动画",
                     () => App.globalValues.IsLoop,
                     v => { App.globalValues.IsLoop = v; App.globalValues.SetAnime = true; });
 
-                Ipc.AddBool("水平翻转", "",
+                Ipc.AddBool("水平翻转", "将人形水平翻转",
                     () => App.globalValues.FilpX,
                     v => App.globalValues.FilpX = v);
 
-                Ipc.AddBool("垂直翻转", "",
+                Ipc.AddBool("垂直翻转", "将人形垂直翻转",
                     () => App.globalValues.FilpY,
                     v => App.globalValues.FilpY = v);
 
@@ -195,11 +198,11 @@ namespace GflChibiDesktop
                     () => App.globalValues.Simulation,
                     v => toggleSimulation(v));
 
-                Ipc.AddNumeric("模拟间隔(秒)", "",
+                Ipc.AddNumeric("模拟间隔(秒)", "动态模拟的间隔时间",
                     () => (int)timerEventsSimulation.Interval.TotalSeconds,
                     v => setSimulationInterval(v), 1, 120);
 
-                Ipc.AddBool("窗口置顶", "",
+                Ipc.AddBool("窗口置顶", "将桌宠置于最上层",
                     () => Topmost,
                     v => Topmost = v);
 

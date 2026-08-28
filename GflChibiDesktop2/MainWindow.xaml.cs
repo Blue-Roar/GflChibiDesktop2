@@ -111,7 +111,6 @@ namespace GflChibiDesktop2
                 WindowStyle = WindowStyle.SingleBorderWindow;
             }
             EnsureLuajitGpuPreference();
-            UpdateModuleMenu();
             playGeometry = (System.Windows.Media.Geometry)FindResource("PlayGeometry");
             pauseGeometry = (System.Windows.Media.Geometry)FindResource("PauseGeometry");
             closeGeometry = (System.Windows.Media.Geometry)FindResource("CloseGeometry");
@@ -202,7 +201,7 @@ namespace GflChibiDesktop2
             // 后台任务未完成前的兜底
             if (string.IsNullOrEmpty(announcementMsg)) announcementMsg = fallbackTitle;
             // 清理上次崩溃残留的 luajit 进程（主程序已无法管理它们），再重新启动
-            KillStaleLuajitProcesses();
+            KillStalePetProcesses();
             DataContext = context;
             bool started = AutoStartInstance();
             notifyIcon.Init();
@@ -233,37 +232,41 @@ namespace GflChibiDesktop2
         }
 
         /// <summary>
-        /// 结束本程序目录下残留的 luajit 进程（程序崩溃后遗留的桌宠渲染进程）。
-        /// 仅清理可执行文件位于本程序 app\ 目录下的进程，避免误伤其他程序的 luajit。
+        /// 结束本程序目录下残留的桌宠渲染进程（程序崩溃后遗留的 luajit / legacy 进程）。
+        /// 仅清理可执行文件位于本程序 app\ 目录树下的进程，避免误伤其他程序的同名进程。
         /// </summary>
-        private static void KillStaleLuajitProcesses()
+        private static void KillStalePetProcesses()
         {
             try
             {
-                string expectedDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app");
-                foreach (var p in System.Diagnostics.Process.GetProcessesByName("luajit"))
+                string appRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app");
+                string[] names = { "luajit", "GflChibiDesktopLegacy", "GflChibiDesktopLegacyGL" };
+                foreach (string name in names)
                 {
-                    try
+                    foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
                     {
-                        string file = p.MainModule?.FileName ?? "";
-                        if (string.IsNullOrEmpty(file))
+                        try
                         {
-                            continue;
+                            string file = p.MainModule?.FileName ?? "";
+                            if (string.IsNullOrEmpty(file))
+                            {
+                                continue;
+                            }
+                            // 校验进程可执行文件是否在本程序的 app 目录下（含 LegacyDX/LegacyGL 子目录）
+                            if (!file.StartsWith(appRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+                            p.Kill();
+                            p.WaitForExit(1000);
                         }
-                        // 校验进程可执行文件是否在本程序的 app 目录下
-                        if (!string.Equals(Path.GetDirectoryName(file), expectedDir, StringComparison.OrdinalIgnoreCase))
+                        catch
                         {
-                            continue;
                         }
-                        p.Kill();
-                        p.WaitForExit(1000);
-                    }
-                    catch
-                    {
-                    }
-                    finally
-                    {
-                        p.Dispose();
+                        finally
+                        {
+                            p.Dispose();
+                        }
                     }
                 }
             }
@@ -423,7 +426,7 @@ namespace GflChibiDesktop2
             {
                 return;
             }
-            // 限制多开数量为 8 个
+            // 限制多开数量为 8 个（EasterEgg 解锁后可取消）
             if (pets.Count >= 8)
             {
                 if (Settings.Default.EasterEgg)
@@ -446,7 +449,7 @@ namespace GflChibiDesktop2
                 }
                 else
                 {
-                    HandyControl.Controls.MessageBox.Warning("最多同时开启 8 个桌宠实例。",productTitle);
+                    HandyControl.Controls.MessageBox.Warning("最多同时开启 8 个桌宠实例。", productTitle);
                     return;
                 }
             }
@@ -583,6 +586,23 @@ namespace GflChibiDesktop2
             }
         }
 
+        /// <summary>
+        /// 顶部“删除”按钮：删除当前选中的桌宠实例（确认后停止并清除配置）。
+        /// </summary>
+        private void DeleteSelected(object sender, RoutedEventArgs e)
+        {
+            PetInstance? pet = SelectedPet;
+            if (pet is null)
+            {
+                return;
+            }
+            MessageBoxResult result = HandyControl.Controls.MessageBox.Show($"是否删除桌宠“{pet.Name}”？\n删除后该实例的配置数据将一并清除，无法恢复。", "删除桌宠确认", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+            if (result == MessageBoxResult.Yes)
+            {
+                _ = StopInstance(pet);
+            }
+        }
+
         private async Task StopInstance(PetInstance pet)
         {
             if (!pets.Contains(pet))
@@ -706,7 +726,7 @@ namespace GflChibiDesktop2
         /// <summary>
         /// 生成标签页标题：实例编号 + 人形名称。
         /// </summary>
-        private static string GetTabTitle(PetInstance pet) => $"{pet.Id}. {pet.Name}";
+        private static string GetTabTitle(PetInstance pet) => $"#{pet.Id} {pet.Name}";
 
         private void AddTab(PetInstance pet)
         {
@@ -714,30 +734,17 @@ namespace GflChibiDesktop2
             pet.Tab = tab;
             tab.Tag = pet;
 
-            var header = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-            pet.TabTitle = new TextBlock { Text = GetTabTitle(pet), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
-            var close = new Button
-            {
-                //Content = "✕",
-                Width = 20,
-                Height = 20,
-                //Style = (Style)FindResource("ButtonDanger"),
-                Padding = new Thickness(0),
-                Margin = new Thickness(0),
-                ToolTip = "关闭并删除桌宠实例"
+            var header = new StackPanel {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Left
             };
-
-            HandyControl.Controls.IconElement.SetGeometry(close, closeGeometry);
-            close.Click += (_, _) =>
-            {
-                MessageBoxResult result = HandyControl.Controls.MessageBox.Show($"是否关闭并删除桌宠“{pet.Name}”？\n删除后该实例的配置数据将一并清除，无法恢复。", "删除桌宠确认", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
-                if (result == MessageBoxResult.Yes)
-                {
-                    _ = StopInstance(pet);
-                }
+            pet.TabTitle = new TextBlock {
+                Text = GetTabTitle(pet),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(6, 0, 6, 0)
             };
             header.Children.Add(pet.TabTitle);
-            header.Children.Add(close);
             tab.Header = header;
 
             // 控制面板 + 暂停提示（默认隐藏，暂停时显示）
@@ -1284,41 +1291,63 @@ namespace GflChibiDesktop2
             ShowAbout();
         }
 
+        private SettingsDialog? settingsDialog;
+
+        /// <summary>设置对话框访问的上下文（消息提示/运行模块/界面选项）。</summary>
+        internal MainWindowDataContext SettingsDataContext => context;
+
+        private void ShowSettings_Click(object sender, RoutedEventArgs e) => ShowSettings();
+
         /// <summary>
-        /// 托盘菜单“运行模块”选择：切换新版(luajit)/旧版(legacy)渲染模块。
+        /// 打开设置对话框（消息设置 / 运行模块 / 界面选项）。
         /// </summary>
-        private void ModuleSelect_Click(object sender, RoutedEventArgs e)
+        public void ShowSettings()
         {
-            bool legacy = sender == miModuleLegacy;
-            if (context.UseLegacyModule == legacy)
+            if (settingsDialog is null)
+            {
+                settingsDialog = new SettingsDialog(this);
+                settingsDialog.Closed += (_, _) => settingsDialog = null;
+            }
+            settingsDialog.Show();
+            settingsDialog.Activate();
+        }
+
+        /// <summary>
+        /// 应用“运行模块”选择（新版 DWM/ULW、旧版 OpenGL/DirectX）。供设置对话框调用。
+        /// </summary>
+        public void ApplyModule(bool legacy, bool useOpenGL, bool ulw)
+        {
+            bool curLegacy = context.UseLegacyModule;
+            bool curOpenGL = context.UseOpenGL;
+            bool curUlw = context.UseUlwTransparency;
+            if (curLegacy == legacy && curOpenGL == useOpenGL && curUlw == ulw)
             {
                 return;
             }
+
             context.UseLegacyModule = legacy;
-            UpdateModuleMenu();
-            GrowlHelper.InfoGlobal(legacy
-                ? "已切换到旧版(legacy)渲染模块。\n请重启桌宠实例以生效。"
-                : "已切换到新版(luajit)渲染模块。\n请重启桌宠实例以生效。");
+            context.UseOpenGL = useOpenGL;
+            if (!legacy)
+            {
+                // 新版透明模式：写/删 transparent_mode.conf（luajit 读取决定 DWM/ULW）
+                context.UseUlwTransparency = ulw;
+            }
+            string msg = legacy
+                ? $"已切换到旧版渲染模块（{(useOpenGL ? "OpenGL" : "DirectX")}）。\n请重启桌宠实例以生效。"
+                : $"已切换到新版(luajit)渲染模块（{(ulw ? "ULW" : "DWM")}透明）。\n请重启桌宠实例以生效。";
+            GrowlHelper.InfoGlobal(msg);
         }
 
         /// <summary>
-        /// 同步“运行模块”菜单勾选状态。
-        /// </summary>
-        private void UpdateModuleMenu()
-        {
-            bool legacy = Properties.Settings.Default.UseLegacyModule;
-            if (miModuleNew is not null) miModuleNew.IsChecked = !legacy;
-            if (miModuleLegacy is not null) miModuleLegacy.IsChecked = legacy;
-        }
-
-        /// <summary>
-        /// 按“运行模块”设置启动实例进程：新版用 luajit，旧版用 GflChibiDesktopLegacy.exe。
+        /// 按“运行模块”设置启动实例进程：新版用 luajit；旧版按后端选 GflChibiDesktopLegacyGL/DX.exe。
         /// </summary>
         private ProcessManager StartPetProcess(PetInstance pet)
         {
             if (Properties.Settings.Default.UseLegacyModule)
             {
-                string exe = FindLegacyExe() ?? throw new FileNotFoundException("未找到备用渲染模块 GflChibiDesktopLegacy.exe。");
+                bool useOpenGL = Properties.Settings.Default.UseOpenGL;
+                string exe = FindLegacyExe(useOpenGL) ?? throw new FileNotFoundException(
+                    useOpenGL ? "未找到备用渲染模块（OpenGL）GflChibiDesktopLegacyGL.exe。" : "未找到备用渲染模块（DirectX）GflChibiDesktopLegacy.exe。");
                 string? atlas = pet.Model?.AtlasFile is string af ? Path.Combine(AppDir, af.Replace('/', Path.DirectorySeparatorChar)) : null;
                 if (atlas is null || !File.Exists(atlas))
                 {
@@ -1336,18 +1365,18 @@ namespace GflChibiDesktop2
         }
 
         /// <summary>
-        /// 查找备用渲染模块 exe：优先发布形态（app 下），再回退到本解决方案的构建输出。
+        /// 查找旧版渲染模块 exe：按后端找 app 下对应目录，再回退到本解决方案的构建输出。
         /// </summary>
-        private static string? FindLegacyExe()
+        private static string? FindLegacyExe(bool useOpenGL)
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string dir = useOpenGL ? "LegacyGL" : "LegacyDX";
+            string file = useOpenGL ? "GflChibiDesktopLegacyGL.exe" : "GflChibiDesktopLegacy.exe";
             string[] candidates =
             {
-                Path.Combine(baseDir, "app", "GflChibiDesktopLegacy", "GflChibiDesktopLegacy.exe"),
-                Path.Combine(baseDir, "app", "GflChibiDesktopLegacy.exe"),
-                Path.Combine(baseDir, "GflChibiDesktopLegacy.exe"),
-                Path.Combine(baseDir, "..", "..", "..", "GflChibiDesktopLegacy", "bin", "Debug", "net6.0-windows", "win-x64", "GflChibiDesktopLegacy.exe"),
-                Path.Combine(baseDir, "..", "..", "..", "GflChibiDesktopLegacy", "bin", "Release", "net6.0-windows", "win-x64", "GflChibiDesktopLegacy.exe"),
+                Path.Combine(baseDir, "app", dir, file),
+                Path.Combine(baseDir, "..", "..", "..", "GflChibiDesktopLegacy", "bin", useOpenGL ? "LegacyGL" : "", "Debug", "net6.0-windows", "win-x64", file),
+                Path.Combine(baseDir, "..", "..", "..", "GflChibiDesktopLegacy", "bin", useOpenGL ? "LegacyGL" : "", "Release", "net6.0-windows", "win-x64", file),
             };
             foreach (string c in candidates)
             {
@@ -1426,6 +1455,34 @@ namespace GflChibiDesktop2
             set
             {
                 Settings.Default.SuppressGlobalGrowl = value;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 高级设置解锁（EasterEgg），用于启用“解除多开限制”等选项。
+        /// </summary>
+        public bool EasterEgg
+        {
+            get => Settings.Default.EasterEgg;
+            set
+            {
+                Settings.Default.EasterEgg = value;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 解除 8 个桌宠实例的多开数量限制。
+        /// </summary>
+        public bool SuppressMultiInstanceWarning
+        {
+            get => Settings.Default.SuppressMultiInstanceWarning;
+            set
+            {
+                Settings.Default.SuppressMultiInstanceWarning = value;
                 Settings.Default.Save();
                 OnPropertyChanged();
             }
@@ -1548,6 +1605,20 @@ namespace GflChibiDesktop2
             set
             {
                 Settings.Default.UseLegacyModule = value;
+                Settings.Default.Save();
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 旧版渲染后端：true=OpenGL；false=DirectX。
+        /// </summary>
+        public bool UseOpenGL
+        {
+            get => Settings.Default.UseOpenGL;
+            set
+            {
+                Settings.Default.UseOpenGL = value;
                 Settings.Default.Save();
                 OnPropertyChanged();
             }

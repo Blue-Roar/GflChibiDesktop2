@@ -1,0 +1,159 @@
+<hc:Window xmlns:hc="https://handyorg.github.io/handycontrol" x:Class="GflChibiDesktop2.SettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GflChibiDesktop2"
+        mc:Ignorable="d"
+        Width="320" Height="Auto" SizeToContent="Height" Background="{DynamicResource SecondaryRegionBrush}" Foreground="{DynamicResource PrimaryTextBrush}" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" Icon="/hk416_happy.ico" WindowStartupLocation="CenterScreen" Title="首选项">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TabControl TabStripPlacement="Top">
+            <TabItem Header="桌宠实现方式" HorizontalAlignment="Left">
+                <StackPanel Grid.Row="0">
+                    <Label Grid.Row="0" Margin="5,5,5,0" Style="{DynamicResource LabelWarning.Small}" Content="如果桌宠运行正常，不建议修改此处的设置&#xD;&#xA;默认为 Raylib DWM + OpenGL" HorizontalAlignment="Stretch" Height="40" HorizontalContentAlignment="Left"/>
+                    <GroupBox Header="桌宠版本" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Label Grid.Row="0" Margin="5" Style="{DynamicResource LabelInfo.Small}" HorizontalAlignment="Stretch" Height="40" HorizontalContentAlignment="Left">
+                                <TextBlock>
+                                    <TextBlock Foreground="{DynamicResource LightInfoBrush}">V2</TextBlock>与<TextBlock Foreground="{DynamicResource LightWarningBrush}">V1</TextBlock>是<TextBlock FontWeight="Bold">不同</TextBlock>的两个版本，在动态模拟、鼠标跟随
+                                    <LineBreak/>等功能的实现与逻辑上不同
+                                </TextBlock>
+                            </Label>
+                            <RadioButton x:Name="rModuleRaylibDWM" Margin="5" Grid.Row="1" GroupName="module" Checked="Module_Checked" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsEnabled="{Binding IsChecked, ElementName=rGraphicsGL}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center">Raylib DWM</TextBlock>
+                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource LightInfoBrush}">V2</hc:Tag>
+                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource DarkDefaultBrush}">默认</hc:Tag>
+                                </StackPanel>
+                            </RadioButton>
+                            <RadioButton x:Name="rModuleRaylibULW" Margin="5" Grid.Row="2" GroupName="module" Checked="Module_Checked" ToolTip="部分系统下本应透明的桌宠窗口会显示黑色背景，改用 ULW（UpdateLayeredWindow）透明或可解决；切换后需重启桌宠实例生效" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsEnabled="{Binding IsChecked, ElementName=rGraphicsGL}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center">Raylib ULW</TextBlock>
+                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource LightInfoBrush}">V2</hc:Tag>
+                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource DarkWarningBrush}">透明兼容</hc:Tag>
+                                </StackPanel>
+                            </RadioButton>
+                            <RadioButton x:Name="rModuleMonogame" Margin="5" Grid.Row="3" GroupName="module" Checked="Module_Checked" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center">MonoGame</TextBlock>
+                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource LightWarningBrush}">V1</hc:Tag>
+                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource LightDangerBrush}">旧版</hc:Tag>
+                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource DarkWarningBrush}">透明兼容</hc:Tag>
+                                </StackPanel>
+                            </RadioButton>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox Header="渲染后端" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="5" Style="{DynamicResource LabelInfo.Small}" Content="目前只有MonoGame支持DirectX&#xD;&#xA;然而 OpenGL 的兼容性似乎存在问题……" HorizontalAlignment="Stretch" Height="40" HorizontalContentAlignment="Left"/>
+                            <RadioButton x:Name="rGraphicsGL" Margin="5" Grid.Row="1" Grid.Column="0" GroupName="graphics" Checked="Module_Checked" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center">OpenGL</TextBlock>
+                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource DarkDefaultBrush}">默认</hc:Tag>
+                                </StackPanel>
+                            </RadioButton>
+                            <RadioButton x:Name="rGraphicsDX" Margin="5" Grid.Row="1" Grid.Column="1" GroupName="graphics" Checked="Module_Checked" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsEnabled="{Binding IsChecked, ElementName=rModuleMonogame}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center">DirectX</TextBlock>
+                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource DarkAccentBrush}">兼容</hc:Tag>
+                                </StackPanel>
+                            </RadioButton>
+                        </Grid>
+                    </GroupBox>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="用户交互">
+                <StackPanel>
+                    <GroupBox Header="消息提示" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Content="禁用加载成功提示" Margin="5" Grid.Row="0" Grid.Column="0" IsChecked="{Binding SuppressLoadPrompts}"/>
+                            <CheckBox Content="禁用检查更新提示" Margin="5" Grid.Row="0" Grid.Column="1" IsChecked="{Binding SuppressUpdatePrompts}"/>
+                            <CheckBox Content="禁用后台运行提示" Margin="5" Grid.Row="1" Grid.Column="0" IsChecked="{Binding SuppressMinimizePrompts}"/>
+                            <CheckBox Content="禁用连接错误提示" Margin="5" Grid.Row="1" Grid.Column="1" IsChecked="{Binding SuppressConnectionErrorPrompts}"/>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox Header="用户界面" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Content="使用系统窗口样式" Margin="5" Grid.Row="0" Grid.Column="0" IsChecked="{Binding DisableCustomWindowChrome}"/>
+                        </Grid>
+                    </GroupBox>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="杂项">
+                <StackPanel>
+                    <GroupBox Header="杂项" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Content="开机自启" Margin="5" Grid.Row="0" Grid.Column="0" IsChecked="{Binding IsAutoRun}"/>
+                            <CheckBox Content="离线模式" Margin="5" Grid.Row="0" Grid.Column="1" IsChecked="{Binding ForceOfflineMode}"/>
+                            <Button Content="检查更新" Grid.Row="1" Grid.Column="1" Click="AboutButton_Click" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox Header="高级模式" Margin="5" IsEnabled="{Binding EasterEgg}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="↑↑↓↓←→←→BA↵" Grid.Row="0" Grid.Column="0" Opacity="0.01" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                            <ToggleButton Style="{StaticResource ToggleButtonSwitch}" Background="{DynamicResource RegionBrush}" Content="解锁高级模式" Margin="5" Grid.Row="0" Grid.Column="1" IsChecked="{Binding EasterEgg}" HorizontalAlignment="Right"/>
+                            <hc:Divider Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0" Content="进阶功能"/>
+                            <CheckBox Content="解除多开限制" Margin="5" Grid.Row="2" Grid.Column="0" IsChecked="{Binding SuppressMultiInstanceWarning}"/>
+                        </Grid>
+                    </GroupBox>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10" VerticalAlignment="Bottom">
+            <Button Content="关闭" Width="80" Click="btnOK_Click"/>
+        </StackPanel>
+    </Grid>
+</hc:Window>

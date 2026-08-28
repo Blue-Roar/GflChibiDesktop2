@@ -1,0 +1,7 @@
+<Project>
+  <!-- 仅对 OpenGL 版（与 DX 版同目录共存）：使用独立中间目录，避免 NuGet 恢复/生成物与 DX 版冲突 -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'GflChibiDesktopLegacyGL'">
+    <BaseIntermediateOutputPath>$(MSBuildProjectDirectory)\obj\LegacyGL\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(MSBuildProjectDirectory)\obj\LegacyGL\</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+</Project>
