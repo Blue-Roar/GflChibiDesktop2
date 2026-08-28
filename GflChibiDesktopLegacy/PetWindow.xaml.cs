@@ -56,6 +56,24 @@ namespace GflChibiDesktop
             timerSimulationReload.Tick += timerSimulationReload_Tick;
         }
 
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(WndProc);
+        }
+
+        /// <summary>拦截系统关闭（Alt+F4/系统菜单），防止用户关闭 legacy 进程被 V2 误判为异常退出。</summary>
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            const int WM_SYSCOMMAND = 0x0112;
+            const int SC_CLOSE = 0xF060;
+            if (msg == WM_SYSCOMMAND && (wParam.ToInt32() & 0xFFF0) == SC_CLOSE)
+            {
+                handled = true;
+            }
+            return IntPtr.Zero;
+        }
+
         /// <summary>加载模型（Show 之前调用，确保渲染控件挂载后即可渲染）。</summary>
         public void LoadModel()
         {
@@ -293,7 +311,13 @@ namespace GflChibiDesktop
             {
                 App.globalValues.Simulation = false;
                 timerEventsSimulation.Stop();
-                StopMove();
+                timerSimulationMoveX.Stop();
+                App.globalValues.Simulation_Moving = false;
+                // 不强制回 wait（否则会覆盖用户同时选择的动画）；仅当停在 move 移动状态时回待机
+                if (App.globalValues.SelectAnimeName == "move")
+                {
+                    eventSimulation_wait();
+                }
             }
         }
 
@@ -413,6 +437,8 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("sit"))
             {
+                if (App.globalValues.SelectAnimeName == "sit")
+                    return;   // 与当前动画相同，不重建避免抽搐
                 App.globalValues.IsLoop = true;
                 App.globalValues.SelectAnimeName = "sit";
                 App.globalValues.SetAnime = true;
@@ -424,6 +450,8 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("wait"))
             {
+                if (App.globalValues.SelectAnimeName == "wait")
+                    return;   // 与当前动画相同，不重建避免抽搐
                 App.globalValues.SelectAnimeName = "wait";
                 App.globalValues.SetAnime = true;
                 App.globalValues.IsLoop = true;
@@ -435,6 +463,8 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("attack"))
             {
+                if (App.globalValues.SelectAnimeName == "attack")
+                    return;   // 与当前动画相同，不重建避免抽搐
                 App.globalValues.SelectAnimeName = "attack";
                 App.globalValues.SetAnime = true;
                 App.globalValues.IsLoop = true;
@@ -450,6 +480,8 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("attack2"))
             {
+                if (App.globalValues.SelectAnimeName == "attack2")
+                    return;   // 与当前动画相同，不重建避免抽搐
                 App.globalValues.SelectAnimeName = "attack2";
                 App.globalValues.SetAnime = true;
                 App.globalValues.IsLoop = true;
@@ -465,9 +497,11 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("s"))
             {
+                if (App.globalValues.SelectAnimeName == "s")
+                    return;   // 与当前动画相同，不重建避免抽搐
                 App.globalValues.SelectAnimeName = "s";
                 App.globalValues.SetAnime = true;
-                App.globalValues.IsLoop = false;
+                App.globalValues.IsLoop = false;   // s 播一次，定时器到点接 attack2
                 UpdateSpine();
                 timerSimulationS.Interval = new TimeSpan(0, 0, 0, (int)App.globalValues.AnimeDuration);
                 timerSimulationS.Start();
@@ -488,9 +522,11 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("reload"))
             {
+                if (App.globalValues.SelectAnimeName == "reload")
+                    return;   // 与当前动画相同，不重建避免抽搐
                 App.globalValues.SelectAnimeName = "reload";
                 App.globalValues.SetAnime = true;
-                App.globalValues.IsLoop = false;
+                App.globalValues.IsLoop = false;   // reload 播一次，定时器到点接 attack2
                 UpdateSpine();
                 timerSimulationReload.Interval = new TimeSpan(0, 0, 0, (int)App.globalValues.AnimeDuration, 0);
                 timerSimulationReload.Start();
@@ -511,6 +547,8 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("skill"))
             {
+                if (App.globalValues.SelectAnimeName == "skill")
+                    return;   // 与当前动画相同，不重建避免抽搐
                 App.globalValues.SelectAnimeName = "skill";
                 App.globalValues.SetAnime = true;
                 App.globalValues.IsLoop = true;
@@ -526,9 +564,11 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("die"))
             {
+                if (App.globalValues.SelectAnimeName == "die")
+                    return;   // 与当前动画相同，不重建避免抽搐
                 App.globalValues.SelectAnimeName = "die";
                 App.globalValues.SetAnime = true;
-                App.globalValues.IsLoop = false;
+                App.globalValues.IsLoop = false;   // die 播一次（死亡动画），下次随机切换
                 UpdateSpine();
             }
         }
@@ -537,6 +577,8 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("victory"))
             {
+                if (App.globalValues.SelectAnimeName == "victory")
+                    return;   // 与当前动画相同，不重建避免抽搐
                 if (App.globalValues.AnimeList.Contains("victoryloop"))
                 {
                     App.globalValues.SelectAnimeName = "victory";
@@ -580,6 +622,8 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("lying"))
             {
+                if (App.globalValues.SelectAnimeName == "lying")
+                    return;   // 与当前动画相同，不重建避免抽搐
                 App.globalValues.SelectAnimeName = "lying";
                 App.globalValues.SetAnime = true;
                 App.globalValues.IsLoop = true;

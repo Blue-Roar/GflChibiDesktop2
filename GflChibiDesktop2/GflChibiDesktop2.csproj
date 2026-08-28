@@ -33,16 +33,16 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
-  <!-- 保证备用渲染模块（V1 模式）先于本程序构建，随后整目录拷入输出根目录（与主程序共享 HandyControl 等同名 DLL） -->
+  <!-- 保证备用渲染模块（V1 模式）先于本程序构建；Private=false 防止 ProjectReference 把 legacy 启动文件复制到输出根目录 -->
   <ItemGroup>
-    <ProjectReference Include="..\GflChibiDesktopLegacy\GflChibiDesktopLegacy.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\GflChibiDesktopLegacy\GflChibiDesktopLegacy.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
 
   <Target Name="CopyLegacyModuleToOutput" AfterTargets="Build">
     <ItemGroup>
       <LegacyFiles Include="$(MSBuildProjectDirectory)\..\GflChibiDesktopLegacy\bin\$(Configuration)\net6.0-windows\win-x64\**\*" />
     </ItemGroup>
-    <Copy SourceFiles="@(LegacyFiles)" DestinationFiles="@(LegacyFiles->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(LegacyFiles)" DestinationFiles="@(LegacyFiles->'$(OutDir)app\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 
   <ItemGroup>

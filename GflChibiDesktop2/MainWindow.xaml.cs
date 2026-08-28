@@ -1032,6 +1032,8 @@ namespace GflChibiDesktop2
                     }
                 }
             }
+            // 面板项联动（如 legacy：动态模拟开启时禁用动画下拉，仍保持显示当前动画）
+            BindPanelLinks(pet);
             // 面板重建完成后延迟复位 IsChanged，清除控件加载时回写源属性造成的“伪更改”
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
             {
@@ -1045,6 +1047,62 @@ namespace GflChibiDesktop2
                     context.IsChanged = false;
                 }
             });
+        }
+
+        /// <summary>
+        /// 面板项联动：legacy 渲染模块的“动态模拟”开启时，禁用“动画”下拉（仍显示当前动画），
+        /// 并强制启用“循环播放”。
+        /// </summary>
+        private void BindPanelLinks(PetInstance pet)
+        {
+            ComboControl? anime = null;
+            BoolControl? simulate = null;
+            BoolControl? loop = null;
+            foreach (object child in pet.Panel.Children)
+            {
+                if (child is ComboControl cc && cc.PromptText == "动画")
+                {
+                    anime = cc;
+                }
+                else if (child is BoolControl bc && bc.PromptText == "动态模拟")
+                {
+                    simulate = bc;
+                }
+                else if (child is BoolControl lbc && lbc.PromptText == "循环播放")
+                {
+                    loop = lbc;
+                }
+            }
+            if (simulate is null)
+            {
+                return;
+            }
+            void UpdateState()
+            {
+                bool sim = simulate.Choice;
+                if (anime is not null)
+                {
+                    // 动态模拟开启时禁用动画下拉；禁用仅阻止操作，不改变选中值
+                    anime.IsEnabled = !sim;
+                }
+                if (loop is not null)
+                {
+                    // 动态模拟开启时禁用循环开关并强制为开启
+                    loop.IsEnabled = !sim;
+                    if (sim && !loop.Choice)
+                    {
+                        loop.Choice = true;
+                    }
+                }
+            }
+            UpdateState();
+            simulate.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(BoolControl.Choice))
+                {
+                    UpdateState();
+                }
+            };
         }
 
         private void OnPetControlChanged(PetInstance pet)
@@ -1266,7 +1324,8 @@ namespace GflChibiDesktop2
                 {
                     throw new FileNotFoundException("未找到模型文件：" + atlas);
                 }
-                return new ProcessManager(exe, AppDir, $"--model \"{atlas}\" --name \"{pet.Name}\"",
+                // legacy 实例的工作目录用 pet.WorkDir（实例各自独立），避免多实例同时写 app/out.log 冲突
+                return new ProcessManager(exe, pet.WorkDir, $"--model \"{atlas}\" --name \"{pet.Name}\"",
                     () => Dispatcher.BeginInvoke(() => { if (pet.Manager is not null) ReadIpc(pet.Manager, pet); }));
             }
             return new ProcessManager(

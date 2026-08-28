@@ -13,7 +13,7 @@
         </Grid.ColumnDefinitions>
         <Border BorderBrush="{DynamicResource SecondaryBorderBrush}" BorderThickness="0, 1, 0, 0" Grid.ColumnSpan="2"/>
         <Label x:Name="PromptTextBox" Content="{Binding Path=PromptText}" Margin="10,3,4,0" VerticalAlignment="Top" Background="{x:Null}" BorderThickness="0" Padding="0,0,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Right"/>
-        <ComboBox Margin="0,3,10,0" ItemsSource="{Binding Path=Items}" SelectedIndex="{Binding Path=SelectedIndex, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Grid.Column="1" MinHeight="24"/>
+        <ComboBox Margin="0,3,10,0" ItemsSource="{Binding Path=Items}" SelectedIndex="{Binding Path=SelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Grid.Column="1" MinHeight="24"/>
         <Label x:Name="HintTextBox" Content="{Binding Path=HintText}" VerticalAlignment="Bottom"  Foreground="{StaticResource SecondaryTextBrush}" Grid.ColumnSpan="2" Background="{x:Null}" BorderThickness="0" Padding="0" VerticalContentAlignment="Bottom" HorizontalContentAlignment="Center" HorizontalAlignment="Stretch" Margin="10,0,10,4"/>
     </Grid>
 </UserControl>

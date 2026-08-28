@@ -139,7 +139,8 @@ public class Player_2_1_25 : IPlayer
         App.graphicsDevice.Clear(Color.Transparent);
 
         Player.DrawBG(ref App.spriteBatch);
-        App.globalValues.TimeScale = (float)App.globalValues.Speed / 30f;
+        // 动画速度与“帧率”设置解耦：帧率（Speed）只控制渲染帧率，动画恒为正常速度
+        App.globalValues.TimeScale = 1f;
 
         state.Update((float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000f);
 

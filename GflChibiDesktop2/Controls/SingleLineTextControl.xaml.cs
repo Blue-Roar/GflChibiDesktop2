@@ -103,6 +103,5 @@ namespace GflChibiDesktop2
                 }
                 changed = false;
             }
-        }
-    }
+        }    }
 }
