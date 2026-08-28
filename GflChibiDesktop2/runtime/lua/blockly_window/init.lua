@@ -137,9 +137,9 @@ M.ulwUpdate = function()
         ulwErrCount = ulwErrCount + 1
         log("[window] ulw UpdateLayeredWindow failed, GetLastError=" .. tostring(user32.GetLastError()) .. "\n")
     end
-    -- 周期性打印 alpha 统计（约每 10 秒@60fps）：帮助判断该环境渲染纹理是否带 alpha 通道
+    -- 打印 alpha 统计：前 5 帧（启动即诊断该环境渲染纹理是否带 alpha）与之后每 600 帧（约 10 秒）
     ulwFrameCount = ulwFrameCount + 1
-    if ulwFrameCount % 600 == 0 then
+    if ulwFrameCount <= 5 or ulwFrameCount % 600 == 0 then
         log("[window] ulw alpha stats frame=" .. ulwFrameCount .. " alphaMin=" .. ulwAlphaMin .. " alphaMax=" .. ulwAlphaMax .. "\n")
     end
 end

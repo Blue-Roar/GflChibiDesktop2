@@ -1,0 +1,18 @@
+<Window x:Class="GflChibiDesktop.PetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GflChibiDesktop"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        mc:Ignorable="d"
+        Title="GflChibiDesktop" FocusVisualStyle="{x:Null}" WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize" WindowStyle="None" Background="{x:Null}" AllowsTransparency="True"
+        ShowInTaskbar="False" Topmost="True" SnapsToDevicePixels="True"
+        hc:WindowAttach.IgnoreAltF4="True" hc:WindowAttach.ShowInTaskManager="False">
+    <Grid x:Name="GridPlayer" Width="{Binding Width, ElementName=Player, Mode=OneWay}" Height="{Binding Height, ElementName=Player, Mode=OneWay}"
+          MouseMove="GridPlayer_MouseMove" Cursor="SizeAll">
+        <ContentControl x:Name="Player" Width="448" Height="448" HorizontalAlignment="Left" VerticalAlignment="Top"
+                        UseLayoutRounding="True" RenderOptions.BitmapScalingMode="HighQuality" />
+    </Grid>
+</Window>

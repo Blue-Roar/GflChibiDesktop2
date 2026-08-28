@@ -12,9 +12,9 @@
     <AssemblyTitle>少女前线桌面Q宠</AssemblyTitle>
     <Description>少女前线桌面Q宠</Description>
     <Copyright>© 2020~2026 BrightSu</Copyright>
-    <AssemblyVersion>2.1.3.6</AssemblyVersion>
-    <FileVersion>2.1.3.6</FileVersion>
-    <InformationalVersion>20260825</InformationalVersion>
+    <AssemblyVersion>2.1.4.0</AssemblyVersion>
+    <FileVersion>2.1.4.0</FileVersion>
+    <InformationalVersion>20260828</InformationalVersion>
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <PackageProjectUrl>https://projects.brightsu.cn/GflChibiDesktop/V2/</PackageProjectUrl>
     <ApplicationIcon>hk416_happy.ico</ApplicationIcon>
@@ -32,6 +32,18 @@
     <PackageReference Include="HandyControl" Version="3.5.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
+
+  <!-- 保证备用渲染模块（V1 模式）先于本程序构建，随后整目录拷入输出根目录（与主程序共享 HandyControl 等同名 DLL） -->
+  <ItemGroup>
+    <ProjectReference Include="..\GflChibiDesktopLegacy\GflChibiDesktopLegacy.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Target Name="CopyLegacyModuleToOutput" AfterTargets="Build">
+    <ItemGroup>
+      <LegacyFiles Include="$(MSBuildProjectDirectory)\..\GflChibiDesktopLegacy\bin\$(Configuration)\net6.0-windows\win-x64\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(LegacyFiles)" DestinationFiles="@(LegacyFiles->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
 
   <ItemGroup>
     <Resource Include="hk416_happy.ico" />

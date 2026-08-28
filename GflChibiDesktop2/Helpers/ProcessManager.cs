@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -74,7 +75,38 @@ namespace GflChibiDesktop2
 
         public void TryCloseWindow()
         {
-            process.CloseMainWindow();
+            // CloseMainWindow 对无边框/透明窗口（如 legacy 渲染模块的 WPF 透明窗口）
+            // 可能因 MainWindowHandle 检测不到而失败，此时改用 Win32 向该进程的全部窗口
+            // 发送 WM_CLOSE，实现优雅关闭，避免落入 ForceCloseWindow（强制 Kill）。
+            if (!process.CloseMainWindow())
+            {
+                CloseWindowsByWin32(process.Id);
+            }
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        private const uint WM_CLOSE = 0x0010;
+
+        /// <summary>向指定进程的全部顶层窗口发送 WM_CLOSE。</summary>
+        private static void CloseWindowsByWin32(int pid)
+        {
+            EnumWindows((hWnd, lParam) =>
+            {
+                GetWindowThreadProcessId(hWnd, out uint windowPid);
+                if (windowPid == pid)
+                {
+                    SendMessage(hWnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+                }
+                return true;
+            }, IntPtr.Zero);
         }
 
         public void ForceCloseWindow()

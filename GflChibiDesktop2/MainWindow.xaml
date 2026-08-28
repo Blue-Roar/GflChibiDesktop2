@@ -30,7 +30,11 @@
                         <MenuItem Header="禁用全局提示(不建议)(_A)" IsCheckable="True" IsChecked="{Binding SuppressGlobalGrowl}"/>-->
                     </MenuItem>
                     <MenuItem Header="使用系统窗口样式(_B)" IsCheckable="True" IsChecked="{Binding DisableCustomWindowChrome}"/>
-                    <MenuItem Header="透明兼容模式(_U)" IsCheckable="True" IsChecked="{Binding UseUlwTransparency}" ToolTip="部分系统下本应透明的桌宠窗口会显示黑色背景，开启兼容模式或许可以解决；切换后需重启桌宠实例生效"/>
+                    <MenuItem Header="运行模块(_R)">
+                        <MenuItem x:Name="miModuleNew" Header="新版(luajit)" IsCheckable="True" Click="ModuleSelect_Click"/>
+                        <MenuItem x:Name="miModuleLegacy" Header="旧版(legacy)" IsCheckable="True" Click="ModuleSelect_Click"/>
+                    </MenuItem>
+                    <MenuItem Header="透明兼容模式(_U)" IsCheckable="True" IsChecked="{Binding UseUlwTransparency}" Visibility="{Binding UseLegacyModule, Converter={StaticResource runningStatusConverter}, ConverterParameter=Visible/Collapsed}" ToolTip="部分系统下本应透明的桌宠窗口会显示黑色背景，开启兼容模式或许可以解决；切换后需重启桌宠实例生效"/>
                     <Separator/>
                     <MenuItem Click="menuItemAbout_Click" Header="关于(_A)"/>
                     <Separator/>

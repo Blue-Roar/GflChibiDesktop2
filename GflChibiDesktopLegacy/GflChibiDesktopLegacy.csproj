@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>GflChibiDesktopLegacy</RootNamespace>
+    <AssemblyName>GflChibiDesktopLegacy</AssemblyName>
+    <StartupObject>GflChibiDesktop.App</StartupObject>
+    <ApplicationIcon>hk416_happy.ico</ApplicationIcon>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <Platforms>AnyCPU</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+    <NoWarn>$(NoWarn);SYSLIB0014;CA1416</NoWarn>
+    <AssemblyTitle>少女前线桌面Q宠（备用渲染模块）</AssemblyTitle>
+    <Description>少女前线桌面Q宠（V1 备用运行模块）</Description>
+    <Company>BrightSu</Company>
+    <Product>GflChibiDesktopLegacy</Product>
+    <Copyright>© 2020~2026 BrightSu</Copyright>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HandyControl" Version="3.5.1" />
+    <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.1.303" />
+  </ItemGroup>
+
+  <!-- 渲染核心（MonoGame/PublicFunction/spine-runtimes）已复制到本项目内，自包含，不依赖 V1 仓库 -->
+  <ItemGroup>
+    <Resource Include="hk416_happy.ico" />
+  </ItemGroup>
+
+  <!-- huMessageQueue.dll 由 Ipc.cs 通过 P/Invoke 加载，必须与程序同目录 -->
+  <ItemGroup>
+    <None Include="huMessageQueue.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

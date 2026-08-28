@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -110,6 +111,7 @@ namespace GflChibiDesktop2
                 WindowStyle = WindowStyle.SingleBorderWindow;
             }
             EnsureLuajitGpuPreference();
+            UpdateModuleMenu();
             playGeometry = (System.Windows.Media.Geometry)FindResource("PlayGeometry");
             pauseGeometry = (System.Windows.Media.Geometry)FindResource("PauseGeometry");
             closeGeometry = (System.Windows.Media.Geometry)FindResource("CloseGeometry");
@@ -452,11 +454,7 @@ namespace GflChibiDesktop2
             {
                 PetInstance pet = PetInstance.Create(GetNextPetId(), model);
                 ProcessManager? pm = null;
-                pm = new ProcessManager(
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
-                    pet.WorkDir,
-                    "main.lua",
-                    () => Dispatcher.BeginInvoke(() => { if (pm is not null) ReadIpc(pm, pet); }));
+                pm = StartPetProcess(pet);
                 pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
                 pet.Manager = pm;
                 pets.Add(pet);
@@ -495,11 +493,7 @@ namespace GflChibiDesktop2
             pet.Panel.Children.Clear();
             pet.IsChanged = false;
             ProcessManager? pm = null;
-            pm = new ProcessManager(
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
-                pet.WorkDir,
-                "main.lua",
-                () => Dispatcher.BeginInvoke(() => { if (pm is not null) ReadIpc(pm, pet); }));
+            pm = StartPetProcess(pet);
             pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
             pet.Manager = pm;
             pet.IsRestarting = false;
@@ -573,11 +567,7 @@ namespace GflChibiDesktop2
                 pet.Panel.Children.Clear();
                 pet.IsChanged = false;
                 ProcessManager? pm = null;
-                pm = new ProcessManager(
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
-                    pet.WorkDir,
-                    "main.lua",
-                    () => Dispatcher.BeginInvoke(() => { if (pm is not null) ReadIpc(pm, pet); }));
+                pm = StartPetProcess(pet);
                 pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
                 pet.Manager = pm;
                 pet.Panel.Visibility = Visibility.Visible;
@@ -679,11 +669,7 @@ namespace GflChibiDesktop2
                 pet.Panel.Children.Clear();
                 pet.IsChanged = false;
                 ProcessManager? pm = null;
-                pm = new ProcessManager(
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
-                    pet.WorkDir,
-                    "main.lua",
-                    () => Dispatcher.BeginInvoke(() => { if (pm is not null) ReadIpc(pm, pet); }));
+                pm = StartPetProcess(pet);
                 pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
                 pet.Manager = pm;
                 GrowlHelper.InfoGlobal($"桌宠“{pet.Name}”已自动重启。");
@@ -1024,6 +1010,25 @@ namespace GflChibiDesktop2
                                 pet.Panel.Children.Add(c);
                             }
                             break;
+                        case 5:
+                            {
+                                // 下拉选择（legacy 渲染模块的动画/皮肤等）
+                                ComboControl c = new(pet.Panel.Children.Count + 1);
+                                c.PromptText = reader.ReadString();
+                                c.HintText = reader.ReadString();
+                                int count = reader.ReadInt();
+                                var items = new System.Collections.Generic.List<string>();
+                                for (int i = 0; i < count; i++)
+                                {
+                                    items.Add(reader.ReadString());
+                                }
+                                c.Items = items;
+                                c.SelectedIndex = reader.ReadInt();
+                                c.PropertyChanged += (_, _) => OnPetControlChanged(pet);
+                                c.changed = false;
+                                pet.Panel.Children.Add(c);
+                            }
+                            break;
                     }
                 }
             }
@@ -1220,6 +1225,77 @@ namespace GflChibiDesktop2
         {
             ShowAbout();
         }
+
+        /// <summary>
+        /// 托盘菜单“运行模块”选择：切换新版(luajit)/旧版(legacy)渲染模块。
+        /// </summary>
+        private void ModuleSelect_Click(object sender, RoutedEventArgs e)
+        {
+            bool legacy = sender == miModuleLegacy;
+            if (context.UseLegacyModule == legacy)
+            {
+                return;
+            }
+            context.UseLegacyModule = legacy;
+            UpdateModuleMenu();
+            GrowlHelper.InfoGlobal(legacy
+                ? "已切换到旧版(legacy)渲染模块。\n请重启桌宠实例以生效。"
+                : "已切换到新版(luajit)渲染模块。\n请重启桌宠实例以生效。");
+        }
+
+        /// <summary>
+        /// 同步“运行模块”菜单勾选状态。
+        /// </summary>
+        private void UpdateModuleMenu()
+        {
+            bool legacy = Properties.Settings.Default.UseLegacyModule;
+            if (miModuleNew is not null) miModuleNew.IsChecked = !legacy;
+            if (miModuleLegacy is not null) miModuleLegacy.IsChecked = legacy;
+        }
+
+        /// <summary>
+        /// 按“运行模块”设置启动实例进程：新版用 luajit，旧版用 GflChibiDesktopLegacy.exe。
+        /// </summary>
+        private ProcessManager StartPetProcess(PetInstance pet)
+        {
+            if (Properties.Settings.Default.UseLegacyModule)
+            {
+                string exe = FindLegacyExe() ?? throw new FileNotFoundException("未找到备用渲染模块 GflChibiDesktopLegacy.exe。");
+                string? atlas = pet.Model?.AtlasFile is string af ? Path.Combine(AppDir, af.Replace('/', Path.DirectorySeparatorChar)) : null;
+                if (atlas is null || !File.Exists(atlas))
+                {
+                    throw new FileNotFoundException("未找到模型文件：" + atlas);
+                }
+                return new ProcessManager(exe, AppDir, $"--model \"{atlas}\" --name \"{pet.Name}\"",
+                    () => Dispatcher.BeginInvoke(() => { if (pet.Manager is not null) ReadIpc(pet.Manager, pet); }));
+            }
+            return new ProcessManager(
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app/luajit.exe"),
+                pet.WorkDir,
+                "main.lua",
+                () => Dispatcher.BeginInvoke(() => { if (pet.Manager is not null) ReadIpc(pet.Manager, pet); }));
+        }
+
+        /// <summary>
+        /// 查找备用渲染模块 exe：优先发布形态（app 下），再回退到本解决方案的构建输出。
+        /// </summary>
+        private static string? FindLegacyExe()
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string[] candidates =
+            {
+                Path.Combine(baseDir, "app", "GflChibiDesktopLegacy", "GflChibiDesktopLegacy.exe"),
+                Path.Combine(baseDir, "app", "GflChibiDesktopLegacy.exe"),
+                Path.Combine(baseDir, "GflChibiDesktopLegacy.exe"),
+                Path.Combine(baseDir, "..", "..", "..", "GflChibiDesktopLegacy", "bin", "Debug", "net6.0-windows", "win-x64", "GflChibiDesktopLegacy.exe"),
+                Path.Combine(baseDir, "..", "..", "..", "GflChibiDesktopLegacy", "bin", "Release", "net6.0-windows", "win-x64", "GflChibiDesktopLegacy.exe"),
+            };
+            foreach (string c in candidates)
+            {
+                if (File.Exists(c)) return Path.GetFullPath(c);
+            }
+            return null;
+        }
     }
 
     class MainWindowDataContext : INotifyPropertyChanged
@@ -1400,6 +1476,20 @@ namespace GflChibiDesktop2
                 catch
                 {
                 }
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 运行模块：true=旧版(legacy)；false=新版(luajit)。切换后需重启实例生效。
+        /// </summary>
+        public bool UseLegacyModule
+        {
+            get => Settings.Default.UseLegacyModule;
+            set
+            {
+                Settings.Default.UseLegacyModule = value;
+                Settings.Default.Save();
                 OnPropertyChanged();
             }
         }
