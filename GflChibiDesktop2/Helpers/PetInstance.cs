@@ -90,6 +90,20 @@ namespace GflChibiDesktop2
             catch
             {
             }
+            // 备份已计算的 model.conf.json 画布尺寸（首次启动由 luajit 计算并写回，之后保留，
+            // 避免每次启动重算包围盒导致卡顿；模型变更时下方按模型路径判断是否沿用）
+            string savedModelConf = null;
+            string modelConfFile = Path.Combine(workDir, "assets", "model.conf.json");
+            try
+            {
+                if (File.Exists(modelConfFile))
+                {
+                    savedModelConf = File.ReadAllText(modelConfFile);
+                }
+            }
+            catch
+            {
+            }
             // 备份 legacy 渲染模块保存的窗口位置
             string savedLegacyPosition = null;
             string legacyPositionFile = Path.Combine(workDir, "legacy_position.json");
@@ -138,8 +152,22 @@ namespace GflChibiDesktop2
             // 实例配置
             string name = model.DisplayName;
             File.WriteAllText(Path.Combine(assetsDir, "name.txt"), model.DisplayName);
-            File.WriteAllText(Path.Combine(assetsDir, "model.conf.json"),
-                "{\"skeleton\":\"" + model.SkeletonFile + "\",\"type\":\"skel\",\"atlas\":\"" + model.AtlasFile + "\",\"h\":448,\"w\":448,\"x\":224,\"y\":224}");
+            // 优先沿用已计算的 model.conf.json（含画布尺寸），避免每次启动重算包围盒；
+            // 仅当备份缺失、模型已变更（骨架路径不同）、或仍是旧版硬编码 448 占位尺寸时才重新计算。
+            // 旧版占位格式为 C# 精确拼接（luajit 写回时字段顺序/格式不同，不会误匹配）
+            string stalePlaceholder = "{\"skeleton\":\"" + model.SkeletonFile + "\",\"type\":\"skel\",\"atlas\":\"" + model.AtlasFile + "\",\"h\":448,\"w\":448,\"x\":224,\"y\":224}";
+            bool useSaved = !string.IsNullOrEmpty(savedModelConf)
+                && savedModelConf != stalePlaceholder
+                && savedModelConf.Contains("\"" + model.SkeletonFile + "\"", StringComparison.Ordinal);
+            if (useSaved)
+            {
+                File.WriteAllText(Path.Combine(assetsDir, "model.conf.json"), savedModelConf);
+            }
+            else
+            {
+                File.WriteAllText(Path.Combine(assetsDir, "model.conf.json"),
+                    "{\"skeleton\":\"" + model.SkeletonFile + "\",\"type\":\"skel\",\"atlas\":\"" + model.AtlasFile + "\"}");
+            }
 
             // 音频等共享配置
             foreach (string f in new[] { "audio.conf.json", "pet.conf.json" })
@@ -195,8 +223,9 @@ namespace GflChibiDesktop2
             string assetsDir = Path.Combine(WorkDir, "assets");
             Directory.CreateDirectory(assetsDir);
             File.WriteAllText(Path.Combine(assetsDir, "name.txt"), model.DisplayName);
+            // 模型变更：不写尺寸字段，由 luajit 首次启动计算画布尺寸并写回
             File.WriteAllText(Path.Combine(assetsDir, "model.conf.json"),
-                "{\"skeleton\":\"" + model.SkeletonFile + "\",\"type\":\"skel\",\"atlas\":\"" + model.AtlasFile + "\",\"h\":448,\"w\":448,\"x\":224,\"y\":224}");
+                "{\"skeleton\":\"" + model.SkeletonFile + "\",\"type\":\"skel\",\"atlas\":\"" + model.AtlasFile + "\"}");
         }
 
         /// <summary>

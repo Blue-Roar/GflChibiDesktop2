@@ -53,16 +53,23 @@ _M.create = function (p, modelConfig)
     local animationStateData = sp.spAnimationStateData_create(skeletonData)
     local animationState = sp.spAnimationState_create(animationStateData)
 
+    -- 画布尺寸：仅当配置缺失（首次启动/模型变更）时计算实际动画包围盒并写回。
+    -- 之后 C# 端会沿用已计算的值，避免每次启动重算包围盒导致卡顿。
+    -- 部分模型（如完整立绘）动画范围超出默认 448 画布会被裁切，按实际包围盒向外扩展。
     if modelConfig.x == nil or modelConfig.y == nil or modelConfig.w == nil or modelConfig.h == nil then
         local r = calcWindowSize(ffi, sp, animationState, animationStateData, skeleton)
         if r.x * 2 < r.width then
             r.x = r.width - r.x
             r.width = r.x * 2
         end
-        modelConfig.x = r.x
-        modelConfig.y = r.y
-        modelConfig.w = r.width
-        modelConfig.h = r.height
+        local cw = modelConfig.w or 0
+        local ch = modelConfig.h or 0
+        local nw = math.max(cw, r.width)
+        local nh = math.max(ch, r.height)
+        modelConfig.x = (nw - r.width) / 2 + r.x
+        modelConfig.y = (nh - r.height) / 2 + r.y
+        modelConfig.w = nw
+        modelConfig.h = nh
         if modelConfig.save ~= nil then modelConfig:save() end
     end
 
