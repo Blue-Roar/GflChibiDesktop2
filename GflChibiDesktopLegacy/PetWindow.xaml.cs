@@ -389,7 +389,7 @@ namespace GflChibiDesktop
                 App.globalValues.Simulation = true;
                 timerEventsSimulation.Start();
                 timerEventsSimulation_Tick(this, EventArgs.Empty);
-                App.globalValues.Speed = 30;
+                App.globalValues.Speed = 0;
             }
             else
             {

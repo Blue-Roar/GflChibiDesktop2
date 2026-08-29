@@ -71,7 +71,7 @@ namespace GflChibiDesktop
             App.globalValues.PreMultiplyAlpha = true;
             App.globalValues.IsLoop = true;
             App.globalValues.Scale = 1;
-            App.globalValues.Speed = 60;
+            App.globalValues.Speed = 0;
             App.globalValues.Opacity = 1;
         }
     }

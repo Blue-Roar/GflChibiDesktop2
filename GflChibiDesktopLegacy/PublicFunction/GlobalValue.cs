@@ -16,7 +16,7 @@ public class GlobalValue : INotifyPropertyChanged
     private List<string> _SkinList;
     private float _Scale;
     private double _ViewScale;
-    private int _Speed = 60;
+    private int _Speed = 0;
     private float _PosX = 0;
     private float _PosY = 0;
     private float _PosBGX = 0;

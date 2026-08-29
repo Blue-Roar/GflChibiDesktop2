@@ -85,6 +85,33 @@ namespace GflChibiDesktop2
             }
         }
 
+        private void CheckLegacyModules()
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            bool glExists = File.Exists(Path.Combine(baseDir, "app", "LegacyGL", "GflChibiDesktopLegacyGL.exe"));
+            bool dxExists = File.Exists(Path.Combine(baseDir, "app", "LegacyDX", "GflChibiDesktopLegacyDX.exe"));
+
+            if (!glExists && !dxExists)
+            {
+                Settings.Default.EnableLegacy = false;
+                Settings.Default.UseLegacyModule = false;
+                Settings.Default.DisableNew = false;
+            }
+            else
+            {
+                if (!glExists && dxExists)
+                {
+                    Settings.Default.UseOpenGL = false;
+                }
+                if (glExists && !dxExists)
+                {
+                    Settings.Default.UseOpenGL = true;
+                }
+            }
+            Settings.Default.Save();
+            EnableLegacy = Settings.Default.EnableLegacy;
+        }
+
         private PetInstance? SelectedPet => (PetTabs.SelectedItem as TabItem)?.Tag as PetInstance;
 
         /// <summary>
@@ -112,6 +139,7 @@ namespace GflChibiDesktop2
                 WindowStyle = WindowStyle.SingleBorderWindow;
             }
             EnsureLuajitGpuPreference();
+            CheckLegacyModules();
             playGeometry = (System.Windows.Media.Geometry)FindResource("PlayGeometry");
             pauseGeometry = (System.Windows.Media.Geometry)FindResource("PauseGeometry");
             closeGeometry = (System.Windows.Media.Geometry)FindResource("CloseGeometry");
@@ -825,6 +853,7 @@ namespace GflChibiDesktop2
         /// </summary>
         public void ApplyLegacyEnableState()
         {
+            CheckLegacyModules();
             bool show = Properties.Settings.Default.EnableLegacy && !Properties.Settings.Default.DisableNew;
             foreach (PetInstance pet in pets)
             {

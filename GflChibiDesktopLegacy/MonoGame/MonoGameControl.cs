@@ -117,7 +117,7 @@ namespace GflChibiDesktop
                 return;
 
             TimeSpan now = _frameClock.Elapsed;
-            // 渲染帧率由“帧率”设置（Speed）控制，默认 60；0 为不限制；动画速度不受影响
+            // 渲染帧率由“帧率”设置（Speed）控制，默认 0（不限制）；动画速度不受影响
             double fps = App.globalValues.Speed;
             if (fps > 0)
             {
