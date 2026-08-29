@@ -19,8 +19,8 @@
                 <hc:TextBox x:Name="txt_description" Padding="0" Background="{x:Null}" IsReadOnly="True" Text="版本更新内容信息&#xA;1&#xA;2&#xA;3&#xA;4&#xD;&#xA;5&#xA;6&#xA;7&#xA;8&#xA;9&#xD;&#xA;10" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextWrapping="Wrap" Margin="10,50,10,10" VerticalContentAlignment="Top" />
             </Grid>
         </Border>
-        <Label Content="此程序仅供个人学习研究与交流用，严禁用于商业用途。&#xD;&#xA;作者不对因使用此程序而产生的各种后果承担任何责任。" Width="300" Height="33" VerticalContentAlignment="Top" Background="{x:Null}" HorizontalContentAlignment="Center" BorderThickness="0" Padding="0" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,0,0,30" />
-        <Label x:Name="lblCopyright" Content="© 2020~2026 BrightSu  / 由 HuiDesktop 驱动" Width="300" Height="19" VerticalContentAlignment="Top" Background="{x:Null}" BorderThickness="0" Padding="0" VerticalAlignment="Bottom" Margin="10,0,0,10" HorizontalAlignment="Left" />
+        <Label Content="此程序仅供个人学习研究与交流用，严禁用于商业用途。&#xD;&#xA;作者不对因使用此程序而产生的各种后果承担任何责任。" Height="32" VerticalContentAlignment="Top" Background="{x:Null}" HorizontalContentAlignment="Center" BorderThickness="0" Padding="0" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Margin="10,0,200,30" />
+        <Label x:Name="lblCopyright" Content="© 2020~2026 BrightSu  / 由 HuiDesktop 驱动" Height="18" VerticalContentAlignment="Center" Background="{x:Null}" BorderThickness="0" Padding="0" VerticalAlignment="Bottom" Margin="10,0,200,10" HorizontalAlignment="Stretch" />
 
         <Label Foreground="{DynamicResource PrimaryTextBrush}" Background="Transparent" BorderThickness="0" Padding="0" Width="175" Content="开发者信息" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,40,10,0" FontSize="{StaticResource SubHeadFontSize}" Height="24"/>
         <Button x:Name="btn_BrightSu" Height="56" Width="175" Padding="10,5,5,5" Click="btn_BrightSu_Click" HorizontalAlignment="Right" Cursor="Hand" VerticalAlignment="Top" Margin="0,70,10,0" HorizontalContentAlignment="Left">

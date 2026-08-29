@@ -16,16 +16,36 @@
         <hc:NotifyIcon x:Name="notifyIcon" Text="{Binding Title, ElementName=window}" Visibility="Visible" Icon="/hk416_happy.ico" MouseDoubleClick="notifyIcon_MouseDoubleClick">
             <hc:NotifyIcon.ContextMenu>
                 <ContextMenu x:Name="trayMenu">
-                    <MenuItem Command="hc:ControlCommands.PushMainWindow2Top" Header="显示主窗口(_S)" Click="notifyIcon_MouseDoubleClick"/>
+                    <MenuItem Command="hc:ControlCommands.PushMainWindow2Top" Header="显示主窗口(_S)" Click="notifyIcon_MouseDoubleClick">
+                        <MenuItem.Icon>
+                            <Image Source="/hk416_happy.ico" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <Separator/>
-                    <MenuItem Click="DataManager" Header="人形数据配置(_D)"/>
+                    <MenuItem Click="DataManager" Header="人形数据配置(_D)">
+                        <MenuItem.Icon>
+                            <Path Data="{StaticResource FileImportGeometry}" Stretch="Uniform" Fill="{DynamicResource PrimaryTextBrush}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <!-- <MenuItem Header="开机自启(_B)" IsCheckable="True" IsChecked="{Binding IsAutoRun}"/> -->
                     <!-- <MenuItem Header="离线模式(_O)" IsCheckable="True" IsChecked="{Binding ForceOfflineMode}"/> -->
-                    <MenuItem Click="ShowSettings_Click" Header="首选项(_P)"/>
+                    <MenuItem Click="ShowSettings_Click" Header="首选项(_P)">
+                        <MenuItem.Icon>
+                            <Path Data="{StaticResource GearsGeometry}" Stretch="Uniform" Fill="{DynamicResource PrimaryTextBrush}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <Separator/>
-                    <MenuItem Click="menuItemAbout_Click" Header="关于(_A)"/>
+                    <MenuItem Click="menuItemAbout_Click" Header="关于(_A)">
+                        <MenuItem.Icon>
+                            <Path Data="{StaticResource InfoGeometry}" Stretch="Uniform" Fill="{DynamicResource PrimaryTextBrush}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <Separator/>
-                    <MenuItem Click="ExitApplication" Header="退出(_E)"/>
+                    <MenuItem Click="ExitApplication" Header="退出(_E)">
+                        <MenuItem.Icon>
+                            <Path Data="{StaticResource CloseGeometry}" Stretch="Uniform" Fill="{DynamicResource PrimaryTextBrush}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                 </ContextMenu>
             </hc:NotifyIcon.ContextMenu>
         </hc:NotifyIcon>
@@ -51,7 +71,7 @@
             <Grid Grid.Row="3">
                 <Button x:Name="btnSaveConfig" Content="保存配置(_S)" Style="{DynamicResource ButtonDashedPrimary}"  hc:IconElement.Geometry="{StaticResource SaveGeometry}" HorizontalAlignment="Left" Margin="10,0,0,0" Width="100" IsEnabled="{Binding IsChanged}" Click="SaveConfig" Padding="5"/>
                 <Button x:Name="btnDiscardConfig" Content="放弃更改(_Q)" Style="{DynamicResource ButtonDashedDanger}" hc:IconElement.Geometry="{StaticResource DeleteGeometry}" HorizontalAlignment="Left" Margin="120,0,0,0" Width="100" IsEnabled="{Binding IsChanged}" Click="DiscardConfigChange" Padding="5"/>
-                <Button Content="人形数据配置(_D)" hc:IconElement.Geometry="{StaticResource GearsGeometry}" HorizontalAlignment="Right" Padding="5" Width="130" Click="DataManager" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <Button Content="人形数据配置(_D)" hc:IconElement.Geometry="{StaticResource FileImportGeometry}" HorizontalAlignment="Right" Padding="5" Width="130" Click="DataManager" VerticalAlignment="Center" Margin="0,0,10,0"/>
             </Grid>
         </Grid>
     </Grid>

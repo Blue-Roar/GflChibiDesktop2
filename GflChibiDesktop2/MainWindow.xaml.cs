@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -125,7 +126,7 @@ namespace GflChibiDesktop2
                 try
                 {
                     bool StartupPost = false;
-                    string StartupStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/startup", $"version={productVersion}&build={currentBuild}", Encoding.UTF8, ref StartupPost);
+                    string StartupStr = HttpRequestHelper.PostWebRequest("https://api.brightsu.cn/GflChibiDesktop2/startup", $"version={productVersion}&build={currentBuild}&os={RuntimeInformation.OSDescription}/{RuntimeInformation.RuntimeIdentifier}/{RuntimeInformation.FrameworkDescription}", Encoding.UTF8, ref StartupPost);
                     if (StartupPost)
                     {
                         StartupRoot? rt = JsonConvert.DeserializeObject<StartupRoot>(StartupStr);

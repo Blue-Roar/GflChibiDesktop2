@@ -65,7 +65,7 @@
                             <TextBlock VerticalAlignment="Center">MonoGame 旧版桌宠设置</TextBlock>
                         </StackPanel>
                     </hc:Divider>
-                    <Label x:Name="lblLegacy404" Margin="5" Style="{DynamicResource LabelWarning.Small}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Height="36">
+                    <Label x:Name="lblLegacy404" Margin="5" Style="{DynamicResource LabelDanger.Small}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Height="36">
                         <StackPanel>
                             <TextBlock HorizontalAlignment="Center">未安装旧版桌宠运行时</TextBlock>
                             <TextBlock HorizontalAlignment="Center">请前往项目页面下载增量包或使用完整包覆盖</TextBlock>
@@ -171,8 +171,10 @@
                 </StackPanel>
             </TabItem>
         </TabControl>
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10" VerticalAlignment="Bottom">
-            <Button Content="关闭" Width="80" Click="btnOK_Click"/>
-        </StackPanel>
+        <Grid Grid.Row="1" Margin="10" VerticalAlignment="Bottom">
+            <Label Content="设置立即生效" Foreground="{DynamicResource DangerBrush}" Background="{x:Null}" BorderThickness="0" Padding="0" VerticalAlignment="Center" HorizontalAlignment="Left" />
+
+            <Button Content="关闭" Width="80" Click="btnOK_Click" HorizontalAlignment="Right"/>
+        </Grid>
     </Grid>
 </hc:Window>
