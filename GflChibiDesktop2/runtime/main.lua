@@ -29,12 +29,12 @@ local enterState = function(name)
     state = name
     enterStateThen[name]()
 end
-local simStopMove -- 供 drag 块在拖动时中止宿舍模拟动作（由 walk 块赋值）
+local simStopMove -- 供 drag 块在拖动时中止动态模拟动作（由 walk 块赋值）
 
 -- 加载设置
 local settings = settingsMan.load("settings.json", true)
 settings:default({ walk = true, drag = true, startDistance = 500, stopDistance = 200, scale = 100, drop = true, transparency = 255, autoHide = true, idleMotion = 1, simulateDorm = false, simulateInterval = 30, moveFlip = false })
--- 互斥保证：跟随鼠标与宿舍模拟不能同时启用
+-- 互斥保证：跟随鼠标与动态模拟不能同时启用
 if settings.walk and settings.simulateDorm then
     settings.simulateDorm = false
 end
@@ -120,7 +120,7 @@ end
         model.loop("move")
     end
 
-    -- 宿舍模拟（参考旧版 toggleSimulation：定时随机 走动/坐下/躺下/站立）
+    -- 动态模拟（参考旧版 toggleSimulation：定时随机 走动/坐下/躺下/站立/攻击/技能/胜利 等）
     -- 声明先于"跟随鼠标"面板项，供其互斥逻辑引用
     local simTimer = 0
     local simMoving = false
@@ -130,6 +130,8 @@ end
     local simTraveled = 0
     local SIM_MOVE_SPEED = 80 -- 走动速度（像素/秒）
     local workArea = win32.getWorkArea()
+    local simChain = nil      -- 一次性动作结束后的接续动作（如 s→attack2、reload→attack2、victory→victoryloop）
+    local simChainTime = 0    -- 接续倒计时（秒）
 
     local function simStartMove()
         simDir = math.random(2) == 1 and 1 or -1
@@ -147,24 +149,148 @@ end
         simRemain = 0
         simTraveled = 0
         simTimer = 0
+        simChain = nil
+        simChainTime = 0
         enterState("idle")
     end
 
+    local function simAnimDuration(name)
+        local anim = model.findAnimation(name)
+        if anim == nil then return 1 end
+        local d = tonumber(anim.duration)
+        if d == nil or d <= 0 then d = 1 end
+        return d
+    end
+
+    -- 一次性动作：播完后自动接续 follow（参考旧版 s→attack2、reload→attack2、victory→victoryloop）
+    local function simPlayOnce(name, follow)
+        if model.findAnimation(name) == nil then return false end
+        model.once(name)
+        simChain = follow
+        simChainTime = simAnimDuration(name)
+        return true
+    end
+
+    local function simActWait()
+        if model.findAnimation("wait") ~= nil then
+            simChain = nil
+            model.loop("wait")
+        end
+    end
+
+    local function simActAttack()
+        if model.findAnimation("attack") ~= nil then
+            simChain = nil
+            model.loop("attack")
+        else
+            simActWait()
+        end
+    end
+
+    local function simActAttack2()
+        if model.findAnimation("attack2") ~= nil then
+            simChain = nil
+            model.loop("attack2")
+        else
+            simActAttack()
+        end
+    end
+
+    local function simActSkill()
+        if model.findAnimation("skill") ~= nil then
+            simChain = nil
+            model.loop("skill")
+        else
+            simActAttack()
+        end
+    end
+
+    local function simActS()
+        if not simPlayOnce("s", "attack2") then simActAttack() end
+    end
+
+    local function simActReload()
+        if not simPlayOnce("reload", "attack2") then simActAttack2() end
+    end
+
+    local function simActDie()
+        if not simPlayOnce("die", nil) then simActWait() end
+    end
+
+    local function simActVictory()
+        if model.findAnimation("victory") ~= nil then
+            if model.findAnimation("victoryloop") ~= nil then
+                simPlayOnce("victory", "victoryloop")
+            else
+                simChain = nil
+                model.loop("victory")
+            end
+        else
+            simActWait()
+        end
+    end
+
+    local function simActSit()
+        if model.findAnimation("sit") ~= nil then
+            simChain = nil
+            model.loop("sit")
+        end
+    end
+
+    local function simActLying()
+        if model.findAnimation("lying") ~= nil then
+            simChain = nil
+            model.loop("lying")
+        end
+    end
+
     local function simAct()
-        local r = math.random(1, 10)
+        local r = math.random(1, 20)
         if r == 2 or r == 4 then
             simStartMove()
-        elseif r == 6 or r == 8 or r == 10 then
-            if model.findAnimation("lying") ~= nil then model.loop("lying") end
-        elseif r == 7 or r == 9 then
-            if model.findAnimation("sit") ~= nil then model.loop("sit") end
+        elseif r == 6 then
+            simActAttack()
+        elseif r == 7 then
+            simActVictory()
+        elseif r == 8 then
+            simActS()
+        elseif r == 9 then
+            simActSkill()
+        elseif r == 10 then
+            simActDie()
+        elseif r == 11 then
+            simActAttack2()
+        elseif r == 12 then
+            simActReload()
+        elseif r == 13 then
+            simActVictory()
+        elseif r == 15 or r == 18 then
+            simActSit()
+        elseif r == 16 or r == 19 then
+            simActLying()
         else
-            model.loop("wait")
+            simActWait()
         end
     end
 
     local function simTick()
         if not settings.simulateDorm then return end
+        -- 一次性动作接续：s/reload/victory 播完后进入接续动作（attack2/victoryloop）
+        if simChain ~= nil then
+            simChainTime = simChainTime - window.frameTime()
+            if simChainTime <= 0 then
+                local target = simChain
+                simChain = nil
+                if model.findAnimation(target) ~= nil then
+                    model.loop(target)
+                elseif target == "attack2" then
+                    simActAttack()
+                else
+                    simActWait()
+                end
+            end
+            return
+        end
         if simMoving then
             simTraveled = simTraveled + SIM_MOVE_SPEED * window.frameTime()
             if simTraveled >= simRemain then
@@ -196,10 +322,10 @@ end
     ev.on(window.after_draw, simTick)
 
     ipc.addPanelItem(
-        { type = "bool", prompt = "跟随鼠标", hint = "与鼠标距离太远会接近（与宿舍模拟互斥）" },
+        { type = "bool", prompt = "跟随鼠标", hint = "与鼠标距离太远会接近（与动态模拟互斥）" },
         function(v)
             settings.walk = v
-            -- 与宿舍模拟互斥：开启跟随鼠标时关闭宿舍模拟
+            -- 与动态模拟互斥：开启跟随鼠标时关闭动态模拟
             if v and settings.simulateDorm then
                 settings.simulateDorm = false
                 simStopMove()
@@ -209,10 +335,10 @@ end
         function() return settings.walk end)
 
     ipc.addPanelItem(
-        { type = "bool", prompt = "宿舍模拟", hint = "开启后小人会随机活动：走动、坐下、躺下（与跟随鼠标互斥）" },
+        { type = "bool", prompt = "动态模拟", hint = "开启后小人会随机活动（与跟随鼠标互斥）" },
         function(v)
             settings.simulateDorm = v
-            -- 与跟随鼠标互斥：开启宿舍模拟时关闭跟随鼠标
+            -- 与跟随鼠标互斥：开启动态模拟时关闭跟随鼠标
             if v and settings.walk then settings.walk = false end
             settings:save()
             if v then
@@ -226,7 +352,7 @@ end
         end,
         function() return settings.simulateDorm end)
     ipc.addPanelItem(
-        { type = "single", valueType = "number", prompt = "模拟间隔(秒)", hint = "宿舍模拟每隔多少秒随机切换一次动作", min = 1, max = 3600 },
+        { type = "single", valueType = "number", prompt = "模拟间隔(秒)", hint = "动态模拟每隔多少秒随机切换一次动作", min = 1, max = 3600 },
         function(v) settings.simulateInterval = v settings:save() end,
         function() return settings.simulateInterval end)
     ipc.addPanelItem(
@@ -249,7 +375,7 @@ local dragger = nil;
 (function()
     local updating = false
     dragger = dragmove.createWithWindowDefault {
-        -- walk 状态（宿舍模拟/跟随鼠标走动）也允许拖拽
+        -- walk 状态（动态模拟/跟随鼠标走动）也允许拖拽
         checkCanStart = function() return state == "idle" or state == "walk" or state == "drop" end,
         key = window.mouseButton.left,
         model = model
@@ -257,7 +383,7 @@ local dragger = nil;
 
     ev.on(window.after_draw, dragger.trigger) -- 拖拽响应
     ev.on(dragger.dragging, function()
-        -- 拖动开始：立即中止宿舍模拟动作（移动/计时）
+        -- 拖动开始：立即中止动态模拟动作（移动/计时）
         if simStopMove ~= nil then simStopMove() end
         enterState("drag")
     end)
@@ -313,7 +439,7 @@ end)();
 ipc.addPanelItem(
         { type = "button", prompt = "重置小人坐标", hint = "如屏幕里面找不到小人，请最小化所有窗口然后点击此按钮" },
         function()
-            -- 重置坐标同时中止宿舍模拟动作（移动/计时）
+            -- 重置坐标同时中止动态模拟动作（移动/计时）
             if simStopMove ~= nil then simStopMove() end
             window.setPosition(0, 0)
             settings:save()

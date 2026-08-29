@@ -179,7 +179,7 @@ namespace GflChibiDesktop
                 // 面板命令在后台线程读取，回调操作 App.globalValues/Topmost 等 UI 依赖，须派发到 UI 线程
                 Ipc = new LegacyIpc(LegacyArgs.ReadIpcName, LegacyArgs.WriteIpcName, a => Dispatcher.Invoke(a));
 
-                Ipc.AddReadonly(() => "少前桌宠V1重构版");
+                Ipc.AddReadonly(() => "少女前线桌面Q宠 MonoGame 运行模块");
                 Ipc.AddReadonly(() => Path.GetFileName(App.globalValues.SelectAtlasFile));
 
                 Ipc.AddCombo("动画", "选择当前播放的动画",
@@ -207,9 +207,9 @@ namespace GflChibiDesktop
                     () => (int)(App.globalValues.Opacity * 255),
                     v => App.globalValues.Opacity = v / 255.0, 0, 255);
 
-                Ipc.AddNumeric("帧率", "FPS",
+                Ipc.AddNumeric("帧率", "0 为不限制，1~240",
                     () => App.globalValues.Speed,
-                    v => App.globalValues.Speed = v, 1, 60);
+                    v => App.globalValues.Speed = v, 0, 240);
 
                 Ipc.AddNumeric("水平位置", "人形在画布上的水平坐标",
                     () => (int)App.globalValues.PosX,
