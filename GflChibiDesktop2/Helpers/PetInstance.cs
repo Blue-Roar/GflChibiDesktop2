@@ -17,6 +17,8 @@ namespace GflChibiDesktop2
         public TabItem? Tab { get; set; }
         public TextBlock? TabTitle { get; set; }
         public StackPanel Panel { get; } = new();
+        /// <summary>标签页顶部的实例级版本切换面板（全局禁用旧版时隐藏）。</summary>
+        public HandyControl.Controls.ButtonGroup? VersionPanel { get; set; }
         /// <summary>
         /// 暂停时显示在控制面板位置上的提示信息（默认隐藏）。
         /// </summary>
@@ -42,6 +44,11 @@ namespace GflChibiDesktop2
         /// 异常退出后的自动重启尝试次数。
         /// </summary>
         public int RestartAttempts { get; set; }
+        /// <summary>
+        /// 本实例使用的渲染模块：true=旧版(MonoGame)；false=新版(Raylib)。
+        /// 与全局设置分开，每个实例可独立选择；DWM/ULW 与 OpenGL/DirectX 跟随全局设置。
+        /// </summary>
+        public bool UseLegacyModule { get; set; }
 
         public PetInstance(int id, string name, string workDir)
         {
@@ -78,6 +85,19 @@ namespace GflChibiDesktop2
                 if (File.Exists(settingsFile))
                 {
                     savedSettings = File.ReadAllText(settingsFile);
+                }
+            }
+            catch
+            {
+            }
+            // 备份 legacy 渲染模块保存的窗口位置
+            string savedLegacyPosition = null;
+            string legacyPositionFile = Path.Combine(workDir, "legacy_position.json");
+            try
+            {
+                if (File.Exists(legacyPositionFile))
+                {
+                    savedLegacyPosition = File.ReadAllText(legacyPositionFile);
                 }
             }
             catch
@@ -148,6 +168,18 @@ namespace GflChibiDesktop2
             {
                 string srcSettings = Path.Combine(appDir, "settings.json");
                 if (File.Exists(srcSettings)) File.Copy(srcSettings, Path.Combine(workDir, "settings.json"), true);
+            }
+
+            // 恢复 legacy 渲染模块的窗口位置
+            if (!string.IsNullOrEmpty(savedLegacyPosition))
+            {
+                try
+                {
+                    File.WriteAllText(Path.Combine(workDir, "legacy_position.json"), savedLegacyPosition);
+                }
+                catch
+                {
+                }
             }
 
             return new PetInstance(id, name, workDir) { Model = model };

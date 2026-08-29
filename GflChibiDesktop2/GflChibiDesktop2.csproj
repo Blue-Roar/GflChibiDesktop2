@@ -12,9 +12,9 @@
     <AssemblyTitle>少女前线桌面Q宠</AssemblyTitle>
     <Description>少女前线桌面Q宠</Description>
     <Copyright>© 2020~2026 BrightSu</Copyright>
-    <AssemblyVersion>2.1.4.0</AssemblyVersion>
-    <FileVersion>2.1.4.0</FileVersion>
-    <InformationalVersion>20260828</InformationalVersion>
+    <AssemblyVersion>2.1.4.1</AssemblyVersion>
+    <FileVersion>2.1.4.1</FileVersion>
+    <InformationalVersion>20260829</InformationalVersion>
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <PackageProjectUrl>https://projects.brightsu.cn/GflChibiDesktop/V2/</PackageProjectUrl>
     <ApplicationIcon>hk416_happy.ico</ApplicationIcon>
@@ -41,7 +41,7 @@
 
   <Target Name="CopyLegacyModuleToOutput" AfterTargets="Build">
     <ItemGroup>
-      <LegacyDXFiles Include="$(MSBuildProjectDirectory)\..\GflChibiDesktopLegacy\bin\$(Configuration)\net6.0-windows\win-x64\**\*" />
+      <LegacyDXFiles Include="$(MSBuildProjectDirectory)\..\GflChibiDesktopLegacy\bin\LegacyDX\$(Configuration)\net6.0-windows\win-x64\**\*" />
       <LegacyGLFiles Include="$(MSBuildProjectDirectory)\..\GflChibiDesktopLegacy\bin\LegacyGL\$(Configuration)\net6.0-windows\win-x64\**\*" />
     </ItemGroup>
     <Copy SourceFiles="@(LegacyDXFiles)" DestinationFiles="@(LegacyDXFiles->'$(OutDir)app\LegacyDX\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />

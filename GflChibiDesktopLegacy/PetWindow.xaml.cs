@@ -54,6 +54,47 @@ namespace GflChibiDesktop
             timerSimulationS.Tick += timerSimulationS_Tick;
             timerSimulationVictory.Tick += timerSimulationVictory_Tick;
             timerSimulationReload.Tick += timerSimulationReload_Tick;
+
+            LoadPosition();
+            Closed += (_, _) => SavePosition();
+        }
+
+        /// <summary>窗口位置保存文件（实例工作目录，V2 重建实例时由主程序备份恢复）。</summary>
+        private static string PositionFile => Path.Combine(Environment.CurrentDirectory, "legacy_position.json");
+
+        /// <summary>启动时恢复上次退出的窗口位置（读取成功则禁用居中对齐）。</summary>
+        private void LoadPosition()
+        {
+            try
+            {
+                if (!File.Exists(PositionFile))
+                {
+                    return;
+                }
+                string[] parts = File.ReadAllText(PositionFile).Split(',');
+                if (parts.Length == 2 && double.TryParse(parts[0], out double l) && double.TryParse(parts[1], out double t))
+                {
+                    Left = l;
+                    Top = t;
+                    WindowStartupLocation = WindowStartupLocation.Manual;
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        /// <summary>退出时保存窗口位置，供下次启动恢复。</summary>
+        private void SavePosition()
+        {
+            try
+            {
+                Directory.CreateDirectory(Environment.CurrentDirectory);
+                File.WriteAllText(PositionFile, $"{Left},{Top}");
+            }
+            catch
+            {
+            }
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -206,6 +247,10 @@ namespace GflChibiDesktop
                     () => Topmost,
                     v => Topmost = v);
 
+                Ipc.AddBool("点击穿透", "启用后鼠标点击穿过桌宠",
+                    () => _clickThrough,
+                    v => SetClickThrough(v));
+
                 Ipc.AddButton("重置小人坐标", "屏幕中找不到小人时点击，回到画布中心", ResetDummy);
 
                 Ipc.Start();
@@ -239,8 +284,44 @@ namespace GflChibiDesktop
         private static extern bool ReleaseCapture();
         [DllImport("user32.dll")]
         private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
+        private static extern uint SetWindowLong(IntPtr hWnd, int nIndex, long dwNewLong);
+        [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
+        private static extern uint GetWindowLong(IntPtr hWnd, int nIndex);
 
         private bool _dragging;
+        private long _oldExtStyle;
+        private bool _clickThrough;
+
+        /// <summary>
+        /// 点击穿透：启用后窗口不响应鼠标（WS_EX_TRANSPARENT），交互事件（拖拽/双击）同时失效。
+        /// </summary>
+        public void SetClickThrough(bool enabled)
+        {
+            if (enabled == _clickThrough)
+            {
+                return;
+            }
+            _clickThrough = enabled;
+            try
+            {
+                IntPtr hwnd = new WindowInteropHelper(this).Handle;
+                if (enabled)
+                {
+                    IsHitTestVisible = false;
+                    _oldExtStyle = GetWindowLong(hwnd, -20); // GWL_EXSTYLE
+                    SetWindowLong(hwnd, -20, 0x20);          // WS_EX_TRANSPARENT
+                }
+                else
+                {
+                    IsHitTestVisible = true;
+                    SetWindowLong(hwnd, -20, _oldExtStyle);
+                }
+            }
+            catch
+            {
+            }
+        }
 
         private void GridPlayer_MouseMove(object sender, MouseEventArgs e)
         {

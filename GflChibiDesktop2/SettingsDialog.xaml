@@ -6,6 +6,10 @@
         xmlns:local="clr-namespace:GflChibiDesktop2"
         mc:Ignorable="d"
         Width="320" Height="Auto" SizeToContent="Height" Background="{DynamicResource SecondaryRegionBrush}" Foreground="{DynamicResource PrimaryTextBrush}" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" Icon="/hk416_happy.ico" WindowStartupLocation="CenterScreen" Title="首选项">
+    <hc:Window.Resources>
+        <hc:Boolean2VisibilityReConverter x:Key="Boolean2VisibilityReConverter"/>
+        <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </hc:Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -14,68 +18,83 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <TabControl TabStripPlacement="Top">
-            <TabItem Header="桌宠实现方式" HorizontalAlignment="Left">
-                <StackPanel Grid.Row="0">
-                    <Label Grid.Row="0" Margin="5,5,5,0" Style="{DynamicResource LabelWarning.Small}" Content="如果桌宠运行正常，不建议修改此处的设置&#xD;&#xA;默认为 Raylib DWM + OpenGL" HorizontalAlignment="Stretch" Height="40" HorizontalContentAlignment="Left"/>
-                    <GroupBox Header="桌宠版本" Margin="5">
+            <TabItem Header="桌宠设置">
+                <StackPanel>
+                    <Label Margin="5" Style="{DynamicResource LabelWarning.Small}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Height="36">
+                        <StackPanel>
+                            <TextBlock HorizontalAlignment="Center">如果桌宠运行正常，不建议修改此处的设置。</TextBlock>
+                            <TextBlock HorizontalAlignment="Center">请先查看FAQ或帮助文档。</TextBlock>
+                        </StackPanel>
+                    </Label>
+                    <hc:Divider Margin="0">
+                        <StackPanel Orientation="Horizontal">
+                            <hc:Tag ShowCloseButton="False" Margin="0,0,4,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource LightInfoBrush}">V2</hc:Tag>
+                            <TextBlock VerticalAlignment="Center">Raylib 新版桌宠设置</TextBlock>
+                        </StackPanel>
+                    </hc:Divider>
+                    <Grid Margin="5" x:Name="gridNew" Visibility="{Binding EnableLegacy, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chbDisableRaylib" Grid.Column="0" Content="禁用新版桌宠" HorizontalAlignment="Left" IsChecked="{Binding DisableNew}" Visibility="{Binding EnableLegacy, Converter={StaticResource BoolToVisibilityConverter}}" Click="chbDisableRaylib_Click"/>
+                    </Grid>
+                    <GroupBox Header="渲染模式" Margin="5" Visibility="{Binding IsChecked, Converter={StaticResource Boolean2VisibilityReConverter}, ElementName=chbDisableRaylib}">
                         <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Label Grid.Row="0" Margin="5" Style="{DynamicResource LabelInfo.Small}" HorizontalAlignment="Stretch" Height="40" HorizontalContentAlignment="Left">
-                                <TextBlock>
-                                    <TextBlock Foreground="{DynamicResource LightInfoBrush}">V2</TextBlock>与<TextBlock Foreground="{DynamicResource LightWarningBrush}">V1</TextBlock>是<TextBlock FontWeight="Bold">不同</TextBlock>的两个版本，在动态模拟、鼠标跟随
-                                    <LineBreak/>等功能的实现与逻辑上不同
-                                </TextBlock>
-                            </Label>
-                            <RadioButton x:Name="rModuleRaylibDWM" Margin="5" Grid.Row="1" GroupName="module" Checked="Module_Checked" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsEnabled="{Binding IsChecked, ElementName=rGraphicsGL}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <RadioButton x:Name="rModuleRaylibDWM" Grid.Row="0" Grid.Column="0" Margin="5" GroupName="raylibMode" Checked="Module_Checked" HorizontalAlignment="Stretch">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock VerticalAlignment="Center">Raylib DWM</TextBlock>
-                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource LightInfoBrush}">V2</hc:Tag>
+                                    <TextBlock VerticalAlignment="Center">DWM</TextBlock>
                                     <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource DarkDefaultBrush}">默认</hc:Tag>
                                 </StackPanel>
                             </RadioButton>
-                            <RadioButton x:Name="rModuleRaylibULW" Margin="5" Grid.Row="2" GroupName="module" Checked="Module_Checked" ToolTip="部分系统下本应透明的桌宠窗口会显示黑色背景，改用 ULW（UpdateLayeredWindow）透明或可解决；切换后需重启桌宠实例生效" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsEnabled="{Binding IsChecked, ElementName=rGraphicsGL}">
+                            <RadioButton x:Name="rModuleRaylibULW" Grid.Row="0" Grid.Column="1" Margin="5" GroupName="raylibMode" Checked="Module_Checked" ToolTip="部分系统下本应透明的桌宠窗口会显示黑色背景，改用 ULW（UpdateLayeredWindow）透明或可解决；切换后需重启桌宠实例生效" HorizontalAlignment="Stretch">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock VerticalAlignment="Center">Raylib ULW</TextBlock>
-                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource LightInfoBrush}">V2</hc:Tag>
-                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource DarkWarningBrush}">透明兼容</hc:Tag>
-                                </StackPanel>
-                            </RadioButton>
-                            <RadioButton x:Name="rModuleMonogame" Margin="5" Grid.Row="3" GroupName="module" Checked="Module_Checked" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock VerticalAlignment="Center">MonoGame</TextBlock>
-                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource LightWarningBrush}">V1</hc:Tag>
-                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource LightDangerBrush}">旧版</hc:Tag>
+                                    <TextBlock VerticalAlignment="Center">ULW</TextBlock>
                                     <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource DarkWarningBrush}">透明兼容</hc:Tag>
                                 </StackPanel>
                             </RadioButton>
                         </Grid>
                     </GroupBox>
-                    <GroupBox Header="渲染后端" Margin="5">
+                    <hc:Divider Margin="0">
+                        <StackPanel Orientation="Horizontal">
+                            <hc:Tag ShowCloseButton="False" Margin="0,0,4,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource LightWarningBrush}">V1</hc:Tag>
+                            <TextBlock VerticalAlignment="Center">MonoGame 旧版桌宠设置</TextBlock>
+                        </StackPanel>
+                    </hc:Divider>
+                    <Label x:Name="lblLegacy404" Margin="5" Style="{DynamicResource LabelWarning.Small}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Height="36">
+                        <StackPanel>
+                            <TextBlock HorizontalAlignment="Center">未安装旧版桌宠运行时</TextBlock>
+                            <TextBlock HorizontalAlignment="Center">请前往项目页面下载增量包或使用完整包覆盖</TextBlock>
+                        </StackPanel>
+                    </Label>
+                    <Grid Margin="5" x:Name="gridLegacy">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chbEnableLegacy" Grid.Column="0" Content="启用旧版桌宠" IsChecked="{Binding EnableLegacy}" Click="chbEnableLegacy_Click" HorizontalAlignment="Left"/>
+                        <ToggleButton Style="{StaticResource ToggleButtonSwitch}" x:Name="chkDefaultLegacy" Content="设为默认" Grid.Column="1" VerticalAlignment="Center" IsEnabled="{Binding CanSetDefaultLegacy}" IsChecked="{Binding UseLegacyModule}" Visibility="{Binding EnableLegacy, Converter={StaticResource BoolToVisibilityConverter}}" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <GroupBox Header="渲染后端" Margin="5" IsEnabled="{Binding IsChecked, ElementName=chbEnableLegacy}" Visibility="{Binding EnableLegacy, Converter={StaticResource BoolToVisibilityConverter}}" >
                         <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="5" Style="{DynamicResource LabelInfo.Small}" Content="目前只有MonoGame支持DirectX&#xD;&#xA;然而 OpenGL 的兼容性似乎存在问题……" HorizontalAlignment="Stretch" Height="40" HorizontalContentAlignment="Left"/>
-                            <RadioButton x:Name="rGraphicsGL" Margin="5" Grid.Row="1" Grid.Column="0" GroupName="graphics" Checked="Module_Checked" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <RadioButton x:Name="rGraphicsDX" Grid.Column="0" Margin="5" GroupName="monogameGfx" Checked="Module_Checked" HorizontalAlignment="Stretch">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock VerticalAlignment="Center">OpenGL</TextBlock>
+                                    <TextBlock VerticalAlignment="Center">DirectX</TextBlock>
                                     <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource DarkDefaultBrush}">默认</hc:Tag>
                                 </StackPanel>
                             </RadioButton>
-                            <RadioButton x:Name="rGraphicsDX" Margin="5" Grid.Row="1" Grid.Column="1" GroupName="graphics" Checked="Module_Checked" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsEnabled="{Binding IsChecked, ElementName=rModuleMonogame}">
+                            <RadioButton x:Name="rGraphicsGL" Grid.Column="1" Margin="5" GroupName="monogameGfx" Checked="Module_Checked" HorizontalAlignment="Stretch">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock VerticalAlignment="Center">DirectX</TextBlock>
-                                    <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource DarkAccentBrush}">兼容</hc:Tag>
+                                    <TextBlock VerticalAlignment="Center">OpenGL</TextBlock>
+                                    <!-- <hc:Tag ShowCloseButton="False" Margin="4,0,0,0" Padding="5,0,5,0" Height="20" Background="{DynamicResource DarkAccentBrush}">兼容</hc:Tag> -->
                                 </StackPanel>
                             </RadioButton>
                         </Grid>

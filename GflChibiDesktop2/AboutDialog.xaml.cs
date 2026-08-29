@@ -450,8 +450,16 @@ namespace GflChibiDesktop2
             else
             {
                 GrowlHelper.InfoGlobal("Cheat Activated!\n已解锁高级模式");
-                Settings.Default.EasterEgg = true;
-                Settings.Default.Save();
+                // 经 DataContext setter 设置，触发 PropertyChanged，使已打开的设置窗口同步解锁
+                if (Application.Current.MainWindow is MainWindow main)
+                {
+                    main.SettingsDataContext.EasterEgg = true;
+                }
+                else
+                {
+                    Settings.Default.EasterEgg = true;
+                    Settings.Default.Save();
+                }
             }
         }
 

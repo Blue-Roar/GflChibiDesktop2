@@ -240,7 +240,7 @@ namespace GflChibiDesktop2
             try
             {
                 string appRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app");
-                string[] names = { "luajit", "GflChibiDesktopLegacy", "GflChibiDesktopLegacyGL" };
+                string[] names = { "luajit", "GflChibiDesktopLegacyDX", "GflChibiDesktopLegacyGL" };
                 foreach (string name in names)
                 {
                     foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
@@ -302,11 +302,11 @@ namespace GflChibiDesktop2
                 if (s.Suspended)
                 {
                     // 上次退出时处于暂停状态：恢复标签页但不启动进程
-                    StartSuspendedInstance(m);
+                    StartSuspendedInstance(m, s.UseLegacyModule);
                 }
                 else
                 {
-                    StartInstance(m, true);
+                    StartInstance(m, true, s.UseLegacyModule);
                 }
                 started++;
             }
@@ -316,11 +316,12 @@ namespace GflChibiDesktop2
         /// <summary>
         /// 恢复暂停的桌宠：创建标签页但不启动进程，控制面板隐藏。
         /// </summary>
-        private void StartSuspendedInstance(ChibiModelData model)
+        private void StartSuspendedInstance(ChibiModelData model, bool? useLegacyModule = null)
         {
             try
             {
                 PetInstance pet = PetInstance.Create(GetNextPetId(), model);
+                pet.UseLegacyModule = useLegacyModule ?? Properties.Settings.Default.UseLegacyModule;
                 pet.IsSuspended = true;
                 pet.StopRequested = true;
                 pets.Add(pet);
@@ -391,7 +392,7 @@ namespace GflChibiDesktop2
         {
             try
             {
-                var list = pets.Select(p => new SavedInstance { Model = p.Model, Suspended = p.IsSuspended })
+                var list = pets.Select(p => new SavedInstance { Model = p.Model, Suspended = p.IsSuspended, UseLegacyModule = p.UseLegacyModule })
                     .Where(s => s.Model is not null).ToList();
                 File.WriteAllText(InstancesFilePath, JsonConvert.SerializeObject(list, Newtonsoft.Json.Formatting.Indented));
             }
@@ -401,12 +402,14 @@ namespace GflChibiDesktop2
         }
 
         /// <summary>
-        /// 实例列表持久化记录（含暂停状态）。
+        /// 实例列表持久化记录（含暂停状态与实例级渲染模块）。
         /// </summary>
         public class SavedInstance
         {
             public ChibiModelData? Model { get; set; }
             public bool Suspended { get; set; }
+            /// <summary>本实例使用的渲染模块（true=旧版 MonoGame；false=新版 Raylib）。null 表示未设置，用全局默认。</summary>
+            public bool? UseLegacyModule { get; set; }
         }
 
         /// <summary>
@@ -416,11 +419,12 @@ namespace GflChibiDesktop2
         {
             if (SelectedPet?.Model is ChibiModelData model)
             {
-                StartInstance(model);
+                // 新实例继承当前选中实例的渲染模块选择
+                StartInstance(model, false, SelectedPet?.UseLegacyModule);
             }
         }
 
-        private void StartInstance(ChibiModelData model, bool silently = false)
+        private void StartInstance(ChibiModelData model, bool silently = false, bool? useLegacyModule = null)
         {
             if (isExiting)
             {
@@ -456,6 +460,7 @@ namespace GflChibiDesktop2
             try
             {
                 PetInstance pet = PetInstance.Create(GetNextPetId(), model);
+                pet.UseLegacyModule = useLegacyModule ?? Properties.Settings.Default.UseLegacyModule;
                 ProcessManager? pm = null;
                 pm = StartPetProcess(pet);
                 pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
@@ -758,8 +763,38 @@ namespace GflChibiDesktop2
                 Margin = new Thickness(12)
             };
             var container = new Grid();
-            container.Children.Add(pet.HintPanel);
-            container.Children.Add(pet.Panel);
+            container.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            container.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+
+            // 实例级渲染模块选择（新版 Raylib / 旧版 MonoGame），切换后重启实例生效
+            var versionPanel = new HandyControl.Controls.ButtonGroup
+            {
+                Margin = new Thickness(10, 8, 10, 4)
+            };
+            var rbRaylib = new RadioButton {
+                Content = "V2新版 (Raylib)",
+                IsChecked = !pet.UseLegacyModule
+            };
+            var rbMonoGame = new RadioButton {
+                Content = "V1旧版 (MonoGame)",
+                IsChecked = pet.UseLegacyModule
+            };
+            rbRaylib.Checked += (_, _) => SetInstanceVersion(pet, false);
+            rbMonoGame.Checked += (_, _) => SetInstanceVersion(pet, true);
+            versionPanel.Items.Add(rbRaylib);
+            versionPanel.Items.Add(rbMonoGame);
+            pet.VersionPanel = versionPanel;
+            // 全局禁用旧版或禁用新版时隐藏版本切换面板
+            versionPanel.Visibility = (Properties.Settings.Default.EnableLegacy && !Properties.Settings.Default.DisableNew)
+                ? Visibility.Visible : Visibility.Collapsed;
+            Grid.SetRow(versionPanel, 0);
+            container.Children.Add(versionPanel);
+
+            var panelArea = new Grid();
+            panelArea.Children.Add(pet.HintPanel);
+            panelArea.Children.Add(pet.Panel);
+            Grid.SetRow(panelArea, 1);
+            container.Children.Add(panelArea);
 
             var scroller = new ScrollViewer
             {
@@ -768,6 +803,50 @@ namespace GflChibiDesktop2
             };
             tab.Content = scroller;
             PetTabs.Items.Add(tab);
+        }
+
+        /// <summary>
+        /// 切换实例的渲染模块（新版 Raylib / 旧版 MonoGame），保存并重启实例生效。
+        /// </summary>
+        private void SetInstanceVersion(PetInstance pet, bool legacy)
+        {
+            if (pet.UseLegacyModule == legacy)
+            {
+                return;
+            }
+            pet.UseLegacyModule = legacy;
+            SaveInstances();
+            _ = RestartInstanceForVersion(pet);
+        }
+
+        /// <summary>
+        /// 同步各实例版本切换面板的可见性（全局禁用旧版或禁用新版时隐藏）。
+        /// </summary>
+        public void ApplyLegacyEnableState()
+        {
+            bool show = Properties.Settings.Default.EnableLegacy && !Properties.Settings.Default.DisableNew;
+            foreach (PetInstance pet in pets)
+            {
+                if (pet.VersionPanel is not null)
+                {
+                    pet.VersionPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
+        }
+
+        /// <summary>停止当前实例进程，并按新版本重新启动（复用标签页）。</summary>
+        private async Task RestartInstanceForVersion(PetInstance pet)
+        {
+            if (!pets.Contains(pet) || isExiting)
+            {
+                return;
+            }
+            pet.StopRequested = true;
+            pet.RestartAttempts = 0;
+            pet.IsRestarting = true;
+            await StopManager(pet);
+            pet.IsRestarting = false;
+            ResumeInstance(pet);
         }
 
         private void Window_Closing(object? sender, CancelEventArgs e)
@@ -1296,6 +1375,13 @@ namespace GflChibiDesktop2
         /// <summary>设置对话框访问的上下文（消息提示/运行模块/界面选项）。</summary>
         internal MainWindowDataContext SettingsDataContext => context;
 
+        /// <summary>全局启用旧版（转发到 DataContext，触发保存与绑定通知）。</summary>
+        public bool EnableLegacy
+        {
+            get => context.EnableLegacy;
+            set => context.EnableLegacy = value;
+        }
+
         private void ShowSettings_Click(object sender, RoutedEventArgs e) => ShowSettings();
 
         /// <summary>
@@ -1313,41 +1399,25 @@ namespace GflChibiDesktop2
         }
 
         /// <summary>
-        /// 应用“运行模块”选择（新版 DWM/ULW、旧版 OpenGL/DirectX）。供设置对话框调用。
-        /// </summary>
-        public void ApplyModule(bool legacy, bool useOpenGL, bool ulw)
-        {
-            bool curLegacy = context.UseLegacyModule;
-            bool curOpenGL = context.UseOpenGL;
-            bool curUlw = context.UseUlwTransparency;
-            if (curLegacy == legacy && curOpenGL == useOpenGL && curUlw == ulw)
-            {
-                return;
-            }
-
-            context.UseLegacyModule = legacy;
-            context.UseOpenGL = useOpenGL;
-            if (!legacy)
-            {
-                // 新版透明模式：写/删 transparent_mode.conf（luajit 读取决定 DWM/ULW）
-                context.UseUlwTransparency = ulw;
-            }
-            string msg = legacy
-                ? $"已切换到旧版渲染模块（{(useOpenGL ? "OpenGL" : "DirectX")}）。\n请重启桌宠实例以生效。"
-                : $"已切换到新版(luajit)渲染模块（{(ulw ? "ULW" : "DWM")}透明）。\n请重启桌宠实例以生效。";
-            GrowlHelper.InfoGlobal(msg);
-        }
-
-        /// <summary>
-        /// 按“运行模块”设置启动实例进程：新版用 luajit；旧版按后端选 GflChibiDesktopLegacyGL/DX.exe。
+        /// 按实例的渲染模块选择启动进程：新版用 luajit；旧版按全局后端选 GflChibiDesktopLegacyGL/DX.exe。
         /// </summary>
         private ProcessManager StartPetProcess(PetInstance pet)
         {
-            if (Properties.Settings.Default.UseLegacyModule)
+            // 全局禁用新版 → 强制旧版；禁用旧版 → 强制新版；否则按实例选择
+            bool useLegacy = pet.UseLegacyModule;
+            if (Properties.Settings.Default.DisableNew)
+            {
+                useLegacy = true;
+            }
+            else if (!Properties.Settings.Default.EnableLegacy)
+            {
+                useLegacy = false;
+            }
+            if (useLegacy)
             {
                 bool useOpenGL = Properties.Settings.Default.UseOpenGL;
                 string exe = FindLegacyExe(useOpenGL) ?? throw new FileNotFoundException(
-                    useOpenGL ? "未找到备用渲染模块（OpenGL）GflChibiDesktopLegacyGL.exe。" : "未找到备用渲染模块（DirectX）GflChibiDesktopLegacy.exe。");
+                    useOpenGL ? "未找到备用渲染模块（OpenGL）GflChibiDesktopLegacyGL.exe。" : "未找到备用渲染模块（DirectX）GflChibiDesktopLegacyDX.exe。");
                 string? atlas = pet.Model?.AtlasFile is string af ? Path.Combine(AppDir, af.Replace('/', Path.DirectorySeparatorChar)) : null;
                 if (atlas is null || !File.Exists(atlas))
                 {
@@ -1371,12 +1441,12 @@ namespace GflChibiDesktop2
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
             string dir = useOpenGL ? "LegacyGL" : "LegacyDX";
-            string file = useOpenGL ? "GflChibiDesktopLegacyGL.exe" : "GflChibiDesktopLegacy.exe";
+            string file = useOpenGL ? "GflChibiDesktopLegacyGL.exe" : "GflChibiDesktopLegacyDX.exe";
             string[] candidates =
             {
                 Path.Combine(baseDir, "app", dir, file),
-                Path.Combine(baseDir, "..", "..", "..", "GflChibiDesktopLegacy", "bin", useOpenGL ? "LegacyGL" : "", "Debug", "net6.0-windows", "win-x64", file),
-                Path.Combine(baseDir, "..", "..", "..", "GflChibiDesktopLegacy", "bin", useOpenGL ? "LegacyGL" : "", "Release", "net6.0-windows", "win-x64", file),
+                Path.Combine(baseDir, "..", "..", "..", "GflChibiDesktopLegacy", "bin", dir, "Debug", "net6.0-windows", "win-x64", file),
+                Path.Combine(baseDir, "..", "..", "..", "GflChibiDesktopLegacy", "bin", dir, "Release", "net6.0-windows", "win-x64", file),
             };
             foreach (string c in candidates)
             {
@@ -1623,6 +1693,51 @@ namespace GflChibiDesktop2
                 OnPropertyChanged();
             }
         }
+
+        /// <summary>
+        /// 全局启用旧版（MonoGame）功能。
+        /// </summary>
+        public bool EnableLegacy
+        {
+            get => Settings.Default.EnableLegacy;
+            set
+            {
+                Settings.Default.EnableLegacy = value;
+                // 禁用旧版时同时取消“禁用新版”，避免两版全被禁用
+                if (!value && Settings.Default.DisableNew)
+                {
+                    Settings.Default.DisableNew = false;
+                }
+                Settings.Default.Save();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(DisableNew));
+                OnPropertyChanged(nameof(CanSetDefaultLegacy));
+            }
+        }
+
+        /// <summary>
+        /// 全局禁用新版（Raylib）功能；勾选后强制旧版为默认。
+        /// </summary>
+        public bool DisableNew
+        {
+            get => Settings.Default.DisableNew;
+            set
+            {
+                Settings.Default.DisableNew = value;
+                if (value)
+                {
+                    // 禁用新版 → 强制旧版为默认（新实例默认使用旧版）
+                    Settings.Default.UseLegacyModule = true;
+                }
+                Settings.Default.Save();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(UseLegacyModule));
+                OnPropertyChanged(nameof(CanSetDefaultLegacy));
+            }
+        }
+
+        /// <summary>是否可设置“旧版为默认”（启用旧版且未禁用新版时才可修改）。</summary>
+        public bool CanSetDefaultLegacy => Settings.Default.EnableLegacy && !Settings.Default.DisableNew;
 
         private static string CurrentExePath => System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
 

@@ -21,7 +21,11 @@ namespace GflChibiDesktop2.Properties
         /// <summary>运行模块：true=旧版(legacy)渲染模块；false=新版(luajit)渲染模块。</summary>
         public bool UseLegacyModule { get; set; } = false;
         /// <summary>渲染后端：true=OpenGL(DesktopGL)；false=DirectX(WindowsDX)。</summary>
-        public bool UseOpenGL { get; set; } = true;
+        public bool UseOpenGL { get; set; } = false;
+        /// <summary>全局启用旧版（MonoGame）功能：false 时禁用旧版，实例版本切换面板隐藏且强制使用新版。</summary>
+        public bool EnableLegacy { get; set; } = true;
+        /// <summary>全局禁用新版（Raylib）功能：true 时禁用新版，实例强制使用旧版。</summary>
+        public bool DisableNew { get; set; } = false;
         private static string FilePath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app", "gfl_settings.json");
 
         private class SettingsData
@@ -38,6 +42,8 @@ namespace GflChibiDesktop2.Properties
             public bool DisableCustomWindowChrome { get; set; }
             public bool UseLegacyModule { get; set; }
             public bool UseOpenGL { get; set; }
+            public bool EnableLegacy { get; set; }
+            public bool DisableNew { get; set; }
         }
 
         private Settings()
@@ -64,6 +70,8 @@ namespace GflChibiDesktop2.Properties
                         if (json.DisableCustomWindowChrome) DisableCustomWindowChrome = json.DisableCustomWindowChrome;
                         if (json.UseLegacyModule) UseLegacyModule = json.UseLegacyModule;
                         if (json.UseOpenGL) UseOpenGL = json.UseOpenGL;
+                        if (json.EnableLegacy) EnableLegacy = json.EnableLegacy;
+                        if (json.DisableNew) DisableNew = json.DisableNew;
                     }
                 }
             }
@@ -93,7 +101,9 @@ namespace GflChibiDesktop2.Properties
                     ForceOfflineMode = ForceOfflineMode,
                     DisableCustomWindowChrome = DisableCustomWindowChrome,
                     UseLegacyModule = UseLegacyModule,
-                    UseOpenGL = UseOpenGL
+                    UseOpenGL = UseOpenGL,
+                    EnableLegacy = EnableLegacy,
+                    DisableNew = DisableNew
                 };
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
                 File.WriteAllText(FilePath, json);
