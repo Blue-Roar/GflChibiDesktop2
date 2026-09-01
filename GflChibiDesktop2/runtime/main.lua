@@ -65,7 +65,9 @@ ipc.addPanelItem(
     function() return settings.transparency end)
 
 -- 加载模型
-local model = blockly_spine.createFromDefaultConfigFile { hittest = true, pma = true }
+-- pma=false：raylib 从 PNG 加载的是直线 alpha 纹理，需用直线 alpha 混合（src=srcA, dst=1-srcA），
+-- 否则以预乘混合渲染会导致半透明边缘 RGB 残留，出现白/灰色毛边。
+local model = blockly_spine.createFromDefaultConfigFile { hittest = true, pma = false }
 setPropertyValues(model, {
     scale = settings.scale / 100,
     defaultMix = 0.2,
