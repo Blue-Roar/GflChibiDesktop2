@@ -39,6 +39,7 @@ namespace GflChibiDesktop2
         public readonly Version productVersion = new Version(((AssemblyFileVersionAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyFileVersionAttribute))).Version) ?? Assembly.GetExecutingAssembly().GetName().Version;
         public MainWindow? OwnerMainWindow { get; set; }
         public string homepageLink { get; set; }
+        public string helpLink { get; set; }
         public string repoLink { get; set; }
         public string updateLink { get; set; }
         public string chibiListLink { get; set; }
@@ -93,7 +94,7 @@ namespace GflChibiDesktop2
         {
             lblAnnouncement.Content = announcementMsg;
 
-            if (string.IsNullOrEmpty(homepageLink) || string.IsNullOrEmpty(repoLink) || string.IsNullOrEmpty(updateLink) || string.IsNullOrEmpty(chibiListLink))
+            if (string.IsNullOrEmpty(homepageLink) || string.IsNullOrEmpty(repoLink) || string.IsNullOrEmpty(updateLink) || string.IsNullOrEmpty(chibiListLink) || string.IsNullOrEmpty(helpLink))
             {
                 //GrowlHelper.WarningGlobal("部分链接未正确设置。重新获取链接……");
                 UpdateLinks();
@@ -184,6 +185,10 @@ namespace GflChibiDesktop2
                         if (HttpRequestHelper.CheckIsUrlFormat(rt.data.homepage_link)) {
                             homepageLink = rt.data.homepage_link;
                             OwnerMainWindow.homepageLink = homepageLink;
+                        }
+                        if (HttpRequestHelper.CheckIsUrlFormat(rt.data.help_link)) {
+                            helpLink = rt.data.help_link;
+                            OwnerMainWindow.helpLink = helpLink;
                         }
                         if (HttpRequestHelper.CheckIsUrlFormat(rt.data.repo_link)) {
                             repoLink = rt.data.repo_link;

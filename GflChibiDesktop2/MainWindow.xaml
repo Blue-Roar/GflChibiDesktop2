@@ -35,6 +35,11 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
+                    <MenuItem Click="menuItemHelp_Click" Header="帮助(_H)">
+                        <MenuItem.Icon>
+                            <Path Data="{StaticResource AskGeometry}" Stretch="Uniform" Fill="{DynamicResource PrimaryTextBrush}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <MenuItem Click="menuItemAbout_Click" Header="关于(_A)">
                         <MenuItem.Icon>
                             <Path Data="{StaticResource InfoGeometry}" Stretch="Uniform" Fill="{DynamicResource PrimaryTextBrush}" Width="16" Height="16"/>

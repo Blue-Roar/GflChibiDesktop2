@@ -53,6 +53,9 @@ public class Player_2_1_25 : IPlayer
         App.globalValues.FileHash = skeleton.Data.Hash;
 
         stateData = new AnimationStateData(skeleton.Data);
+        // 动画切换交叉过渡时长（与新版 raylib 的 defaultMix=0.2 对齐），
+        // 使 SetAnimation 在已有轨道上平滑过渡而非硬切
+        stateData.DefaultMix = 0.2f;
 
         state = new AnimationState(stateData);
 
@@ -118,9 +121,15 @@ public class Player_2_1_25 : IPlayer
     {
         if (App.globalValues.SelectAnimeName != string.Empty && App.globalValues.SetAnime)
         {
-            state.ClearTracks();
-            skeleton.SetToSetupPose();
+            // 不清轨道/不重置姿势：由 AnimationState 依据 DefaultMix 在现有动画上交叉过渡，
+            // 与新版 raylib 的 setAnimationByName 行为一致，避免硬切抽搐
             state.SetAnimation(0, App.globalValues.SelectAnimeName, App.globalValues.IsLoop);
+            TrackEntry entry = state.GetCurrent(0);
+            if (entry != null)
+            {
+                // 供一次性动作（s/reload/victory）接续定时器使用的当前动画时长
+                App.globalValues.AnimeDuration = entry.EndTime;
+            }
             App.globalValues.SetAnime = false;
         }
 

@@ -18,6 +18,7 @@ using Microsoft.Win32;
 using Newtonsoft.Json;
 using GflChibiDesktop2.Properties;
 using static GflChibiDesktop2.WebAPI;
+using GflChibiDesktop2.Helpers;
 
 namespace GflChibiDesktop2
 {
@@ -42,6 +43,7 @@ namespace GflChibiDesktop2
         AboutDialog? aboutDialog;
         public string announcementMsg = "";
         public string homepageLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/";
+        public string helpLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/FAQ";
         public string repoLink = "https://github.com/Blue-Roar/GflChibiDesktop2";
         public string updateLink = "https://projects.brightsu.cn/GflChibiDesktop/V2/download";
         public string chibiListLink = "https://api.brightsu.cn/GFL/chibi_list";
@@ -164,6 +166,7 @@ namespace GflChibiDesktop2
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.repo_link)) { repoLink = rt.data.repo_link; }
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.update_link)) { updateLink = rt.data.update_link; }
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.chibi_list_link)) { chibiListLink = rt.data.chibi_list_link; }
+                            if (HttpRequestHelper.CheckIsUrlFormat(rt.data.help_link)) { helpLink = rt.data.help_link; }
 
                             announcementMsg = rt.data?.msg;
                             Version latestVersion = new Version(rt.data?.latest);
@@ -1333,6 +1336,7 @@ namespace GflChibiDesktop2
                 dataManagerWindow.repoLink = repoLink;
                 dataManagerWindow.updateLink = updateLink;
                 dataManagerWindow.chibiListLink = chibiListLink;
+                dataManagerWindow.helpLink = helpLink;
                 dataManagerWindow.announcementMsg = announcementMsg;
                 dataManagerWindow.UpdateSharedVariables();
             }
@@ -1483,6 +1487,11 @@ namespace GflChibiDesktop2
                 if (File.Exists(c)) return Path.GetFullPath(c);
             }
             return null;
+        }
+
+        private void menuItemHelp_Click(object sender, RoutedEventArgs e)
+        {
+            UrlHelper.OpenUrl(helpLink);
         }
     }
 

@@ -12,6 +12,7 @@ using System.Windows.Media.Imaging;
 using Newtonsoft.Json;
 using GflChibiDesktop2.Properties;
 using static GflChibiDesktop2.WebAPI;
+using GflChibiDesktop2.Helpers;
 
 namespace GflChibiDesktop2
 {
@@ -337,43 +338,26 @@ namespace GflChibiDesktop2
         {
             if (btn_Actions.Content.ToString() == "前往主页")
             {
-                OpenUrl(homepageLink);
+                UrlHelper.OpenUrl(homepageLink);
             }
             else if (btn_Actions.Content.ToString() == "前往更新")
             {
-                OpenUrl(updateLink);
+                UrlHelper.OpenUrl(updateLink);
             }
         }
 
-        /// <summary>
-        /// 用系统默认程序打开链接（.NET Core 需 UseShellExecute=true 才会走 Shell）。
-        /// </summary>
-        private static void OpenUrl(string url)
-        {
-            try
-            {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
-                {
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                GrowlHelper.ErrorGlobal($"无法打开链接。\n{ex.Message}");
-            }
-        }
         private void btn_BrightSu_Click(object sender, RoutedEventArgs e)
         {
-            OpenUrl("https://space.bilibili.com/13827887/");
+            UrlHelper.OpenUrl("https://space.bilibili.com/13827887/");
         }
 
         private void btn_Huix_Click(object sender, RoutedEventArgs e)
         {
-            OpenUrl("https://space.bilibili.com/102421353/");
+            UrlHelper.OpenUrl("https://space.bilibili.com/102421353/");
         }
         private void btn_Repo_Click(object sender, RoutedEventArgs e)
         {
-            OpenUrl(repoLink);
+            UrlHelper.OpenUrl(repoLink);
         }
 
         int easterCount = 0;

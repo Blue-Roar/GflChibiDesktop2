@@ -379,7 +379,13 @@ namespace GflChibiDesktop
 
         public void UpdateSpine()
         {
-            if (player != null) player.ChangeSet();
+            // 动态模拟切换动画不再整包重载（dispose ContentManager + 重建 AnimationState），
+            // 而是交由 Player_2_1_25.Update 的 SetAnime 分支做带 DefaultMix 的交叉过渡，
+            // 与新版 raylib 的 setAnimationByName 行为一致，切换平滑不卡顿。
+            if (player != null)
+            {
+                App.globalValues.SetAnime = true;
+            }
         }
 
         public void toggleSimulation(bool toggleSwitch)
