@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 using System;
 using System.IO;
 
@@ -14,6 +14,8 @@ namespace GflChibiDesktop2.Properties
         public bool SuppressGlobalGrowl { get; set; } = false;
         public bool SuppressLoadPrompts { get; set; } = false;
         public bool SuppressUpdatePrompts { get; set; } = false;
+        /// <summary>用户忽略的更新版本（隐藏字段，仅用于抑制该版本及更早版本的更新提示）。</summary>
+        public string SuppressedVersion { get; set; } = string.Empty;
         public bool SuppressMinimizePrompts { get; set; } = false;
         public bool SuppressConnectionErrorPrompts { get; set; } = false;
         public bool ForceOfflineMode { get; set; } = false;
@@ -36,6 +38,7 @@ namespace GflChibiDesktop2.Properties
             public bool SuppressGlobalGrowl { get; set; }
             public bool SuppressLoadPrompts { get; set; }
             public bool SuppressUpdatePrompts { get; set; }
+            public string SuppressedVersion { get; set; }
             public bool SuppressMinimizePrompts { get; set; }
             public bool SuppressConnectionErrorPrompts { get; set; }
             public bool ForceOfflineMode { get; set; }
@@ -64,6 +67,7 @@ namespace GflChibiDesktop2.Properties
                         if (json.SuppressGlobalGrowl) SuppressGlobalGrowl = json.SuppressGlobalGrowl;
                         if (json.SuppressLoadPrompts) SuppressLoadPrompts = json.SuppressLoadPrompts;
                         if (json.SuppressUpdatePrompts) SuppressUpdatePrompts = json.SuppressUpdatePrompts;
+                        if (!string.IsNullOrEmpty(json.SuppressedVersion)) SuppressedVersion = json.SuppressedVersion;
                         if (json.SuppressMinimizePrompts) SuppressMinimizePrompts = json.SuppressMinimizePrompts;
                         if (json.SuppressConnectionErrorPrompts) SuppressConnectionErrorPrompts = json.SuppressConnectionErrorPrompts;
                         if (json.ForceOfflineMode) ForceOfflineMode = json.ForceOfflineMode;
@@ -96,6 +100,7 @@ namespace GflChibiDesktop2.Properties
                     SuppressGlobalGrowl = SuppressGlobalGrowl,
                     SuppressLoadPrompts = SuppressLoadPrompts,
                     SuppressUpdatePrompts = SuppressUpdatePrompts,
+                    SuppressedVersion = SuppressedVersion,
                     SuppressMinimizePrompts = SuppressMinimizePrompts,
                     SuppressConnectionErrorPrompts = SuppressConnectionErrorPrompts,
                     ForceOfflineMode = ForceOfflineMode,

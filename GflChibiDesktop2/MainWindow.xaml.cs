@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -169,29 +169,7 @@ namespace GflChibiDesktop2
                             if (HttpRequestHelper.CheckIsUrlFormat(rt.data.help_link)) { helpLink = rt.data.help_link; }
 
                             announcementMsg = rt.data?.msg;
-                            Version latestVersion = new Version(rt.data?.latest);
-                            if (latestVersion is not null)
-                            {
-                                if (latestVersion > productVersion && !Properties.Settings.Default.SuppressUpdatePrompts)
-                                {
-                                    GrowlHelper.AskGlobal(new HandyControl.Data.GrowlInfo()
-                                    {
-                                        //IsCustom = true,
-                                        Type = HandyControl.Data.InfoType.Info,
-                                        //IconKey = "info",
-                                        Message = $"{productTitle}有版本更新可用。\n当前版本: {productVersion}\n最新版本: {latestVersion}\n\n是否前往更新页面？",
-                                        ShowCloseButton = false,
-                                        ShowDateTime = false,
-                                        ConfirmStr = "立刻查看",
-                                        CancelStr = "以后再说",
-                                        ActionBeforeClose = (b) =>
-                                        {
-                                            if (b) ShowAbout();
-                                            return true;
-                                        }
-                                    });
-                                }
-                            }
+                            UpdateCheckHelper.CheckAndPrompt(rt.data?.latest, productVersion, productTitle, ShowAbout);
                             // 公告为空时回退为程序名+版本
                             if (string.IsNullOrEmpty(announcementMsg)) announcementMsg = fallbackTitle;
                             Dispatcher.BeginInvoke(() =>

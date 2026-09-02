@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -203,29 +203,8 @@ namespace GflChibiDesktop2
                             OwnerMainWindow.chibiListLink = chibiListLink;
                         }
 
-                        Version latestVersion = new Version(rt.data?.latest);
-                        if (latestVersion is not null)
-                        {
-                            if (latestVersion != productVersion && !Properties.Settings.Default.SuppressUpdatePrompts)
-                            {
-                                GrowlHelper.AskGlobal(new HandyControl.Data.GrowlInfo()
-                                {
-                                    //IsCustom = true,
-                                    Type = HandyControl.Data.InfoType.Info,
-                                    //IconKey = "info",
-                                    Message = $"{productTitle}有版本更新可用。\n当前版本: {productVersion}\n最新版本: {latestVersion}\n\n是否前往更新页面？",
-                                    ShowCloseButton = false,
-                                    ShowDateTime = false,
-                                    ConfirmStr = "立刻查看",
-                                    CancelStr = "以后再说",
-                                    ActionBeforeClose = (b) =>
-                                    {
-                                        if (b) btnVersion_Click(btnVersion, new());
-                                        return true;
-                                    }
-                                });
-                            }
-                        }
+                        UpdateCheckHelper.CheckAndPrompt(rt.data?.latest, productVersion, productTitle,
+                            () => btnVersion_Click(btnVersion, new()));
                     }
                     else
                     {
