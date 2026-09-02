@@ -33,7 +33,7 @@ local simStopMove -- 供 drag 块在拖动时中止动态模拟动作（由 walk
 
 -- 加载设置
 local settings = settingsMan.load("settings.json", true)
-settings:default({ walk = true, drag = true, startDistance = 500, stopDistance = 200, scale = 100, drop = true, transparency = 255, autoHide = true, idleMotion = 1, simulateDorm = false, simulateInterval = 30, moveFlip = false })
+settings:default({ walk = true, drag = true, startDistance = 500, stopDistance = 200, scale = 100, drop = true, transparency = 255, autoHide = true, idleMotion = 1, simulateDorm = false, simulateInterval = 30, moveFlip = false, canvasMode = 2 })
 -- 互斥保证：跟随鼠标与动态模拟不能同时启用
 if settings.walk and settings.simulateDorm then
     settings.simulateDorm = false
@@ -67,12 +67,16 @@ ipc.addPanelItem(
 -- 加载模型
 -- pma=true：2.1.25 渲染层在加载图集时已对纹理做 alpha 预乘，配合预乘混合（src=ONE, dst=1-srcA），
 -- 与旧版行为一致，半透明边缘无毛边（纹理未预乘时不可用 true）。
-local model = blockly_spine.createFromDefaultConfigFile { hittest = true, pma = true }
+local model = blockly_spine.createFromDefaultConfigFile { hittest = true, pma = true, canvasMode = settings.canvasMode }
 setPropertyValues(model, {
     scale = settings.scale / 100,
     defaultMix = 0.2,
     listenEvent = true })
 model.setWindowSize() -- 将窗口大小设置为适合模型的状态
+ipc.addPanelItem(
+    { type = "combo", prompt = "画布", hint = "画布尺寸：小/大固定，动态按模型动画并集自动", items = { "小(448x448)", "大(768x768)", "动态" } },
+    function(v) settings.canvasMode = v model.setCanvasMode(v) settings:save() end,
+    function() return settings.canvasMode end)
 ipc.addPanelItem(
     { type = "single", valueType = "number", prompt = "缩放(%)", hint = "e.g. 100 为一倍缩放", min = 0, max = 114514 },
     function(v) settings.scale = v model.keepSetScale(v / 100) model.setWindowSize() settings:save() end,

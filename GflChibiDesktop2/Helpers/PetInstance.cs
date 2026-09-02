@@ -104,14 +104,14 @@ namespace GflChibiDesktop2
             catch
             {
             }
-            // 备份 legacy 渲染模块保存的窗口位置
-            string savedLegacyPosition = null;
-            string legacyPositionFile = Path.Combine(workDir, "legacy_position.json");
+            // 备份 legacy 渲染模块的持久化设置（settings1.json：窗口位置 left/top + 画布模式 canvasMode）
+            string savedLegacySettings = null;
+            string legacySettingsFile = Path.Combine(workDir, "settings1.json");
             try
             {
-                if (File.Exists(legacyPositionFile))
+                if (File.Exists(legacySettingsFile))
                 {
-                    savedLegacyPosition = File.ReadAllText(legacyPositionFile);
+                    savedLegacySettings = File.ReadAllText(legacySettingsFile);
                 }
             }
             catch
@@ -198,12 +198,12 @@ namespace GflChibiDesktop2
                 if (File.Exists(srcSettings)) File.Copy(srcSettings, Path.Combine(workDir, "settings.json"), true);
             }
 
-            // 恢复 legacy 渲染模块的窗口位置
-            if (!string.IsNullOrEmpty(savedLegacyPosition))
+            // 恢复 legacy 渲染模块的持久化设置（settings1.json：窗口位置 + 画布模式等）
+            if (!string.IsNullOrEmpty(savedLegacySettings))
             {
                 try
                 {
-                    File.WriteAllText(Path.Combine(workDir, "legacy_position.json"), savedLegacyPosition);
+                    File.WriteAllText(Path.Combine(workDir, "settings1.json"), savedLegacySettings);
                 }
                 catch
                 {

@@ -23,8 +23,8 @@
     <Company>BrightSu</Company>
     <Product>GflChibiDesktopLegacyGL</Product>
     <Copyright>© 2020~2026 BrightSu</Copyright>
-    <AssemblyVersion>1.1.0.2</AssemblyVersion>
-    <FileVersion>1.1.0.2</FileVersion>
+    <AssemblyVersion>1.1.0.4</AssemblyVersion>
+    <FileVersion>1.1.0.4</FileVersion>
     <!-- 与 DX 版同目录共存：独立 obj/bin（由 Directory.Build.props 设置 obj），并排除对方生成物 -->
     <OutputPath>bin\LegacyGL\$(Configuration)\</OutputPath>
     <DefaultItemExcludes>$(DefaultItemExcludes);bin\**;obj\**</DefaultItemExcludes>

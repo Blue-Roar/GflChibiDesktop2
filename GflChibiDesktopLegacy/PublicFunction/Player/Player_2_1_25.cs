@@ -21,6 +21,67 @@ public class Player_2_1_25 : IPlayer
     private AnimationStateData stateData;
     private SkeletonBinary binary;
     private SkeletonJson json;
+    /// <summary>最近一次应用的画布模式（Update 检测面板切换）。</summary>
+    private int _lastCanvasMode = 2;
+
+    /// <summary>
+    /// 按画布模式应用画布：
+    /// 0=小(448×448)、1=大(768×768)（固定，模型偏移=画布中心，不使用/修改 model.conf.json）；
+    /// 2=动态（默认，按全部动画并集，conf 沿用或计算并写回）。
+    /// 窗口尺寸 = 基础 × 当前缩放。setInitial=true（首次加载）不通知窗口（由 OnModelLoaded→ApplyCanvas 完成）；
+    /// 否则（运行中切换模式）重摆模型偏移并触发 App.CanvasChanged 让 PetWindow 调整窗口。
+    /// </summary>
+    private void ApplyCanvasByMode(int mode, bool setInitial)
+    {
+        float scale = App.globalValues.Scale;
+        if (mode == 0)
+        {
+            App.CanvasW = 448;
+            App.CanvasH = 448;
+            App.CanvasX = 224;
+            App.CanvasY = 224;
+        }
+        else if (mode == 1)
+        {
+            App.CanvasW = 768;
+            App.CanvasH = 768;
+            App.CanvasX = 384;
+            App.CanvasY = 384;
+        }
+        else
+        {
+            // 动态：优先沿用已计算并写回的 model.conf.json（V2 重建实例时备份恢复），避免每次启动重算
+            CanvasRect? saved = CanvasCalculator.TryReadSavedRect();
+            if (saved.HasValue)
+            {
+                App.CanvasW = saved.Value.W;
+                App.CanvasH = saved.Value.H;
+                App.CanvasX = saved.Value.X;
+                App.CanvasY = saved.Value.Y;
+            }
+            else
+            {
+                CanvasRect rect = CanvasCalculator.ComputeCanvasRect(state, stateData, skeleton, scale);
+                App.CanvasW = rect.W;
+                App.CanvasH = rect.H;
+                App.CanvasX = rect.X;
+                App.CanvasY = rect.Y;
+                CanvasCalculator.SaveRect(rect.X, rect.Y, rect.W, rect.H);
+            }
+        }
+
+        // 窗口尺寸 = 基础 × 当前缩放（与 raylib setWindowSize(modelConfig.w * scale) 一致）
+        App.globalValues.FrameWidth = Math.Ceiling(App.CanvasW * scale);
+        App.globalValues.FrameHeight = Math.Ceiling(App.CanvasH * scale);
+        // 模型默认位置 = 画布偏移
+        App.globalValues.PosX = App.CanvasX * scale;
+        App.globalValues.PosY = App.CanvasY * scale;
+
+        if (!setInitial)
+        {
+            App.NotifyCanvasChanged();
+        }
+    }
 
     public void Initialize()
     {
@@ -75,41 +136,20 @@ public class Player_2_1_25 : IPlayer
         }
         App.globalValues.SkinList = SkinNames;
 
-        // ===== 画布：自动扩大（与 raylib 运行时的"动态扩大画布"一致）=====
-        // 按"全部动画并集包围盒"一次算定并长期保持（用户选择回退到固定大画布，避免切动画时
-        // 窗口频繁缩放/跳动）；优先沿用已计算并写回的 model.conf.json（由 V2 重建实例时备份恢复），
-        // 缺失或模型变更时遍历全部动画采样求并集包围盒，向外扩展画布并居中模型，再写回供后续复用。
-        // 部分模型（如完整立绘）动画范围超出默认 448 画布会被裁切，按实际包围盒向外扩展。
+        // ===== 画布：按画布模式应用（0=小 448×448、1=大 768×768、2=动态=全部动画并集）=====
+        // 动态模式按"全部动画并集包围盒"一次算定并长期保持（避免切动画时窗口频繁缩放/跳动），
+        // 优先沿用已写回的 model.conf.json（V2 重建实例时备份恢复），缺失才采样计算并写回；
+        // 固定模式（小/大）不使用 conf，模型偏移 = 画布中心（超出画布部分裁切）。
         try
         {
-            CanvasRect? saved = CanvasCalculator.TryReadSavedRect();
-            if (saved.HasValue)
-            {
-                App.CanvasW = saved.Value.W;
-                App.CanvasH = saved.Value.H;
-                App.CanvasX = saved.Value.X;
-                App.CanvasY = saved.Value.Y;
-            }
-            else
-            {
-                CanvasRect rect = CanvasCalculator.ComputeCanvasRect(state, stateData, skeleton, App.globalValues.Scale);
-                App.CanvasW = rect.W;
-                App.CanvasH = rect.H;
-                App.CanvasX = rect.X;
-                App.CanvasY = rect.Y;
-                CanvasCalculator.SaveRect(rect.X, rect.Y, rect.W, rect.H);
-            }
+            ApplyCanvasByMode(App.globalValues.CanvasMode, true);
         }
         catch (Exception ex)
         {
             // 计算失败时沿用默认 448 画布，不阻断模型加载
             Console.WriteLine("[canvas] 计算画布失败，使用默认尺寸: " + ex.Message);
         }
-
-        // 应用画布尺寸（未缩放基础 × 当前缩放，与 raylib setWindowSize(modelConfig.w * scale) 一致）
-        float canvasScale = App.globalValues.Scale;
-        App.globalValues.FrameWidth = Math.Ceiling(App.CanvasW * canvasScale);
-        App.globalValues.FrameHeight = Math.Ceiling(App.CanvasH * canvasScale);
+        _lastCanvasMode = App.globalValues.CanvasMode;
 
         if (App.globalValues.SelectAnimeName != string.Empty)
         {
@@ -133,10 +173,8 @@ public class Player_2_1_25 : IPlayer
 
         if (App.isNew)
         {
-            // 新加载模型时：模型默认位置 = 画布偏移（包围盒在画布中居中），
-            // 窗口尺寸/位置由 PetWindow.ApplyCanvas 按此画布调整
-            App.globalValues.PosX = App.CanvasX * canvasScale;
-            App.globalValues.PosY = App.CanvasY * canvasScale;
+            // 新加载模型完成（模型默认位置/画布已在 ApplyCanvasByMode 设置，
+            // 窗口尺寸/位置由 PetWindow.ApplyCanvas 调整）
             App.NotifyModelLoaded?.Invoke();
         }
         App.isNew = false;
@@ -156,6 +194,20 @@ public class Player_2_1_25 : IPlayer
 
     public void Update(GameTime gameTime)
     {
+        // 画布模式切换（面板"画布"下拉）：应用新模式——固定小/大 或 动态（全部动画并集，conf 沿用/计算）
+        if (App.globalValues.CanvasMode != _lastCanvasMode)
+        {
+            _lastCanvasMode = App.globalValues.CanvasMode;
+            try
+            {
+                ApplyCanvasByMode(App.globalValues.CanvasMode, false);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[canvas] 切换画布模式失败: " + ex.Message);
+            }
+        }
+
         if (App.globalValues.SelectAnimeName != string.Empty && App.globalValues.SetAnime)
         {
             // 不清轨道/不重置姿势：由 AnimationState 依据 DefaultMix 在现有动画上交叉过渡，

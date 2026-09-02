@@ -59,46 +59,28 @@ namespace GflChibiDesktop
             timerSimulationReload.Tick += timerSimulationReload_Tick;
 
             LoadPosition();
+            // 恢复持久化的画布模式（面板"画布"下拉，默认动态）；LoadContent 前生效
+            App.globalValues.CanvasMode = LegacySettings.LoadCanvasMode();
             Closed += (_, _) => SavePosition();
         }
 
-        /// <summary>窗口位置保存文件（实例工作目录，V2 重建实例时由主程序备份恢复）。</summary>
-        private static string PositionFile => Path.Combine(Environment.CurrentDirectory, "legacy_position.json");
-
-        /// <summary>启动时恢复上次退出的窗口位置（读取成功则禁用居中对齐）。</summary>
+        /// <summary>启动时恢复上次退出的窗口位置（读取成功则禁用居中对齐）。数据存于 settings1.json。</summary>
         private void LoadPosition()
         {
-            try
+            if (LegacySettings.TryLoadWindowPosition(out double l, out double t))
             {
-                if (!File.Exists(PositionFile))
-                {
-                    return;
-                }
-                string[] parts = File.ReadAllText(PositionFile).Split(',');
-                if (parts.Length == 2 && double.TryParse(parts[0], out double l) && double.TryParse(parts[1], out double t))
-                {
-                    Left = l;
-                    Top = t;
-                    WindowStartupLocation = WindowStartupLocation.Manual;
-                    _positionRestored = true;
-                }
-            }
-            catch
-            {
+                Left = l;
+                Top = t;
+                WindowStartupLocation = WindowStartupLocation.Manual;
+                _positionRestored = true;
             }
         }
 
-        /// <summary>退出时保存窗口位置，供下次启动恢复。</summary>
+        /// <summary>退出时保存窗口位置与持久化设置到 settings1.json，供下次启动恢复。</summary>
         private void SavePosition()
         {
-            try
-            {
-                Directory.CreateDirectory(Environment.CurrentDirectory);
-                File.WriteAllText(PositionFile, $"{Left},{Top}");
-            }
-            catch
-            {
-            }
+            LegacySettings.SaveWindowPosition(Left, Top);
+            LegacySettings.SaveCanvasMode(App.globalValues.CanvasMode);
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -162,11 +144,19 @@ namespace GflChibiDesktop
             Player.Content = App.appXC;
         }
 
-        /// <summary>模型加载完成回调（App.NotifyModelLoaded 目标）：按画布调整窗口，再初始化 V2 控制面板。</summary>
+        /// <summary>模型加载完成回调（App.NotifyModelLoaded 目标）：订阅画布变化、按画布调整窗口，再初始化 V2 控制面板。</summary>
         public void OnModelLoaded()
         {
+            App.CanvasChanged -= OnCanvasChanged;
+            App.CanvasChanged += OnCanvasChanged;
             ApplyCanvas();
             InitIpc();
+        }
+
+        /// <summary>画布模式/尺寸变化（Player 已更新画布），调整窗口。</summary>
+        private void OnCanvasChanged()
+        {
+            ApplyCanvas();
         }
 
         /// <summary>
@@ -256,6 +246,19 @@ namespace GflChibiDesktop
                 Ipc.AddNumeric("缩放(%)", "100 为一倍缩放",
                     () => (int)(App.globalValues.Scale * 100),
                     v => SetScale(v / 100f), 1, 200);
+
+                // 画布尺寸：与新版 raylib 的"画布"下拉一致——小/大固定窗口，动态按模型动画并集自动
+                Ipc.AddCombo("画布", "画布尺寸：小(448x448)、大(768x768)、动态(按模型自动)",
+                    () => new List<string> { "小(448x448)", "大(768x768)", "动态" },
+                    () => App.globalValues.CanvasMode,
+                    idx =>
+                    {
+                        if (idx >= 0 && idx <= 2)
+                        {
+                            App.globalValues.CanvasMode = idx;   // Player.Update 检测后应用
+                            LegacySettings.SaveCanvasMode(idx);   // 持久化（重启恢复）
+                        }
+                    });
 
                 Ipc.AddNumeric("透明度", "0（透明）~255（不透明）",
                     () => (int)(App.globalValues.Opacity * 255),

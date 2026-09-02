@@ -57,6 +57,8 @@ M.after_read = 'ipc:read.after'
     { type = 'readonly', text = '' }
     按钮：
     { type = 'button', prompt = '', hint = '' }
+    下拉：
+    { type = 'combo', prompt = '', hint = '', items = { 'a', 'b', 'c' } }
 ]]
 
 M.getV = function(param)
@@ -127,6 +129,24 @@ M.getV = function(param)
                 M.writeInt32(inst, 4) -- button
                 M.writeString(inst, param.prompt) -- prompt text
                 M.writeString(inst, param.hint) -- hint text
+                M.wrote(inst, wrote)
+            end
+        end
+    elseif param.type == 'combo' then return
+        function(r)
+            return function(inst)
+                r(M.readInt32(inst)) -- 面板发来的选中索引
+            end
+        end,
+        function (r)
+            return function(inst, wrote)
+                ipc.hiMQ_begin(inst)
+                M.writeInt32(inst, 5) -- combo select
+                M.writeString(inst, param.prompt) -- prompt text
+                M.writeString(inst, param.hint) -- hint text
+                M.writeInt32(inst, #param.items) -- item count
+                for i = 1, #param.items do M.writeString(inst, param.items[i]) end
+                M.writeInt32(inst, r()) -- selected index
                 M.wrote(inst, wrote)
             end
         end

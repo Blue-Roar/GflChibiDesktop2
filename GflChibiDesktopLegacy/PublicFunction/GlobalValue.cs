@@ -52,6 +52,7 @@ public class GlobalValue : INotifyPropertyChanged
     private bool _IsRecoding = false;
     private bool _FilpX = false;
     private bool _MoveFlip = false;
+    private int _CanvasMode = 0;
     private float _RedcodePanelWidth = 280f;
     private float _Rotation = 0;
     private bool _UseCache = false;
@@ -710,6 +711,25 @@ public class GlobalValue : INotifyPropertyChanged
             {
                 _MoveFlip = value;
                 OnPropertyChanged("MoveFlip");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 画布模式（与 raylib 的 settings.canvasMode 一致）：0=小(448×448)、1=大(768×768)、2=动态（默认，按模型动画并集）。
+    /// </summary>
+    public int CanvasMode
+    {
+        get
+        {
+            return _CanvasMode;
+        }
+        set
+        {
+            if (_CanvasMode != value)
+            {
+                _CanvasMode = value;
+                OnPropertyChanged("CanvasMode");
             }
         }
     }

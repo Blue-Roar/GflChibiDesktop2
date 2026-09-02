@@ -53,29 +53,52 @@ _M.create = function (p, modelConfig)
     local animationStateData = sp.spAnimationStateData_create(skeletonData)
     local animationState = sp.spAnimationState_create(animationStateData)
 
-    -- 画布尺寸：仅当配置缺失（首次启动/模型变更）时计算实际动画包围盒并写回。
-    -- 之后 C# 端会沿用已计算的值，避免每次启动重算包围盒导致卡顿。
-    -- 部分模型（如完整立绘）动画范围超出默认 448 画布会被裁切，按实际包围盒向外扩展。
-    if modelConfig.x == nil or modelConfig.y == nil or modelConfig.w == nil or modelConfig.h == nil then
-        local r = calcWindowSize(ffi, sp, animationState, animationStateData, skeleton)
-        if r.x * 2 < r.width then
-            r.x = r.width - r.x
-            r.width = r.x * 2
+    -- 画布模式：0=小(448x448)、1=大(768x768)、2=动态（按全部动画并集包围盒，conf 缓存）
+    -- 由 main.lua 的 settings.canvasMode 传入（默认动态）。
+    local canvasMode = p.canvasMode or 2
+
+    ---按画布模式设置 modelConfig 的 x/y/w/h（未缩放基础）。
+    ---动态模式：conf 已有则沿用（避免每次启动重算包围盒卡顿），缺失或 force 时采样计算并写回；
+    ---固定模式（小/大）：画布固定、模型偏移 = 画布中心，不使用/不修改 conf。
+    ---force=true 用于运行时切回动态：忽略内存/conf 缓存直接重算（模型未变，结果与 conf 一致）。
+    local function applyCanvasMode(mode, force)
+        if mode == 0 then
+            modelConfig.x, modelConfig.y, modelConfig.w, modelConfig.h = 224, 224, 448, 448
+        elseif mode == 1 then
+            modelConfig.x, modelConfig.y, modelConfig.w, modelConfig.h = 384, 384, 768, 768
+        elseif force or modelConfig.x == nil or modelConfig.y == nil or modelConfig.w == nil or modelConfig.h == nil then
+            -- 动态：计算实际动画包围盒并写回。部分模型（如完整立绘）动画范围超出默认 448 画布会被裁切，
+            -- 按实际包围盒向外扩展（force 时忽略已存尺寸，按真实并集重算）。
+            local r = calcWindowSize(ffi, sp, animationState, animationStateData, skeleton)
+            if r.x * 2 < r.width then
+                r.x = r.width - r.x
+                r.width = r.x * 2
+            end
+            local cw = (not force) and (modelConfig.w or 0) or 0
+            local ch = (not force) and (modelConfig.h or 0) or 0
+            local nw = math.max(cw, r.width)
+            local nh = math.max(ch, r.height)
+            modelConfig.x = (nw - r.width) / 2 + r.x
+            modelConfig.y = (nh - r.height) / 2 + r.y
+            modelConfig.w = nw
+            modelConfig.h = nh
+            if modelConfig.save ~= nil then modelConfig:save() end
         end
-        local cw = modelConfig.w or 0
-        local ch = modelConfig.h or 0
-        local nw = math.max(cw, r.width)
-        local nh = math.max(ch, r.height)
-        modelConfig.x = (nw - r.width) / 2 + r.x
-        modelConfig.y = (nh - r.height) / 2 + r.y
-        modelConfig.w = nw
-        modelConfig.h = nh
-        if modelConfig.save ~= nil then modelConfig:save() end
     end
+    applyCanvasMode(canvasMode, false)
 
     ---将窗口设置为适应本模型
     M.setWindowSize = function()
         windowMan.setSize(math.ceil(modelConfig.w * scale), math.ceil(modelConfig.h * scale))
+    end
+
+    ---设置画布模式（面板"画布"下拉）：0=小(448x448)、1=大(768x768)、2=动态（按模型动画并集）
+    M.setCanvasMode = function(mode)
+        if mode == nil then mode = 2 end
+        applyCanvasMode(mode, mode == 2)
+        -- 重新应用：模型偏移 × 缩放、窗口尺寸
+        M.scale(scale)
+        M.setWindowSize()
     end
 
     ---设置骨骼缩放值

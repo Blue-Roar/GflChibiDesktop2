@@ -27,12 +27,17 @@ namespace GflChibiDesktop
 
         /// <summary>
         /// 基础画布（未缩放）：W/H = 画布尺寸，X/Y = 模型默认偏移（包围盒在画布中居中）。
-        /// 由 Player 加载模型时从 model.conf.json 读取或按全部动画并集包围盒计算（与 raylib 一致）。
+        /// 由 Player 加载模型时按画布模式（CanvasMode：小/大固定或动态=模型动画并集）设置。
         /// </summary>
         public static float CanvasW = 448;
         public static float CanvasH = 448;
         public static float CanvasX = 224;
         public static float CanvasY = 224;
+        /// <summary>画布尺寸/模式变化事件（PetWindow 订阅以调整窗口）。</summary>
+        public static event Action CanvasChanged;
+
+        /// <summary>触发画布变化事件（供其他类调用）。</summary>
+        public static void NotifyCanvasChanged() => CanvasChanged?.Invoke();
 
         /// <summary>渲染/加载错误提示回调。</summary>
         public static Action<Exception> NotifyError;
