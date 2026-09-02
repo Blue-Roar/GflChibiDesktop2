@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -51,7 +51,7 @@ public class GlobalValue : INotifyPropertyChanged
     private float _Lock = 0f;
     private bool _IsRecoding = false;
     private bool _FilpX = false;
-    private bool _FilpY = false;
+    private bool _MoveFlip = false;
     private float _RedcodePanelWidth = 280f;
     private float _Rotation = 0;
     private bool _UseCache = false;
@@ -694,18 +694,22 @@ public class GlobalValue : INotifyPropertyChanged
         }
     }
 
-    public bool FilpY
+    /// <summary>
+    /// 翻转朝向（与新版 raylib 的 settings.moveFlip 一致）：部分模型素材初始面朝左，
+    /// 走动时若不翻转就会"倒着跑"，开启后移动方向取反（FilpX 由走动逻辑自动管理）。
+    /// </summary>
+    public bool MoveFlip
     {
         get
         {
-            return _FilpY;
+            return _MoveFlip;
         }
         set
         {
-            if (_FilpY != value)
+            if (_MoveFlip != value)
             {
-                _FilpY = value;
-                OnPropertyChanged("FilpY");
+                _MoveFlip = value;
+                OnPropertyChanged("MoveFlip");
             }
         }
     }

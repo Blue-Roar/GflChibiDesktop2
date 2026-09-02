@@ -43,16 +43,6 @@ namespace GflChibiDesktop2
             bool glExists = File.Exists(Path.Combine(baseDir, "app", "LegacyGL", "GflChibiDesktopLegacyGL.exe"));
             bool dxExists = File.Exists(Path.Combine(baseDir, "app", "LegacyDX", "GflChibiDesktopLegacyDX.exe"));
 
-            if (!glExists)
-            {
-                rGraphicsGL.IsChecked = false;
-                rGraphicsGL.Visibility = Visibility.Collapsed;
-            }
-            if (!dxExists)
-            {
-                rGraphicsDX.IsChecked = false;
-                rGraphicsDX.Visibility = Visibility.Collapsed;
-            }
             if (!glExists && !dxExists)
             {
                 _main.EnableLegacy = false;
@@ -66,6 +56,18 @@ namespace GflChibiDesktop2
                 lblLegacy404.Visibility = Visibility.Collapsed;
                 gridLegacy.Visibility = Visibility.Visible;
                 chbEnableLegacy.IsEnabled = true;
+                if (!glExists)
+                {
+                    rGraphicsGL.IsChecked = false;
+                    rGraphicsGL.Visibility = Visibility.Collapsed;
+                    rGraphicsDX.IsChecked = true;
+                }
+                if (!dxExists)
+                {
+                    rGraphicsDX.IsChecked = false;
+                    rGraphicsDX.Visibility = Visibility.Collapsed;
+                    rGraphicsGL.IsChecked = true;
+                }
             }
         }
 

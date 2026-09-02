@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -75,6 +75,42 @@ public class Player_2_1_25 : IPlayer
         }
         App.globalValues.SkinList = SkinNames;
 
+        // ===== 画布：自动扩大（与 raylib 运行时的"动态扩大画布"一致）=====
+        // 按"全部动画并集包围盒"一次算定并长期保持（用户选择回退到固定大画布，避免切动画时
+        // 窗口频繁缩放/跳动）；优先沿用已计算并写回的 model.conf.json（由 V2 重建实例时备份恢复），
+        // 缺失或模型变更时遍历全部动画采样求并集包围盒，向外扩展画布并居中模型，再写回供后续复用。
+        // 部分模型（如完整立绘）动画范围超出默认 448 画布会被裁切，按实际包围盒向外扩展。
+        try
+        {
+            CanvasRect? saved = CanvasCalculator.TryReadSavedRect();
+            if (saved.HasValue)
+            {
+                App.CanvasW = saved.Value.W;
+                App.CanvasH = saved.Value.H;
+                App.CanvasX = saved.Value.X;
+                App.CanvasY = saved.Value.Y;
+            }
+            else
+            {
+                CanvasRect rect = CanvasCalculator.ComputeCanvasRect(state, stateData, skeleton, App.globalValues.Scale);
+                App.CanvasW = rect.W;
+                App.CanvasH = rect.H;
+                App.CanvasX = rect.X;
+                App.CanvasY = rect.Y;
+                CanvasCalculator.SaveRect(rect.X, rect.Y, rect.W, rect.H);
+            }
+        }
+        catch (Exception ex)
+        {
+            // 计算失败时沿用默认 448 画布，不阻断模型加载
+            Console.WriteLine("[canvas] 计算画布失败，使用默认尺寸: " + ex.Message);
+        }
+
+        // 应用画布尺寸（未缩放基础 × 当前缩放，与 raylib setWindowSize(modelConfig.w * scale) 一致）
+        float canvasScale = App.globalValues.Scale;
+        App.globalValues.FrameWidth = Math.Ceiling(App.CanvasW * canvasScale);
+        App.globalValues.FrameHeight = Math.Ceiling(App.CanvasH * canvasScale);
+
         if (App.globalValues.SelectAnimeName != string.Empty)
         {
             state.SetAnimation(0, App.globalValues.SelectAnimeName, App.globalValues.IsLoop);
@@ -97,9 +133,10 @@ public class Player_2_1_25 : IPlayer
 
         if (App.isNew)
         {
-            // 新加载模型时居中
-            App.globalValues.PosX = (float)(App.canvasWidth / 2);
-            App.globalValues.PosY = (float)(App.canvasHeight / 2);
+            // 新加载模型时：模型默认位置 = 画布偏移（包围盒在画布中居中），
+            // 窗口尺寸/位置由 PetWindow.ApplyCanvas 按此画布调整
+            App.globalValues.PosX = App.CanvasX * canvasScale;
+            App.globalValues.PosY = App.CanvasY * canvasScale;
             App.NotifyModelLoaded?.Invoke();
         }
         App.isNew = false;
@@ -176,8 +213,6 @@ public class Player_2_1_25 : IPlayer
         skeleton.X = App.globalValues.PosX;
         skeleton.Y = App.globalValues.PosY;
         skeleton.FlipX = App.globalValues.FilpX;
-        skeleton.FlipY = App.globalValues.FilpY;
-
 
         skeleton.RootBone.Rotation = App.globalValues.Rotation;
         skeleton.UpdateWorldTransform();

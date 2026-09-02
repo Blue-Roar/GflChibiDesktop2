@@ -29,7 +29,10 @@ namespace GflChibiDesktop
         private int moveDistanceX;
         private int movedDistanceX;
         private bool moveXDirection;
-        private bool DummyReverse = false;
+        /// <summary>是否从 legacy_position.json 恢复了窗口位置（首次启动画布调整时需重新居中）。</summary>
+        private bool _positionRestored = false;
+        /// <summary>是否已应用过一次画布（首次加载才允许居中；之后动画切换只调整尺寸/平移）。</summary>
+        private bool _canvasApplied = false;
 
         public PetWindow()
         {
@@ -77,6 +80,7 @@ namespace GflChibiDesktop
                     Left = l;
                     Top = t;
                     WindowStartupLocation = WindowStartupLocation.Manual;
+                    _positionRestored = true;
                 }
             }
             catch
@@ -158,10 +162,60 @@ namespace GflChibiDesktop
             Player.Content = App.appXC;
         }
 
-        /// <summary>模型加载完成回调（App.NotifyModelLoaded 目标）：初始化 V2 控制面板。</summary>
+        /// <summary>模型加载完成回调（App.NotifyModelLoaded 目标）：按画布调整窗口，再初始化 V2 控制面板。</summary>
         public void OnModelLoaded()
         {
+            ApplyCanvas();
             InitIpc();
+        }
+
+        /// <summary>
+        /// 按基础画布 × 当前缩放调整窗口与渲染控件尺寸（画布固定为模型并集包围盒）。
+        /// 首次启动（未应用过且无保存位置）在新尺寸下重新居中，避免模型超出屏幕。
+        /// </summary>
+        public void ApplyCanvas()
+        {
+            double w = Math.Ceiling(App.CanvasW * App.globalValues.Scale);
+            double h = Math.Ceiling(App.CanvasH * App.globalValues.Scale);
+            if (w <= 0 || h <= 0)
+                return;
+            App.globalValues.FrameWidth = w;
+            App.globalValues.FrameHeight = h;
+            Width = w;
+            Height = h;
+            Player.Width = w;
+            Player.Height = h;
+            if (App.appXC != null)
+            {
+                App.appXC.Width = w;
+                App.appXC.Height = h;
+            }
+            if (!_canvasApplied && !_positionRestored)
+            {
+                Left = (int)((SystemParameters.WorkArea.Width - w) / 2);
+                Top = (int)((SystemParameters.WorkArea.Height - h) / 2);
+            }
+            _canvasApplied = true;
+        }
+
+        /// <summary>
+        /// 设置缩放：画布随缩放同步调整（基础尺寸 × 缩放），模型偏移等比缩放，
+        /// 窗口反向移动以保持模型在屏幕上的位置稳定（与 raylib keepSetScale + setWindowSize 一致）。
+        /// </summary>
+        private void SetScale(float newScale)
+        {
+            float oldScale = App.globalValues.Scale;
+            if (oldScale <= 0) oldScale = 1;
+            float oldX = App.globalValues.PosX;
+            float oldY = App.globalValues.PosY;
+            float ratio = newScale / oldScale;
+            App.globalValues.Scale = newScale;
+            App.globalValues.PosX = oldX * ratio;
+            App.globalValues.PosY = oldY * ratio;
+            // 窗口随模型偏移变化反向移动，使模型在屏幕上的位置不变
+            Left -= App.globalValues.PosX - oldX;
+            Top -= App.globalValues.PosY - oldY;
+            ApplyCanvas();
         }
 
         /// <summary>
@@ -201,7 +255,7 @@ namespace GflChibiDesktop
 
                 Ipc.AddNumeric("缩放(%)", "100 为一倍缩放",
                     () => (int)(App.globalValues.Scale * 100),
-                    v => App.globalValues.Scale = v / 100f, 1, 200);
+                    v => SetScale(v / 100f), 1, 200);
 
                 Ipc.AddNumeric("透明度", "0（透明）~255（不透明）",
                     () => (int)(App.globalValues.Opacity * 255),
@@ -211,14 +265,6 @@ namespace GflChibiDesktop
                     () => App.globalValues.Speed,
                     v => App.globalValues.Speed = v, 0, 240);
 
-                Ipc.AddNumeric("水平位置", "人形在画布上的水平坐标",
-                    () => (int)App.globalValues.PosX,
-                    v => App.globalValues.PosX = v, 0, (int)App.globalValues.FrameWidth);
-
-                Ipc.AddNumeric("垂直位置", "人形在画布上的垂直坐标",
-                    () => (int)App.globalValues.PosY,
-                    v => App.globalValues.PosY = v, 0, (int)App.globalValues.FrameHeight);
-
                 Ipc.AddNumeric("旋转角度", "人形在画布上的旋转角度",
                     () => (int)App.globalValues.Rotation,
                     v => App.globalValues.Rotation = v, 0, 359);
@@ -227,13 +273,12 @@ namespace GflChibiDesktop
                     () => App.globalValues.IsLoop,
                     v => { App.globalValues.IsLoop = v; App.globalValues.SetAnime = true; });
 
-                Ipc.AddBool("水平翻转", "将人形水平翻转",
-                    () => App.globalValues.FilpX,
-                    v => App.globalValues.FilpX = v);
-
-                Ipc.AddBool("垂直翻转", "将人形垂直翻转",
-                    () => App.globalValues.FilpY,
-                    v => App.globalValues.FilpY = v);
+                // 翻转朝向：与新版 raylib 同名同描述（settings.moveFlip）——
+                // 部分初始面向左边的人形移动时会倒着跑，开启后修正。
+                // FilpX（渲染朝向）由走动逻辑按移动方向自动设置，此开关仅决定是否取反。
+                Ipc.AddBool("翻转朝向", "部分初始面向左边的人形移动时会倒着跑，开启后修正",
+                    () => App.globalValues.MoveFlip,
+                    v => App.globalValues.MoveFlip = v);
 
                 Ipc.AddBool("动态模拟", "定时随机播放动作/走动",
                     () => App.globalValues.Simulation,
@@ -269,15 +314,16 @@ namespace GflChibiDesktop
             }
         }
 
-        /// <summary>重置桌宠窗口到画布中心。</summary>
+        /// <summary>重置桌宠：回到画布尺寸 100% 与模型默认偏移，窗口居中。</summary>
         public void ResetDummy()
         {
+            App.globalValues.Scale = 1;
+            App.globalValues.PosX = App.CanvasX;
+            App.globalValues.PosY = App.CanvasY;
+            ApplyCanvas();
             WindowState = WindowState.Normal;
             Left = (int)((SystemParameters.WorkArea.Width - Width) / 2);
             Top = (int)((SystemParameters.WorkArea.Height - Height) / 2);
-            App.globalValues.PosX = 224;
-            App.globalValues.PosY = 224;
-            App.globalValues.Scale = 1;
         }
 
         [DllImport("user32.dll")]
@@ -473,8 +519,8 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("move"))
             {
-                if (DummyReverse) App.globalValues.FilpX = true;
-                else App.globalValues.FilpX = false;
+                // 向右移动：默认朝右（FilpX=false）；素材初始面朝左（翻转朝向开启）时取反，与 raylib model.direction 一致
+                App.globalValues.FilpX = App.globalValues.MoveFlip;
                 App.globalValues.IsLoop = true;
                 UpdateSpine();
                 if (((int)(SystemParameters.PrimaryScreenWidth - Left - Width) >= 10) && ((SystemParameters.PrimaryScreenWidth - Left - (int)(Width / 2)) > 100))
@@ -500,8 +546,8 @@ namespace GflChibiDesktop
         {
             if (App.globalValues.AnimeList.Contains("move"))
             {
-                if (DummyReverse) App.globalValues.FilpX = false;
-                else App.globalValues.FilpX = true;
+                // 向左移动：默认朝左（FilpX=true）；翻转朝向开启时取反，与 raylib model.direction 一致
+                App.globalValues.FilpX = !App.globalValues.MoveFlip;
                 App.globalValues.IsLoop = true;
                 UpdateSpine();
                 if (Left > 100)

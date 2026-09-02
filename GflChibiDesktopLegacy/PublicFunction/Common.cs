@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using GflChibiDesktop;
@@ -30,7 +30,6 @@ public class Common
         App.globalValues.Lock = 0f;
         App.globalValues.IsRecoding = false;
         App.globalValues.FilpX = false;
-        App.globalValues.FilpY = false;
         App.globalValues.PosBGX = 0;
         App.globalValues.PosBGY = 0;
         if (App.textureBG != null)

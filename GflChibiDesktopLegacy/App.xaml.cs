@@ -25,6 +25,15 @@ namespace GflChibiDesktop
         public static double mainWidth;
         public static double mainHeight;
 
+        /// <summary>
+        /// 基础画布（未缩放）：W/H = 画布尺寸，X/Y = 模型默认偏移（包围盒在画布中居中）。
+        /// 由 Player 加载模型时从 model.conf.json 读取或按全部动画并集包围盒计算（与 raylib 一致）。
+        /// </summary>
+        public static float CanvasW = 448;
+        public static float CanvasH = 448;
+        public static float CanvasX = 224;
+        public static float CanvasY = 224;
+
         /// <summary>渲染/加载错误提示回调。</summary>
         public static Action<Exception> NotifyError;
         /// <summary>模型加载完成回调。</summary>
