@@ -92,6 +92,13 @@ namespace GflChibiDesktop
             if (_target != null && _targetWidth == w && _targetHeight == h)
                 return;
 
+            // 尺寸变化重建前：若设备仍绑定着旧渲染目标（例如画布在本帧 Update（已绑定 RT）期间
+            // 被动画切换缩小/放大，Draw 阶段再次 EnsureTarget 时仍处于绑定中），必须先解除绑定
+            // 再销毁——否则 dispose 使用中的 RenderTarget2D 会触发 native 崩溃/挂起。
+            if (GraphicsDevice.GetRenderTargets().Length > 0)
+            {
+                GraphicsDevice.SetRenderTarget(null);
+            }
             _target?.Dispose();
             _targetWidth = w;
             _targetHeight = h;

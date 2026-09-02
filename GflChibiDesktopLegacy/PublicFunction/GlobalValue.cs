@@ -716,7 +716,8 @@ public class GlobalValue : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// 画布模式（与 raylib 的 settings.canvasMode 一致）：0=小(448×448)、1=大(768×768)、2=动态（默认，按模型动画并集）。
+    /// 画布模式（与 raylib 的 settings.canvasMode 一致）：0=小(448×448)、1=大(768×768)、2=动态（按模型动画并集）。
+    /// 默认小(448×448)。
     /// </summary>
     public int CanvasMode
     {

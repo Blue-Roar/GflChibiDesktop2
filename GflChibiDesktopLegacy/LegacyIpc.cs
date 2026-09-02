@@ -64,6 +64,7 @@ namespace GflChibiDesktop
 
         private void Loop()
         {
+            int idleErrors = 0;
             while (running)
             {
                 try
@@ -73,35 +74,64 @@ namespace GflChibiDesktop
                     // 不能依赖 WaitOne；与 luajit 每帧 hiMQ_get 轮询一致）
                     while (reader.Next())
                     {
-                        int id = reader.ReadInt();
-                        if (id == 2)
+                        idleErrors = 0;
+                        try
                         {
-                            // 面板配置：[itemId, value]…, 0；应用与面板重建须在 UI 线程
-                            Run(() =>
+                            int id = reader.ReadInt();
+                            if (id == 2)
                             {
-                                int itemId = reader.ReadInt();
-                                while (itemId > 0)
+                                // 面板配置：[itemId, value]…, 0；应用与面板重建须在 UI 线程
+                                Run(() =>
                                 {
-                                    if (itemId <= panel.Count)
+                                    try
                                     {
-                                        panel[itemId - 1].Apply(reader);
+                                        int itemId = reader.ReadInt();
+                                        while (itemId > 0)
+                                        {
+                                            if (itemId <= panel.Count)
+                                            {
+                                                panel[itemId - 1].Apply(reader);
+                                            }
+                                            else
+                                            {
+                                                Console.WriteLine("[ipc] 忽略越界面板项 itemId=" + itemId);
+                                            }
+                                            itemId = reader.ReadInt();
+                                        }
+                                        // 应用后重建面板，让主程序显示最新值（与 luajit 一致）
+                                        SendPanelStructure();
                                     }
-                                    itemId = reader.ReadInt();
-                                }
-                                // 应用后重建面板，让主程序显示最新值（与 luajit 一致）
-                                SendPanelStructure();
-                            });
+                                    catch (Exception ex)
+                                    {
+                                        // 单次配置应用失败不退出 IPC 线程：记录并尝试重建面板恢复同步
+                                        Console.WriteLine("[ipc] 面板配置应用失败: " + ex);
+                                        try { SendPanelStructure(); } catch { }
+                                    }
+                                });
+                            }
+                            else if (id == 3)
+                            {
+                                // 重建面板
+                                Run(SendPanelStructure);
+                            }
                         }
-                        else if (id == 3)
+                        catch (Exception ex)
                         {
-                            // 重建面板
-                            Run(SendPanelStructure);
+                            // 单条消息解析出错：跳过该条，继续响应后续命令
+                            Console.WriteLine("[ipc] 消息解析失败: " + ex.Message);
                         }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    break;
+                    idleErrors++;
+                    Console.WriteLine("[ipc] 轮询异常(" + idleErrors + "): " + ex.Message);
+                    // 仅持续故障才放弃（防死循环空转），偶发错误继续轮询
+                    if (idleErrors > 200)
+                    {
+                        Console.WriteLine("[ipc] 持续轮询失败，IPC 线程退出");
+                        break;
+                    }
                 }
                 Thread.Sleep(50);
             }
@@ -114,17 +144,25 @@ namespace GflChibiDesktop
 
         public void SendPanelStructure()
         {
-            // 重置面板
-            using (var w = writeInst.BeginWrite())
+            try
             {
-                w.Write(0);
+                // 重置面板
+                using (var w = writeInst.BeginWrite())
+                {
+                    w.Write(0);
+                }
+                // 各项：最后一项带唤醒信号（bell=true）
+                for (int i = 0; i < panel.Count; i++)
+                {
+                    var w = writeInst.BeginWrite();
+                    panel[i].Send(w);
+                    w.End(i == panel.Count - 1);
+                }
             }
-            // 各项：最后一项带唤醒信号（bell=true）
-            for (int i = 0; i < panel.Count; i++)
+            catch (Exception ex)
             {
-                var w = writeInst.BeginWrite();
-                panel[i].Send(w);
-                w.End(i == panel.Count - 1);
+                // 面板结构发送失败不影响后续（下次重建再试）
+                Console.WriteLine("[ipc] 面板结构发送失败: " + ex.Message);
             }
         }
 

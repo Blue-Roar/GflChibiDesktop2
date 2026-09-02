@@ -23,7 +23,6 @@ namespace GflChibiDesktop
         System.Windows.Threading.DispatcherTimer timerEventsSimulation = new System.Windows.Threading.DispatcherTimer();
         System.Windows.Threading.DispatcherTimer timerSimulationMoveX = new System.Windows.Threading.DispatcherTimer();
         System.Windows.Threading.DispatcherTimer timerSimulationS = new System.Windows.Threading.DispatcherTimer();
-        System.Windows.Threading.DispatcherTimer timerSimulationVictory = new System.Windows.Threading.DispatcherTimer();
         System.Windows.Threading.DispatcherTimer timerSimulationReload = new System.Windows.Threading.DispatcherTimer();
 
         private int moveDistanceX;
@@ -55,12 +54,25 @@ namespace GflChibiDesktop
             timerSimulationMoveX.Interval = new TimeSpan(0, 0, 0, 0, 10);
             timerSimulationMoveX.Tick += timerSimulationMoveX_Tick;
             timerSimulationS.Tick += timerSimulationS_Tick;
-            timerSimulationVictory.Tick += timerSimulationVictory_Tick;
             timerSimulationReload.Tick += timerSimulationReload_Tick;
 
             LoadPosition();
-            // 恢复持久化的画布模式（面板"画布"下拉，默认动态）；LoadContent 前生效
+            // 恢复持久化设置（settings1.json）：画布模式、动画、数值与开关；LoadContent 前生效
             App.globalValues.CanvasMode = LegacySettings.LoadCanvasMode();
+            string savedAnime = LegacySettings.GetString("anime", string.Empty);
+            if (!string.IsNullOrEmpty(savedAnime))
+            {
+                App.globalValues.SelectAnimeName = savedAnime;   // LoadContent 会校验当前模型是否存在该动画
+            }
+            App.globalValues.Scale = (float)LegacySettings.GetDouble("scale", 1.0);
+            App.globalValues.Opacity = LegacySettings.GetDouble("opacity", 1.0);
+            App.globalValues.Speed = LegacySettings.GetInt("speed", 0);
+            App.globalValues.Rotation = (float)LegacySettings.GetDouble("rotation", 0);
+            App.globalValues.IsLoop = LegacySettings.GetBool("loop", true);
+            App.globalValues.MoveFlip = LegacySettings.GetBool("moveFlip", false);
+            double simSec = LegacySettings.GetDouble("simulateInterval", 30);
+            if (simSec > 0) timerEventsSimulation.Interval = TimeSpan.FromSeconds(simSec);
+            Topmost = LegacySettings.GetBool("topmost", LegacyArgs.Topmost);
             Closed += (_, _) => SavePosition();
         }
 
@@ -76,11 +88,22 @@ namespace GflChibiDesktop
             }
         }
 
-        /// <summary>退出时保存窗口位置与持久化设置到 settings1.json，供下次启动恢复。</summary>
+        /// <summary>退出时把当前全部状态（窗口位置 + 所有面板项）保存到 settings1.json，供下次启动恢复。</summary>
         private void SavePosition()
         {
             LegacySettings.SaveWindowPosition(Left, Top);
             LegacySettings.SaveCanvasMode(App.globalValues.CanvasMode);
+            LegacySettings.SetString("anime", App.globalValues.SelectAnimeName ?? string.Empty);
+            LegacySettings.SetDouble("scale", App.globalValues.Scale);
+            LegacySettings.SetDouble("opacity", App.globalValues.Opacity);
+            LegacySettings.SetInt("speed", App.globalValues.Speed);
+            LegacySettings.SetDouble("rotation", App.globalValues.Rotation);
+            LegacySettings.SetBool("loop", App.globalValues.IsLoop);
+            LegacySettings.SetBool("moveFlip", App.globalValues.MoveFlip);
+            LegacySettings.SetBool("simulation", App.globalValues.Simulation);
+            LegacySettings.SetDouble("simulateInterval", timerEventsSimulation.Interval.TotalSeconds);
+            LegacySettings.SetBool("topmost", Topmost);
+            LegacySettings.SetBool("clickThrough", _clickThrough);
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -144,13 +167,44 @@ namespace GflChibiDesktop
             Player.Content = App.appXC;
         }
 
-        /// <summary>模型加载完成回调（App.NotifyModelLoaded 目标）：订阅画布变化、按画布调整窗口，再初始化 V2 控制面板。</summary>
+        /// <summary>模型加载完成回调（App.NotifyModelLoaded 目标）：订阅事件、按画布调整窗口，再初始化 V2 控制面板。</summary>
         public void OnModelLoaded()
         {
             App.CanvasChanged -= OnCanvasChanged;
             App.CanvasChanged += OnCanvasChanged;
+            App.OnceAnimationFinished -= HandleOnceAnimationFinished;
+            App.OnceAnimationFinished += HandleOnceAnimationFinished;
             ApplyCanvas();
             InitIpc();
+            // 恢复持久化开关：动态模拟 / 点击穿透（面板/渲染就绪后生效）
+            if (LegacySettings.GetBool("simulation", false))
+            {
+                toggleSimulation(true);
+            }
+            if (LegacySettings.GetBool("clickThrough", false))
+            {
+                SetClickThrough(true);
+            }
+        }
+
+        /// <summary>
+        /// 一次性动画播完（Player 的 AnimationState.Complete 通知）：victory（非循环）播完接续 victoryloop。
+        /// 替代原先按 AnimeDuration 猜测时长的 DispatcherTimer，播完即接续、不再静止。
+        /// </summary>
+        private void HandleOnceAnimationFinished()
+        {
+            if (!App.globalValues.Simulation)
+            {
+                return;
+            }
+            if (App.globalValues.SelectAnimeName == "victory" &&
+                App.globalValues.AnimeList != null &&
+                App.globalValues.AnimeList.Contains("victoryloop"))
+            {
+                App.globalValues.SelectAnimeName = "victoryloop";
+                App.globalValues.SetAnime = true;
+                App.globalValues.IsLoop = true;
+            }
         }
 
         /// <summary>画布模式/尺寸变化（Player 已更新画布），调整窗口。</summary>
@@ -186,6 +240,14 @@ namespace GflChibiDesktop
                 Top = (int)((SystemParameters.WorkArea.Height - h) / 2);
             }
             _canvasApplied = true;
+            // 动态画布随动画扩大/缩小时的反向平移：保持模型原点屏幕位置不变
+            if (App.CanvasShiftX != 0 || App.CanvasShiftY != 0)
+            {
+                Left += App.CanvasShiftX;
+                Top += App.CanvasShiftY;
+                App.CanvasShiftX = 0;
+                App.CanvasShiftY = 0;
+            }
         }
 
         /// <summary>
@@ -206,6 +268,7 @@ namespace GflChibiDesktop
             Left -= App.globalValues.PosX - oldX;
             Top -= App.globalValues.PosY - oldY;
             ApplyCanvas();
+            LegacySettings.SetDouble("scale", newScale);   // 持久化（重启恢复）
         }
 
         /// <summary>
@@ -240,6 +303,7 @@ namespace GflChibiDesktop
                         {
                             App.globalValues.SelectAnimeName = l[idx];
                             App.globalValues.SetAnime = true;
+                            LegacySettings.SetString("anime", l[idx]);   // 持久化（重启恢复）
                         }
                     });
 
@@ -262,26 +326,26 @@ namespace GflChibiDesktop
 
                 Ipc.AddNumeric("透明度", "0（透明）~255（不透明）",
                     () => (int)(App.globalValues.Opacity * 255),
-                    v => App.globalValues.Opacity = v / 255.0, 0, 255);
+                    v => { App.globalValues.Opacity = v / 255.0; LegacySettings.SetDouble("opacity", App.globalValues.Opacity); }, 0, 255);
 
                 Ipc.AddNumeric("帧率", "0 为不限制，1~240",
                     () => App.globalValues.Speed,
-                    v => App.globalValues.Speed = v, 0, 240);
+                    v => { App.globalValues.Speed = v; LegacySettings.SetInt("speed", v); }, 0, 240);
 
                 Ipc.AddNumeric("旋转角度", "人形在画布上的旋转角度",
                     () => (int)App.globalValues.Rotation,
-                    v => App.globalValues.Rotation = v, 0, 359);
+                    v => { App.globalValues.Rotation = v; LegacySettings.SetDouble("rotation", v); }, 0, 359);
 
                 Ipc.AddBool("循环播放", "循环播放选中的动画",
                     () => App.globalValues.IsLoop,
-                    v => { App.globalValues.IsLoop = v; App.globalValues.SetAnime = true; });
+                    v => { App.globalValues.IsLoop = v; App.globalValues.SetAnime = true; LegacySettings.SetBool("loop", v); });
 
                 // 翻转朝向：与新版 raylib 同名同描述（settings.moveFlip）——
                 // 部分初始面向左边的人形移动时会倒着跑，开启后修正。
                 // FilpX（渲染朝向）由走动逻辑按移动方向自动设置，此开关仅决定是否取反。
                 Ipc.AddBool("翻转朝向", "部分初始面向左边的人形移动时会倒着跑，开启后修正",
                     () => App.globalValues.MoveFlip,
-                    v => App.globalValues.MoveFlip = v);
+                    v => { App.globalValues.MoveFlip = v; LegacySettings.SetBool("moveFlip", v); });
 
                 Ipc.AddBool("动态模拟", "定时随机播放动作/走动",
                     () => App.globalValues.Simulation,
@@ -293,7 +357,7 @@ namespace GflChibiDesktop
 
                 Ipc.AddBool("窗口置顶", "将桌宠置于最上层",
                     () => Topmost,
-                    v => Topmost = v);
+                    v => { Topmost = v; LegacySettings.SetBool("topmost", v); });
 
                 Ipc.AddBool("点击穿透", "启用后鼠标点击穿过桌宠",
                     () => _clickThrough,
@@ -370,6 +434,7 @@ namespace GflChibiDesktop
             catch
             {
             }
+            LegacySettings.SetBool("clickThrough", enabled);   // 持久化（重启恢复）
         }
 
         private void GridPlayer_MouseMove(object sender, MouseEventArgs e)
@@ -458,11 +523,13 @@ namespace GflChibiDesktop
                     eventSimulation_wait();
                 }
             }
+            LegacySettings.SetBool("simulation", toggleSwitch);   // 持久化（重启恢复）
         }
 
         public void setSimulationInterval(double intervalsec)
         {
             timerEventsSimulation.Interval = new TimeSpan(0, 0, 0, (int)intervalsec);
+            LegacySettings.SetDouble("simulateInterval", intervalsec);   // 持久化
         }
 
         private void timerEventsSimulation_Tick(object sender, EventArgs e)
@@ -471,7 +538,6 @@ namespace GflChibiDesktop
             timerSimulationMoveX.Stop();
             timerSimulationReload.Stop();
             timerSimulationS.Stop();
-            timerSimulationVictory.Stop();
             Random rand = new Random();
             if (App.globalValues.IsDormMode)
             {
@@ -724,8 +790,8 @@ namespace GflChibiDesktop
                     App.globalValues.SetAnime = true;
                     App.globalValues.IsLoop = false;
                     UpdateSpine();
-                    timerSimulationVictory.Interval = new TimeSpan(0, 0, 0, (int)App.globalValues.AnimeDuration);
-                    timerSimulationVictory.Start();
+                    // victory 播完由 AnimationState.Complete 事件接续 victoryloop（HandleOnceAnimationFinished），
+                    // 不再用按 AnimeDuration 猜测时长的定时器（旧 AnimeDuration 常不准导致接续缺失/静止）
                 }
                 else
                 {
@@ -734,22 +800,6 @@ namespace GflChibiDesktop
                     App.globalValues.IsLoop = true;
                     UpdateSpine();
                 }
-            }
-            else
-            {
-                eventSimulation_wait();
-            }
-        }
-
-        private void timerSimulationVictory_Tick(object sender, EventArgs e)
-        {
-            timerSimulationVictory.Stop();
-            if (App.globalValues.AnimeList.Contains("victoryloop"))
-            {
-                App.globalValues.SelectAnimeName = "victoryloop";
-                App.globalValues.SetAnime = true;
-                App.globalValues.IsLoop = true;
-                UpdateSpine();
             }
             else
             {

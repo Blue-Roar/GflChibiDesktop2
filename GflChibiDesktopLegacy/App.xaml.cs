@@ -39,10 +39,22 @@ namespace GflChibiDesktop
         /// <summary>触发画布变化事件（供其他类调用）。</summary>
         public static void NotifyCanvasChanged() => CanvasChanged?.Invoke();
 
+        /// <summary>
+        /// 画布切换（动态画布随动画扩大/缩小时）需要窗口反向平移的量，保持模型原点屏幕位置不变；
+        /// 由 PetWindow.ApplyCanvas 消费后清零。
+        /// </summary>
+        public static float CanvasShiftX;
+        public static float CanvasShiftY;
+
         /// <summary>渲染/加载错误提示回调。</summary>
         public static Action<Exception> NotifyError;
         /// <summary>模型加载完成回调。</summary>
         public static Action NotifyModelLoaded;
+        /// <summary>一次性（非循环）动画播放完成事件（Player 触发，PetWindow 处理 victory→victoryloop 等接续）。</summary>
+        public static event Action OnceAnimationFinished;
+
+        /// <summary>触发一次性动画完成事件（供其他类调用）。</summary>
+        public static void NotifyOnceAnimationFinished() => OnceAnimationFinished?.Invoke();
 
         protected override void OnStartup(StartupEventArgs e)
         {

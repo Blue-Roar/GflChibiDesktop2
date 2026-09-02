@@ -1,15 +1,11 @@
 using Spine2_1_25;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Text.Json;
 
 namespace GflChibiDesktop
 {
     /// <summary>
-    /// 画布尺寸（未缩放基础值，语义与 model.conf.json 的 x/y/w/h 一致）。
-    /// x/y = 模型在画布中的偏移；w/h = 画布尺寸。
+    /// 画布尺寸（未缩放基础值：x/y = 模型在画布中的偏移，w/h = 画布尺寸）。
     /// </summary>
     public struct CanvasRect
     {
@@ -28,114 +24,248 @@ namespace GflChibiDesktop
     }
 
     /// <summary>
-    /// 画布尺寸计算与持久化：与 raylib 运行时的 blockly_spine2125 一致
-    /// （calcWindowSize.lua 采样 + init.lua 扩展居中）。
-    /// 遍历全部动画采样求并集包围盒，向外扩展画布并居中模型；
-    /// 结果写回 <工作目录>/assets/model.conf.json（与 luajit 运行时同一文件），
-    /// 后续启动与 V2 重建实例（备份/恢复该文件）时直接沿用，避免每次重算包围盒卡顿。
-    /// 画布为"全部动画并集"的固定最大值（用户选择回退到固定大画布，而非随动画动态缩放）。
+    /// 动态画布统计计划：剔除离散帧/离群动画后得到"常规画布"，
+    /// 仅在播放"严重超出常规画布"的动画时临时切换其全程画布。
+    /// </summary>
+    public sealed class DynamicCanvasPlan
+    {
+        /// <summary>常驻画布（未缩放）：非离群动画剔除离散帧后的并集范围。</summary>
+        public CanvasRect Base;
+        /// <summary>各动画全程包围盒画布（未缩放，含离散帧）——离群动画播放时用它保证完整可见。</summary>
+        public Dictionary<string, CanvasRect> FullByAnimation = new Dictionary<string, CanvasRect>();
+        /// <summary>需要切换画布的动画（常规范围严重超出常驻画布所属的常规动画）。</summary>
+        public HashSet<string> OversizeAnimations = new HashSet<string>();
+    }
+
+    /// <summary>
+    /// 画布尺寸统计计算（legacy 动态模式）：
+    /// 1) 对每个动画逐帧采样，丢弃尺寸超过该动画 P98 分位的离散帧（个别帧飞出画布不撑大画布）；
+    /// 2) 动画级剔除：常规尺寸显著大于中位数（&gt;中位×3，至少 3 个动画时）的动画视为"严重超出"，
+    ///    不参与常驻画布；常驻画布 = 其余动画常规范围的并集；
+    /// 3) 运行时仅当切到"严重超出"的动画时，临时切换为其全程包围盒画布。
     /// </summary>
     internal static class CanvasCalculator
     {
-        /// <summary>模型配置文件（相对工作目录解析，与 luajit 运行时一致）。</summary>
-        public static string ModelConfFile => Path.Combine(Environment.CurrentDirectory, "assets", "model.conf.json");
-
         /// <summary>动画采样率（Hz），与 calcWindowSize.lua 的 240 一致。</summary>
         private const float SampleRate = 240f;
-        /// <summary>单动画最大采样步数（240Hz 下约 50 秒）：防止超长/病态动画导致启动卡死。</summary>
+        /// <summary>单动画最大采样步数（240Hz 下约 50 秒）：防止超长/病态动画导致卡顿。</summary>
         private const int MaxSteps = 12000;
+        /// <summary>帧级离散剔除分位：保留占全部帧 P98 以内的常规帧。</summary>
+        private const double FrameQuantile = 0.98;
+        /// <summary>动画级离群阈值：常规尺寸超过全部动画常规尺寸中位数的倍数视为"严重超出"。</summary>
+        private const double AnimeOversizeFactor = 3.0;
+        /// <summary>少于该动画数不做动画级离群剔除（小集合直接取全部常规并集）。</summary>
+        private const int MinAnimesForOversize = 3;
 
-        /// <summary>
-        /// 尝试读取已保存的画布尺寸（model.conf.json 中的 x/y/w/h）。
-        /// 未保存、模型不匹配或数值非法时返回 null。
-        /// </summary>
-        public static CanvasRect? TryReadSavedRect()
+        /// <summary>单动画逐帧采样样本。</summary>
+        private sealed class AnimSamples
         {
-            try
-            {
-                string path = ModelConfFile;
-                if (!File.Exists(path)) return null;
-                using (JsonDocument doc = JsonDocument.Parse(File.ReadAllText(path)))
-                {
-                    JsonElement root = doc.RootElement;
-                    if (root.ValueKind != JsonValueKind.Object) return null;
-                    // 配置文件对应其他模型时不沿用（路径经 junction 时绝对前缀不同，按规范化后缀比较）
-                    if (root.TryGetProperty("atlas", out JsonElement atlas) && !PathsMatch(LegacyArgs.ModelFile, atlas.GetString()))
-                        return null;
-                    if (!root.TryGetProperty("x", out JsonElement jx) || !root.TryGetProperty("y", out JsonElement jy) ||
-                        !root.TryGetProperty("w", out JsonElement jw) || !root.TryGetProperty("h", out JsonElement jh))
-                        return null;
-                    float x = jx.GetSingle(), y = jy.GetSingle(), w = jw.GetSingle(), h = jh.GetSingle();
-                    if (w <= 0 || h <= 0 || float.IsNaN(x) || float.IsNaN(y) || float.IsNaN(w) || float.IsNaN(h))
-                        return null;
-                    return new CanvasRect(x, y, w, h);
-                }
-            }
-            catch
-            {
-                return null;
-            }
+            public string Name;
+            public readonly List<float> MinX = new List<float>();
+            public readonly List<float> MinY = new List<float>();
+            public readonly List<float> MaxX = new List<float>();
+            public readonly List<float> MaxY = new List<float>();
+            public float FullMinX = float.MaxValue, FullMinY = float.MaxValue, FullMaxX = float.MinValue, FullMaxY = float.MinValue;
+            public float RegMinX = float.MaxValue, RegMinY = float.MaxValue, RegMaxX = float.MinValue, RegMaxY = float.MinValue;
         }
 
-        /// <summary>
-        /// 把计算出的画布尺寸写回 model.conf.json（保留原有 skeleton/type/atlas 等字段）。
-        /// 文件不存在（独立运行等）或对应其他模型时跳过，避免污染 V2 管理的配置。
-        /// </summary>
-        public static void SaveRect(float x, float y, float w, float h)
+        /// <summary>统计动态画布计划。采样发生在当前缩放下的骨架，返回结果除以缩放（未缩放）。</summary>
+        public static DynamicCanvasPlan ComputeDynamicPlan(AnimationState state, AnimationStateData stateData,
+            Skeleton skeleton, float scale)
         {
+            var plan = new DynamicCanvasPlan();
+            List<AnimSamples> all = SampleAllAnimations(state, stateData, skeleton);
+
+            // 各动画常规范围（剔除离散帧）与离群判定
+            var regDiags = new List<float>(all.Count);
+            foreach (AnimSamples s in all)
+            {
+                s.RegMinX = s.RegMinY = float.MaxValue;
+                s.RegMaxX = s.RegMaxY = float.MinValue;
+                ComputeRegularBounds(s);
+                float regW = s.RegMaxX - s.RegMinX;
+                float regH = s.RegMaxY - s.RegMinY;
+                regDiags.Add((float)Math.Sqrt(regW * (double)regW + regH * (double)regH));
+            }
+            bool doOversize = all.Count >= MinAnimesForOversize;
+            float medianDiag = 0;
+            if (doOversize)
+            {
+                var sorted = new List<float>(regDiags);
+                sorted.Sort();
+                medianDiag = sorted[sorted.Count / 2];
+            }
+
+            // 常驻画布 = 非离群动画常规范围并集
+            float bMinX = float.MaxValue, bMinY = float.MaxValue, bMaxX = float.MinValue, bMaxY = float.MinValue;
+            bool anyRegular = false;
+            for (int i = 0; i < all.Count; i++)
+            {
+                AnimSamples s = all[i];
+                bool oversize = doOversize && medianDiag > 0 && regDiags[i] > medianDiag * AnimeOversizeFactor;
+                if (oversize)
+                {
+                    plan.OversizeAnimations.Add(s.Name);
+                }
+                else
+                {
+                    anyRegular = true;
+                    if (s.RegMinX < bMinX) bMinX = s.RegMinX;
+                    if (s.RegMinY < bMinY) bMinY = s.RegMinY;
+                    if (s.RegMaxX > bMaxX) bMaxX = s.RegMaxX;
+                    if (s.RegMaxY > bMaxY) bMaxY = s.RegMaxY;
+                }
+                plan.FullByAnimation[s.Name] = RectFromBounds(s.FullMinX, s.FullMinY, s.FullMaxX, s.FullMaxY);
+            }
+            if (!anyRegular)
+            {
+                // 全部动画都离群（病态）：退化为全部常规并集
+                bMinX = bMinY = float.MaxValue;
+                bMaxX = bMaxY = float.MinValue;
+                foreach (AnimSamples s in all)
+                {
+                    if (s.RegMinX < bMinX) bMinX = s.RegMinX;
+                    if (s.RegMinY < bMinY) bMinY = s.RegMinY;
+                    if (s.RegMaxX > bMaxX) bMaxX = s.RegMaxX;
+                    if (s.RegMaxY > bMaxY) bMaxY = s.RegMaxY;
+                }
+                plan.OversizeAnimations.Clear();
+            }
+            plan.Base = RectFromBounds(bMinX, bMinY, bMaxX, bMaxY);
+
+            // 除以当前缩放，得到未缩放结果
+            if (scale > 0)
+            {
+                float inv = 1f / scale;
+                CanvasRect b = plan.Base;
+                plan.Base = new CanvasRect(b.X * inv, b.Y * inv, b.W * inv, b.H * inv);
+                var keys = new List<string>(plan.FullByAnimation.Keys);
+                foreach (string k in keys)
+                {
+                    CanvasRect r = plan.FullByAnimation[k];
+                    plan.FullByAnimation[k] = new CanvasRect(r.X * inv, r.Y * inv, r.W * inv, r.H * inv);
+                }
+            }
+            return plan;
+        }
+
+        /// <summary>对每个动画逐帧采样，记录每帧包围盒与全程并集。</summary>
+        private static List<AnimSamples> SampleAllAnimations(AnimationState state, AnimationStateData stateData, Skeleton skeleton)
+        {
+            float savedMix = stateData.DefaultMix;
+            stateData.DefaultMix = 0;   // 采样时不交叉过渡（与 lua 一致）
+
+            float[] regionBuf = new float[8];
+            float[] meshBuf = Array.Empty<float>();
+            var result = new List<AnimSamples>();
             try
             {
-                string path = ModelConfFile;
-                if (!File.Exists(path)) return;
-                string text = File.ReadAllText(path);
-                using (JsonDocument doc = JsonDocument.Parse(text))
+                List<Animation> animations = skeleton.Data.Animations;
+                if (animations != null && animations.Count > 0)
                 {
-                    JsonElement root = doc.RootElement;
-                    // 配置文件对应其他模型：不动它，交由 V2 在重建实例/切换模型时重写
-                    if (root.ValueKind == JsonValueKind.Object &&
-                        root.TryGetProperty("atlas", out JsonElement atlas) &&
-                        !PathsMatch(LegacyArgs.ModelFile, atlas.GetString()))
+                    foreach (Animation anim in animations)
                     {
-                        return;
-                    }
-                    using (var ms = new MemoryStream())
-                    {
-                        using (var writer = new Utf8JsonWriter(ms))
+                        skeleton.SetToSetupPose();   // 独立采样前复位姿势，保证范围准确
+                        TrackEntry entry = state.SetAnimation(0, anim, false);
+                        float dur = entry.EndTime;
+                        if (float.IsNaN(dur) || dur < 0) dur = 0;
+                        int steps = (int)Math.Min(Math.Ceiling(dur * SampleRate) + 2, MaxSteps);
+                        var s = new AnimSamples { Name = anim.Name };
+                        for (int k = 0; k < steps; k++)
                         {
-                            writer.WriteStartObject();
-                            if (root.ValueKind == JsonValueKind.Object)
-                            {
-                                foreach (JsonProperty prop in root.EnumerateObject())
-                                {
-                                    if (prop.Name == "x" || prop.Name == "y" || prop.Name == "w" || prop.Name == "h") continue;
-                                    prop.WriteTo(writer);
-                                }
-                            }
-                            writer.WriteNumber("x", x);
-                            writer.WriteNumber("y", y);
-                            writer.WriteNumber("w", w);
-                            writer.WriteNumber("h", h);
-                            writer.WriteEndObject();
+                            state.Update(1f / SampleRate);
+                            state.Apply(skeleton);
+                            skeleton.UpdateWorldTransform();
+                            float mnX = float.MaxValue, mnY = float.MaxValue, mxX = float.MinValue, mxY = float.MinValue;
+                            AccumulateBounds(skeleton, regionBuf, ref meshBuf, ref mnX, ref mnY, ref mxX, ref mxY);
+                            if (mnX == float.MaxValue) continue;   // 无渲染内容帧
+                            s.MinX.Add(mnX);
+                            s.MinY.Add(mnY);
+                            s.MaxX.Add(mxX);
+                            s.MaxY.Add(mxY);
+                            if (mnX < s.FullMinX) s.FullMinX = mnX;
+                            if (mnY < s.FullMinY) s.FullMinY = mnY;
+                            if (mxX > s.FullMaxX) s.FullMaxX = mxX;
+                            if (mxY > s.FullMaxY) s.FullMaxY = mxY;
                         }
-                        File.WriteAllText(path, Encoding.UTF8.GetString(ms.ToArray()));
+                        if (s.MinX.Count == 0)
+                        {
+                            // 无内容：以 setup 姿势单帧计
+                            skeleton.SetToSetupPose();
+                            state.Apply(skeleton);
+                            skeleton.UpdateWorldTransform();
+                            float mnX = float.MaxValue, mnY = float.MaxValue, mxX = float.MinValue, mxY = float.MinValue;
+                            AccumulateBounds(skeleton, regionBuf, ref meshBuf, ref mnX, ref mnY, ref mxX, ref mxY);
+                            s.MinX.Add(mnX); s.MinY.Add(mnY); s.MaxX.Add(mxX); s.MaxY.Add(mxY);
+                            s.FullMinX = s.RegMinX = mnX; s.FullMinY = s.RegMinY = mnY;
+                            s.FullMaxX = s.RegMaxX = mxX; s.FullMaxY = s.RegMaxY = mxY;
+                        }
+                        result.Add(s);
                     }
                 }
+                else
+                {
+                    // 无动画：取 setup 姿态单帧
+                    skeleton.SetToSetupPose();
+                    state.Apply(skeleton);
+                    skeleton.UpdateWorldTransform();
+                    float mnX = float.MaxValue, mnY = float.MaxValue, mxX = float.MinValue, mxY = float.MinValue;
+                    AccumulateBounds(skeleton, regionBuf, ref meshBuf, ref mnX, ref mnY, ref mxX, ref mxY);
+                    var s = new AnimSamples { Name = string.Empty };
+                    s.MinX.Add(mnX); s.MinY.Add(mnY); s.MaxX.Add(mxX); s.MaxY.Add(mxY);
+                    s.FullMinX = s.RegMinX = mnX; s.FullMinY = s.RegMinY = mnY;
+                    s.FullMaxX = s.RegMaxX = mxX; s.FullMaxY = s.RegMaxY = mxY;
+                    result.Add(s);
+                }
             }
-            catch
+            finally
             {
-                // 写回失败不影响本次运行（下次启动重新计算）
+                stateData.DefaultMix = savedMix;
+            }
+            return result;
+        }
+
+        /// <summary>计算单动画的常规范围：丢弃尺寸超过 P98 分位的离散帧后取并集。</summary>
+        private static void ComputeRegularBounds(AnimSamples s)
+        {
+            int n = s.MinX.Count;
+            if (n == 0) return;
+            float[] ws = new float[n];
+            float[] hs = new float[n];
+            for (int i = 0; i < n; i++)
+            {
+                ws[i] = s.MaxX[i] - s.MinX[i];
+                hs[i] = s.MaxY[i] - s.MinY[i];
+            }
+            Array.Sort(ws);
+            Array.Sort(hs);
+            int idx = Math.Max(0, (int)Math.Ceiling(n * FrameQuantile) - 1);
+            float w98 = ws[idx];
+            float h98 = hs[idx];
+            bool any = false;
+            for (int i = 0; i < n; i++)
+            {
+                float w = s.MaxX[i] - s.MinX[i];
+                float h = s.MaxY[i] - s.MinY[i];
+                if (w > w98 || h > h98) continue;   // 离散帧
+                any = true;
+                if (s.MinX[i] < s.RegMinX) s.RegMinX = s.MinX[i];
+                if (s.MinY[i] < s.RegMinY) s.RegMinY = s.MinY[i];
+                if (s.MaxX[i] > s.RegMaxX) s.RegMaxX = s.MaxX[i];
+                if (s.MaxY[i] > s.RegMaxY) s.RegMaxY = s.MaxY[i];
+            }
+            if (!any)
+            {
+                // 全部被判离散（病态）：退回全程并集
+                s.RegMinX = s.FullMinX; s.RegMinY = s.FullMinY;
+                s.RegMaxX = s.FullMaxX; s.RegMaxY = s.FullMaxY;
             }
         }
 
-        /// <summary>
-        /// 计算画布：遍历全部动画采样求并集包围盒，再按 init.lua 的规则向外扩展并居中。
-        /// 采样发生在当前缩放下的骨架（binary.Scale），除以缩放后返回未缩放基础画布。
-        /// </summary>
-        public static CanvasRect ComputeCanvasRect(AnimationState state, AnimationStateData stateData, Skeleton skeleton, float scale)
+        /// <summary>由世界包围盒求画布（与 init.lua 相同的扩展居中规则：x 方向偏一侧时对称扩展）。</summary>
+        private static CanvasRect RectFromBounds(float minX, float minY, float maxX, float maxY)
         {
-            ComputeBounds(state, stateData, skeleton, out float minX, out float minY, out float maxX, out float maxY);
-
-            // 与 init.lua 相同：x 方向包围盒偏在原点一侧时以原点对称扩展（y 不处理，站立模型向下延伸属正常）
+            if (minX == float.MaxValue) { minX = 0; minY = 0; maxX = 1; maxY = 1; }
             float rx = -minX;
             float ry = -minY;
             float rw = maxX - minX;
@@ -152,68 +282,7 @@ namespace GflChibiDesktop
             if (float.IsNaN(x) || float.IsNaN(y)) { x = 0; y = 0; }
             if (nw < 1) nw = 1;
             if (nh < 1) nh = 1;
-
-            // 除以当前缩放，得到未缩放基础画布（与 model.conf.json 的存储语义一致）
-            if (scale > 0)
-            {
-                float inv = 1f / scale;
-                x *= inv;
-                y *= inv;
-                nw *= inv;
-                nh *= inv;
-            }
             return new CanvasRect(x, y, nw, nh);
-        }
-
-        /// <summary>遍历全部动画（240Hz 采样）求世界坐标并集包围盒，与 calcWindowSize.lua 一致。</summary>
-        private static void ComputeBounds(AnimationState state, AnimationStateData stateData, Skeleton skeleton,
-            out float minX, out float minY, out float maxX, out float maxY)
-        {
-            float savedMix = stateData.DefaultMix;
-            stateData.DefaultMix = 0;   // 采样时不交叉过渡（与 lua 一致）
-
-            minX = minY = float.MaxValue;
-            maxX = maxY = float.MinValue;
-
-            float[] regionBuf = new float[8];
-            float[] meshBuf = Array.Empty<float>();
-
-            try
-            {
-                List<Animation> animations = skeleton.Data.Animations;
-                bool any = false;
-                if (animations != null)
-                {
-                    for (int i = 0; i < animations.Count; i++)
-                    {
-                        Animation anim = animations[i];
-                        TrackEntry entry = state.SetAnimation(0, anim, false);
-                        float dur = entry.EndTime;
-                        if (float.IsNaN(dur) || dur < 0) dur = 0;
-                        // 以动画时长决定采样步数；用步数上限代替浮点相等的 while 循环，避免死循环
-                        int steps = (int)Math.Min(Math.Ceiling(dur * SampleRate) + 2, MaxSteps);
-                        for (int s = 0; s < steps; s++)
-                        {
-                            state.Update(1f / SampleRate);
-                            state.Apply(skeleton);
-                            skeleton.UpdateWorldTransform();
-                            AccumulateBounds(skeleton, regionBuf, ref meshBuf, ref minX, ref minY, ref maxX, ref maxY);
-                        }
-                        any = true;
-                    }
-                }
-                if (!any)
-                {
-                    // 无动画：取当前（setup）姿态的包围盒
-                    state.Apply(skeleton);
-                    skeleton.UpdateWorldTransform();
-                    AccumulateBounds(skeleton, regionBuf, ref meshBuf, ref minX, ref minY, ref maxX, ref maxY);
-                }
-            }
-            finally
-            {
-                stateData.DefaultMix = savedMix;
-            }
         }
 
         /// <summary>累加当前姿态下所有可渲染附件的世界顶点包围盒。</summary>
@@ -260,20 +329,6 @@ namespace GflChibiDesktop
                 if (vx > maxX) maxX = vx;
                 if (vy > maxY) maxY = vy;
             }
-        }
-
-        /// <summary>
-        /// 比较命令行模型绝对路径与配置文件中的（相对）路径。
-        /// 实例目录下 assets/spine 为 junction，绝对前缀不同，故相对路径按规范化后缀匹配。
-        /// </summary>
-        private static bool PathsMatch(string absolutePath, string confPath)
-        {
-            if (string.IsNullOrEmpty(absolutePath) || string.IsNullOrEmpty(confPath)) return false;
-            string rel = confPath.Replace('/', Path.DirectorySeparatorChar);
-            string abs = Path.GetFullPath(absolutePath);
-            if (Path.IsPathRooted(rel))
-                return string.Equals(Path.GetFullPath(rel), abs, StringComparison.OrdinalIgnoreCase);
-            return abs.EndsWith(rel, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
