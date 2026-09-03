@@ -70,10 +70,12 @@ _M.create = function (p, modelConfig)
             -- 动态：计算实际动画包围盒并写回。部分模型（如完整立绘）动画范围超出默认 448 画布会被裁切，
             -- 按实际包围盒向外扩展（force 时忽略已存尺寸，按真实并集重算）。
             local r = calcWindowSize(ffi, sp, animationState, animationStateData, skeleton)
-            if r.x * 2 < r.width then
-                r.x = r.width - r.x
-                r.width = r.x * 2
-            end
+            -- x 方向以骨架原点为对称中心对称扩展：半径取左右延伸较大者，画布宽 = 2×半径。
+            -- 模型水平翻转（model.direction → skeleton.flipX）是绕骨架原点镜像，
+            -- 画布两侧对称才能容纳镜像后的范围 [-maxX, -minX]，避免翻转后部分动画超出画布。
+            local right = r.width - r.x   -- r.x = -minX = 左侧延伸，width-r.x = maxX = 右侧延伸
+            if r.x < right then r.x = right end
+            r.width = r.x * 2
             local cw = (not force) and (modelConfig.w or 0) or 0
             local ch = (not force) and (modelConfig.h or 0) or 0
             local nw = math.max(cw, r.width)

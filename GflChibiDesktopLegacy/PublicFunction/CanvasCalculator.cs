@@ -262,19 +262,16 @@ namespace GflChibiDesktop
             }
         }
 
-        /// <summary>由世界包围盒求画布（与 init.lua 相同的扩展居中规则：x 方向偏一侧时对称扩展）。</summary>
+        /// <summary>由世界包围盒求画布（与 init.lua 相同的扩展居中规则：x 方向以骨架原点为对称中心对称扩展，
+        /// 使水平翻转（FlipX 镜像）后的范围 [-maxX, -minX] 也落在画布内，避免翻转后部分动画超出画布）。</summary>
         private static CanvasRect RectFromBounds(float minX, float minY, float maxX, float maxY)
         {
             if (minX == float.MaxValue) { minX = 0; minY = 0; maxX = 1; maxY = 1; }
-            float rx = -minX;
+            // 对称半径 = max(左侧延伸, 右侧延伸)：画布宽 = 2×半径，骨架原点位于画布中心
+            float rx = Math.Max(-minX, maxX);
             float ry = -minY;
-            float rw = maxX - minX;
+            float rw = rx * 2;
             float rh = maxY - minY;
-            if (rx * 2 < rw)
-            {
-                rx = rw - rx;
-                rw = rx * 2;
-            }
             float nw = Math.Max(0, rw);
             float nh = Math.Max(0, rh);
             float x = (nw - rw) / 2f + rx;
