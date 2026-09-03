@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Controls;
+using Newtonsoft.Json.Linq;
 
 namespace GflChibiDesktop2
 {
@@ -226,6 +227,49 @@ namespace GflChibiDesktop2
             // 模型变更：不写尺寸字段，由 luajit 首次启动计算画布尺寸并写回
             File.WriteAllText(Path.Combine(assetsDir, "model.conf.json"),
                 "{\"skeleton\":\"" + model.SkeletonFile + "\",\"type\":\"skel\",\"atlas\":\"" + model.AtlasFile + "\"}");
+        }
+
+        /// <summary>
+        /// 按数据分类应用默认面板开关：ENEMY（敌方）数据默认勾选"翻转朝向"（moveFlip）。
+        /// 同时写入 v2（settings.json，raylib 运行时）与 v1（settings1.json，legacy 渲染模块），
+        /// 供两个渲染模块启动时读取。仅由"加载新数据/更换模型"路径调用（不用于启动恢复，避免覆盖用户设置）。
+        /// </summary>
+        public void ApplyCategoryDefaults(ChibiModelData model)
+        {
+            try
+            {
+                bool flip = model?.Category == "ENEMY";
+                SetMoveFlip(Path.Combine(WorkDir, "settings.json"), flip);
+                SetMoveFlip(Path.Combine(WorkDir, "settings1.json"), flip);
+            }
+            catch
+            {
+            }
+        }
+
+        /// <summary>在保留其余键的前提下设置顶层 moveFlip（文件缺失时创建最小 JSON）。</summary>
+        private static void SetMoveFlip(string file, bool flip)
+        {
+            try
+            {
+                JObject? root = null;
+                if (File.Exists(file))
+                {
+                    try
+                    {
+                        root = JObject.Parse(File.ReadAllText(file));
+                    }
+                    catch
+                    {
+                    }
+                }
+                root ??= new JObject();
+                root["moveFlip"] = flip;
+                File.WriteAllText(file, root.ToString(Newtonsoft.Json.Formatting.None));
+            }
+            catch
+            {
+            }
         }
 
         /// <summary>

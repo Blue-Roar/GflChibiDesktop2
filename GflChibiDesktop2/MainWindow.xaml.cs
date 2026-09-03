@@ -434,7 +434,7 @@ namespace GflChibiDesktop2
             }
         }
 
-        private void StartInstance(ChibiModelData model, bool silently = false, bool? useLegacyModule = null)
+        private void StartInstance(ChibiModelData model, bool silently = false, bool? useLegacyModule = null, bool applyCategoryDefaults = false)
         {
             if (isExiting)
             {
@@ -471,6 +471,12 @@ namespace GflChibiDesktop2
             {
                 PetInstance pet = PetInstance.Create(GetNextPetId(), model);
                 pet.UseLegacyModule = useLegacyModule ?? Properties.Settings.Default.UseLegacyModule;
+                // 加载新数据（从数据管理器选择模型）时按数据分类预设默认开关（ENEMY → 勾选翻转朝向），
+                // 需在子进程启动前写入 v1/v2 的 settings 文件；启动恢复/多开复制不预设，保留用户设置
+                if (applyCategoryDefaults)
+                {
+                    pet.ApplyCategoryDefaults(model);
+                }
                 ProcessManager? pm = null;
                 pm = StartPetProcess(pet);
                 pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
@@ -489,32 +495,23 @@ namespace GflChibiDesktop2
         }
 
         /// <summary>
-        /// 用新模型重启当前选中的桌宠。
+        /// 加载新数据（未勾选"多开"）= 替换当前选中的桌宠实例：
+        /// 删除旧实例（停止进程并清除其工作目录/坐标等全部配置），再按新数据启动一个全新实例。
+        /// 旧实例的渲染模块选择（legacy/raylib）会继承到新实例。
         /// </summary>
         private async Task RestartSelected(ChibiModelData data)
         {
-            PetInstance? pet = SelectedPet;
-            if (pet is null)
+            PetInstance? old = SelectedPet;
+            if (old is null)
             {
-                StartInstance(data);
+                // 无选中实例：直接按新数据启动（预设分类默认，如 ENEMY → 翻转朝向）
+                StartInstance(data, applyCategoryDefaults: true);
                 return;
             }
-            pet.UpdateModel(data);
-            if (pet.TabTitle is not null)
-            {
-                pet.TabTitle.Text = GetTabTitle(pet);
-            }
-            pet.StopRequested = false;
-            pet.RestartAttempts = 0;
-            pet.IsRestarting = true;
-            await StopManager(pet);
-            pet.Panel.Children.Clear();
-            pet.IsChanged = false;
-            ProcessManager? pm = null;
-            pm = StartPetProcess(pet);
-            pm.Exited += (s, _) => Dispatcher.BeginInvoke(() => OnPetExited(pet, s as ProcessManager));
-            pet.Manager = pm;
-            pet.IsRestarting = false;
+            bool? useLegacy = old.UseLegacyModule;
+            // 替换 = 删除选中实例（停进程、移除标签页、删除工作目录），坐标/画布等配置随之重建为全新默认
+            await StopInstance(old);
+            StartInstance(data, applyCategoryDefaults: true, useLegacyModule: useLegacy);
             UpdateStatus();
         }
 
@@ -1348,7 +1345,7 @@ namespace GflChibiDesktop2
             {
                 if (data.NewInstance)
                 {
-                    StartInstance(data);
+                    StartInstance(data, applyCategoryDefaults: true);
                 }
                 else
                 {

@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -24,6 +24,8 @@ namespace GflChibiDesktop2.ViewModels
         public SolidColorBrush Foreground { get; set; }
         public string[] Tag { get; set; }
         public Visibility Visibility { get; set; }
+        /// <summary>数据分类（chibi_list 的 category：TDOLL/ENEMY/HOC/NPC；外部导入数据为 null）。</summary>
+        public string Category { get; set; }
 
 
         //readonly ReadOnlyCollection<ComponentModel> _children;

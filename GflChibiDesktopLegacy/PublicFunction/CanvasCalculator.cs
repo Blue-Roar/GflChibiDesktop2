@@ -146,6 +146,20 @@ namespace GflChibiDesktop
                     plan.FullByAnimation[k] = new CanvasRect(r.X * inv, r.Y * inv, r.W * inv, r.H * inv);
                 }
             }
+
+            // 画布最小尺寸：动态画布算出的宽/高小于 448 时按 448（与固定"小"画布的下限一致），
+            // 避免小模型把窗口撑得过小；偏移 X/Y 保持不变（模型原点相对窗口位置不变）。
+            const float MinCanvasSize = 448f;
+            CanvasRect bb = plan.Base;
+            plan.Base = new CanvasRect(bb.X, bb.Y,
+                Math.Max(bb.W, MinCanvasSize), Math.Max(bb.H, MinCanvasSize));
+            var fKeys = new List<string>(plan.FullByAnimation.Keys);
+            foreach (string k in fKeys)
+            {
+                CanvasRect r = plan.FullByAnimation[k];
+                plan.FullByAnimation[k] = new CanvasRect(r.X, r.Y,
+                    Math.Max(r.W, MinCanvasSize), Math.Max(r.H, MinCanvasSize));
+            }
             return plan;
         }
 

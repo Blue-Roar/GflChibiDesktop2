@@ -27,6 +27,11 @@ namespace GflChibiDesktop2
         public string SkeletonFile { get; set; }
         public string AtlasFile { get; set; }
         /// <summary>
+        /// 数据分类（chibi_list 的 category：TDOLL/ENEMY/HOC/NPC；外部导入数据为 null）。
+        /// 用于加载时按分类决定默认面板设置（如 ENEMY 默认勾选"翻转朝向"）。
+        /// </summary>
+        public string Category { get; set; }
+        /// <summary>
         /// 是否为多开（新开一个桌宠实例），而不是应用到当前选中实例。
         /// </summary>
         public bool NewInstance { get; set; }
@@ -556,6 +561,7 @@ namespace GflChibiDesktop2
                         node.Header = content.display;
                         node.ComponentID = 200 + counter;
                         node.Tag = CreateTag(content);
+                        node.Category = content.category;
                         node.Foreground = defaultColor;
                         node.ToolTip = content.display_full;
                         SetNodeColor(node, content);
@@ -1243,16 +1249,16 @@ namespace GflChibiDesktop2
         private void btn_loadData_Click(object sender, RoutedEventArgs e)
         {
             ComponentModel item = SelectedItem;
-            LoadInternalSpine(item.Tag, false);
+            LoadInternalSpine(item.Tag, false, item?.Category);
         }
 
         private void btn_loadDormData_Click(object sender, RoutedEventArgs e)
         {
             ComponentModel item = SelectedItem;
-            LoadInternalSpine(item.Tag, true);
+            LoadInternalSpine(item.Tag, true, item?.Category);
         }
 
-        private void LoadInternalSpine(string[] tagString, bool dormMode)
+        private void LoadInternalSpine(string[] tagString, bool dormMode, string category = null)
         {
             //tagString[0] = $"{displaySwitch}";
             //tagString[1] = content.name;
@@ -1310,6 +1316,7 @@ namespace GflChibiDesktop2
                 DisplayName = DisplayName,
                 SkeletonFile = SpineFile,
                 AtlasFile = AtlasFile,
+                Category = category,
                 NewInstance = chb_force_load.IsChecked == true
             });
             tvAfterSelect();
@@ -1761,6 +1768,7 @@ namespace GflChibiDesktop2
                                 node.Header = content.display;
                                 node.ComponentID = 100 + counter;
                                 node.Tag = CreateTag(content);
+                                node.Category = content.category;
                                 node.Foreground = defaultColor;
                                 node.ToolTip = content.display_full;
                                 SetNodeColor(node, content);
