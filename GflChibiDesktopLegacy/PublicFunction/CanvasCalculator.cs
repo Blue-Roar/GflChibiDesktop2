@@ -73,8 +73,27 @@ namespace GflChibiDesktop
         public static DynamicCanvasPlan ComputeDynamicPlan(AnimationState state, AnimationStateData stateData,
             Skeleton skeleton, float scale)
         {
+            // 采样前骨架可能已被运行时偏移/缩放（渲染前会 skeleton.X/Y = PosX/PosY、根骨骼承载缩放）。
+            // 附件世界坐标 = bone.skeleton.x + bone.worldX，偏移会整体平移采样包围盒 → 污染画布。
+            // 须先把 skeleton.X/Y 归零采样（偏移与骨架原点无关，画布定位在 ApplyCanvasRect 用 rect.X/Y 表达），
+            // 之后恢复，与 raylib init.lua 动态采样前归一 x/y=0、scale=1 的做法一致。
+            // 运行时从小/大画布切到动态时若带着 PosX/PosY 采样，Base 偏移会错乱 → 模型不显示；
+            // 重启（LoadContent，新骨架 x/y=0）采样干净所以正常。
+            float savedX = skeleton.X;
+            float savedY = skeleton.Y;
+            skeleton.X = 0;
+            skeleton.Y = 0;
             var plan = new DynamicCanvasPlan();
-            List<AnimSamples> all = SampleAllAnimations(state, stateData, skeleton);
+            List<AnimSamples> all;
+            try
+            {
+                all = SampleAllAnimations(state, stateData, skeleton);
+            }
+            finally
+            {
+                skeleton.X = savedX;
+                skeleton.Y = savedY;
+            }
 
             // 各动画常规范围（剔除离散帧）与离群判定
             var regDiags = new List<float>(all.Count);

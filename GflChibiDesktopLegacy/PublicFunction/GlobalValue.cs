@@ -52,7 +52,7 @@ public class GlobalValue : INotifyPropertyChanged
     private bool _IsRecoding = false;
     private bool _FilpX = false;
     private bool _MoveFlip = false;
-    private int _CanvasMode = 0;
+    private int _CanvasMode = 2;
     private float _RedcodePanelWidth = 280f;
     private float _Rotation = 0;
     private bool _UseCache = false;

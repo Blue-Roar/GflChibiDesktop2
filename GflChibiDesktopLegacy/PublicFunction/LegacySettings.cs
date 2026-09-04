@@ -16,7 +16,7 @@ namespace GflChibiDesktop
         public static string SettingsFile => Path.Combine(Environment.CurrentDirectory, "settings1.json");
 
         /// <summary>画布模式默认值：小(448×448)。</summary>
-        public const int DefaultCanvasMode = 0;
+        public const int DefaultCanvasMode = 2;
 
         // ---------- 兼容旧调用（窗口位置 / 画布模式） ----------
 

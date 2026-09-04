@@ -110,6 +110,31 @@ namespace GflChibiDesktop
         {
             base.OnSourceInitialized(e);
             HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(WndProc);
+            HideFromAltTab();
+        }
+
+        /// <summary>
+        /// 让窗口既不进任务栏也不进 Alt+Tab（Alt+Tab 用 WS_EX_APPWINDOW，SetWindowLong 加 TOOLWINDOW 无效时
+        /// 靠清除 APPWINDOW 让 Shell 不再把它当主窗口；ShowInTaskbar=False 只挡任务栏，挡不住 Alt+Tab）。
+        /// 时机：handle 已创建（首次可见前），此时设样式不会让任务栏残留——与 raylib 隐藏创建思路一致。
+        /// </summary>
+        private void HideFromAltTab()
+        {
+            try
+            {
+                IntPtr hwnd = new WindowInteropHelper(this).Handle;
+                const int GWL_EXSTYLE = -20;
+                const int WS_EX_TOOLWINDOW = 0x00000080;
+                const int WS_EX_APPWINDOW = 0x00040000;
+                long ex = GetWindowLong(hwnd, GWL_EXSTYLE);
+                ex |= WS_EX_TOOLWINDOW;      // 工具窗口：任务栏与 Alt+Tab 都不显示
+                ex &= ~WS_EX_APPWINDOW;      // 移除"应用主窗口"标记，否则 Alt+Tab 仍会列出
+                SetWindowLong(hwnd, GWL_EXSTYLE, ex);
+            }
+            catch
+            {
+                // 设置失败不阻断启动（任务栏隐藏由 ShowInTaskbar=False 兜底）
+            }
         }
 
         /// <summary>拦截系统关闭（Alt+F4/系统菜单），防止用户关闭 legacy 进程被 V2 误判为异常退出。</summary>
