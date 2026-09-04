@@ -62,6 +62,7 @@ _M.create = function (p, modelConfig)
     ---固定模式（小/大）：画布固定、模型偏移 = 画布中心，不使用/不修改 conf。
     ---force=true 用于运行时切回动态：忽略内存/conf 缓存直接重算（模型未变，结果与 conf 一致）。
     local function applyCanvasMode(mode, force)
+        local recomputed = false
         if mode == 0 then
             modelConfig.x, modelConfig.y, modelConfig.w, modelConfig.h = 224, 224, 448, 448
         elseif mode == 1 then
@@ -69,7 +70,19 @@ _M.create = function (p, modelConfig)
         elseif force or modelConfig.x == nil or modelConfig.y == nil or modelConfig.w == nil or modelConfig.h == nil then
             -- 动态：计算实际动画包围盒并写回。部分模型（如完整立绘）动画范围超出默认 448 画布会被裁切，
             -- 按实际包围盒向外扩展（force 时忽略已存尺寸，按真实并集重算）。
+            --
+            -- 采样前注意：calcWindowSize 遍历全部动画会改写当前动画轨道并堆积事件；
+            -- 根骨骼 scale（用户缩放）与 skeleton.x/y（模型偏移）都会放大/平移采样结果，
+            -- 必须先归一为 scale=1、原点 (0,0) 采样，之后恢复，否则 conf 写入带缩放/偏移的尺寸，
+            -- 运行时再乘 scale 会双重放大/错位（create 首次调用时 scale=1、x/y=0，故只有运行时 force 出问题）。
+            local rootBone = skeleton.bones[0]
+            local savedSX, savedSY = rootBone.scaleX, rootBone.scaleY
+            local savedX, savedY = skeleton.x, skeleton.y
+            rootBone.scaleX, rootBone.scaleY = 1, 1
+            skeleton.x, skeleton.y = 0, 0
             local r = calcWindowSize(ffi, sp, animationState, animationStateData, skeleton)
+            rootBone.scaleX, rootBone.scaleY = savedSX, savedSY
+            skeleton.x, skeleton.y = savedX, savedY
             -- x 方向以骨架原点为对称中心对称扩展：半径取左右延伸较大者，画布宽 = 2×半径。
             -- 模型水平翻转（model.direction → skeleton.flipX）是绕骨架原点镜像，
             -- 画布两侧对称才能容纳镜像后的范围 [-maxX, -minX]，避免翻转后部分动画超出画布。
@@ -84,8 +97,15 @@ _M.create = function (p, modelConfig)
             modelConfig.y = (nh - r.height) / 2 + r.y
             modelConfig.w = nw
             modelConfig.h = nh
-            if modelConfig.save ~= nil then modelConfig:save() end
+            recomputed = true
         end
+        -- 动态画布最小尺寸：与 legacy 一致，宽/高小于 448 时按 448，偏移 X/Y 不动
+        -- （模型原点相对窗口位置不变，仅画布变大）；固定模式（小/大）不在此列。
+        if mode == 2 and modelConfig.w ~= nil and modelConfig.h ~= nil then
+            if modelConfig.w < 448 then modelConfig.w = 448 end
+            if modelConfig.h < 448 then modelConfig.h = 448 end
+        end
+        if recomputed and modelConfig.save ~= nil then modelConfig:save() end
     end
     applyCanvasMode(canvasMode, false)
 
