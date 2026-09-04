@@ -403,3 +403,7 @@ FodyWeavers.xsd
 # Agents Memory
 MEMORY.md
 AGENTS.md
+
+# runtime 的 win32 lua 模块需纳入版本管理（上面的 VS 规则 [Ww][Ii][Nn]32/ 会误忽略该目录）
+!GflChibiDesktop2/runtime/lua/win32/
+!GflChibiDesktop2/runtime/lua/win32/**

@@ -160,6 +160,10 @@ M.create = function(param)
     rl.SetConfigFlags(rl.FLAG_WINDOW_UNDECORATED)
     rl.SetConfigFlags(rl.FLAG_WINDOW_ALWAYS_RUN)
     rl.SetConfigFlags(rl.FLAG_WINDOW_RESIZABLE)
+    -- 隐藏创建窗口：任务栏按钮在窗口首次可见时创建，先以隐藏方式创建、
+    -- 设好 WS_EX_TOOLWINDOW（不进任务栏）后再显示，首次可见即带工具窗口样式，
+    -- 避免"先显示普通窗口再改样式"在 Win7/部分 Win10 任务栏按钮残留
+    rl.SetConfigFlags(rl.FLAG_WINDOW_HIDDEN)
     if param.vsync then rl.SetConfigFlags(rl.FLAG_VSYNC_HINT) end
     if param.transparent then
         if M.isUlw() then
@@ -172,6 +176,8 @@ M.create = function(param)
     end
     if param.topmost then rl.SetConfigFlags(rl.FLAG_WINDOW_TOPMOST) end
     rl.InitWindow(400, 300, "HuiDesktop Light Renderer")
+    -- 工具窗口样式（TOOLWINDOW 不进任务栏）：窗口创建为隐藏状态，此时设置样式，
+    -- 之后首次显示即带 TOOLWINDOW，任务栏不会为其创建按钮
     win32.directSetExStyle(0x80180)
     
     -- 窗口创建后立即设置透明度（ULW 模式下由位图 alpha 提供，跳过 LWA_ALPHA，避免破坏 ULW）
@@ -201,6 +207,9 @@ M.create = function(param)
         M.ulwRT = rl.LoadRenderTexture(M.windowSize.width, M.windowSize.height)
         log("[window] ulw render texture created " .. M.windowSize.width .. "x" .. M.windowSize.height .. "\n")
     end
+
+    -- 窗口已隐藏创建并设置 TOOLWINDOW 样式，现在显示：首次可见即不进任务栏
+    rl.ClearWindowState(rl.FLAG_WINDOW_HIDDEN)
 end
 
 M.setSize = function(width, height)
