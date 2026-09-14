@@ -407,3 +407,7 @@ AGENTS.md
 # runtime 的 win32 lua 模块需纳入版本管理（上面的 VS 规则 [Ww][Ii][Nn]32/ 会误忽略该目录）
 !GflChibiDesktop2/runtime/lua/win32/
 !GflChibiDesktop2/runtime/lua/win32/**
+
+# Spine 运行时源码：受 Esoteric Software 的 Spine Runtimes 许可限制，不得随本仓库公开分发。
+# 构建前需自行获取（见 tools/fetch-spine-runtime.ps1 与 THIRD-PARTY-NOTICES.md）。
+GflChibiDesktopLegacy/SpineLibrary/spine-runtimes-2.1.25/

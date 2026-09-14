@@ -45,4 +45,11 @@
     </None>
   </ItemGroup>
 
+  <!-- Spine 运行时代码因许可限制不随本仓库分发（已 gitignore），构建前需自行获取。
+       获取方式见 tools/fetch-spine-runtime.ps1 与 THIRD-PARTY-NOTICES.md。 -->
+  <Target Name="CheckSpineRuntime" BeforeTargets="CoreCompile">
+    <Error Condition="!Exists('SpineLibrary\spine-runtimes-2.1.25\Skeleton.cs')"
+           Text="缺少 Spine 运行时代码（GflChibiDesktopLegacy\SpineLibrary\spine-runtimes-2.1.25）。该代码受 Esoteric Software 许可限制，不随本仓库分发。请先获取：powershell -ExecutionPolicy Bypass -File tools/fetch-spine-runtime.ps1 -FromDir &lt;你已有的副本&gt;" />
+  </Target>
+
 </Project>
